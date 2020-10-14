@@ -1,4 +1,4 @@
 <launch>
-   <node pkg="pkg_task0" type="revolve" name="revolve" />
-   <node pkg="turtlesim" type="" />
+   <node pkg="turtlesim" type="turtlesim_node" name="node_turtlesim_node" output="screen"/>
+   <node pkg="pkg_task0" type="revolve_node.py" name="revolve" output="screen"/>
 </launch>
