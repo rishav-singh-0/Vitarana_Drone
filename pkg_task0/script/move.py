@@ -27,7 +27,7 @@ def move():
             #taking the second time for claculating the distance
         t1=rospy.Time.now().to_sec()
             #calculating distance
-        cdd=(((vel_msg.angular.z**2)+(vel_msg.linear.x**2))**0.5)*(t1-t0)
+        cdd=5*(t1-t0)
         print("moving in circle")
         rospy.loginfo(cdd)
         #turtle bot will stop moving after this loop
