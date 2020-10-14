@@ -1,0 +1,4 @@
+<launch>
+   <node pkg="pkg_task0" type="revolve" name="revolve" />
+   <node pkg="turtlesim" type="" />
+</launch>
