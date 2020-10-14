@@ -10,10 +10,7 @@ def move():
     print("Let's move your robot")
     
     vel_msg.linear.x =5
-    vel_msg.linear.y = 0
-    vel_msg.linear.z = 0
-    vel_msg.angular.x = 0
-    vel_msg.angular.y = 0
+    vel_msg.linear.y =vel_msg.linear.z=vel_msg.angular.x=vel_msg.angular.y=0
     vel_msg.angular.z = 2
 
     t0 = rospy.Time.now().to_sec()#it's for initial time which will useful fir calculating the distance
@@ -27,12 +24,12 @@ def move():
             #taking the second time for claculating the distance
         t1=rospy.Time.now().to_sec()
             #calculating distance
-        cdd=5*(t1-t0)
-        print("moving in circle")
-        rospy.loginfo(cdd)
+        cdd= vel_msg.linear.x*(t1-t0)
+        rospy.loginfo("moving in circle\n %f",cdd)
+        #rospy.loginfo(cdd)
         #turtle bot will stop moving after this loop
     vel_msg.linear.x = 0#makin linear velocity 0 for stopping the bot
-    rospy.loginfo("mission passed \n #peace")
+    rospy.loginfo("goal reached")
         #it will publish the msg of velocity
     velocity_publisher.publish(vel_msg)
         #its for user convineance
