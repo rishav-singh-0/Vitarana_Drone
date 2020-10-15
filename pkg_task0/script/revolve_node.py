@@ -19,7 +19,7 @@ def move():
     vel_msg.linear.z = 0
     vel_msg.angular.x = 0
     vel_msg.angular.y = 0
-    vel_msg.angular.z = 2
+    vel_msg.angular.z = 2.5
 
     t0 = rospy.Time.now().to_sec()
     current_distance = 0
@@ -31,6 +31,7 @@ def move():
         current_distance = speed*(t1-t0)
         rospy.loginfo("Moving in Circle")
         print(current_distance)
+    vel_msg.linear.x = 0  # makin linear velocity 0 for stopping the bot
     velocity_publisher.publish(vel_msg)
     while not rospy.is_shutdown():
         continue
