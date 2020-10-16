@@ -1,0 +1,10 @@
+
+#packages
+pid_tune/
+vitarana_drone/
+
+#swp files
+**/*.swp
+
+#Editor config
+**/.vscode
