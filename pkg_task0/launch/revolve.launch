@@ -1,6 +1,6 @@
 <launch>
    <node pkg="turtlesim" type="turtlesim_node" name="node_turtlesim_node" output="screen"/>
-   <node pkg="pkg_task0" type="move.py" name="revolve" output="screen"/>
+   <node pkg="pkg_task0" type="final.py" name="revolve" output="screen"/>
    <arg name="record" default="false"/>
    <arg name="duration" default="10"/>
    <arg name="rec_name" default="turtle_record.bag"/>
