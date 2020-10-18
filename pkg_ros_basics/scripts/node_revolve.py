@@ -10,7 +10,7 @@ e=0
 RA=2.18*PI#calculating required angle in radian
 expected_theta=0.08481469750404358#its expected theeta figured out from rostopic "echo /turtle1/pose"  
 #this is call back function for subcribing 'turtle1/pose'
-f=0.09
+f=0.4
 radius=1
 def printer(Pose):
     global y
@@ -41,18 +41,17 @@ def move():
         def distance(v, w): return 2*PI * (v**2 + w**2)**0.5/w
         if(e==0):
             while(round(y,1)==0.0):
-                vel_msg.linear.x = 2*2*PI*f
+                vel_msg.linear.x = 2*PI*f
                 vel_msg.linear.y = vel_msg.linear.z = vel_msg.angular.x = vel_msg.angular.y = 0
                 vel_msg.angular.z =2*PI*f
                 velocity_publisher.publish(vel_msg)
-                #print("1")
                 continue
             e=e+1
-        elif((e==1)and(round(y,1)!=0.0)):
+        elif((e==1)and(round(y,0)!=0)):
             velocity_publisher.publish(vel_msg)
         else:
             vel_msg.linear.x = 0
-            vel_msg.angular.z = 0
+            vel_msg.angular.z = 2*radius*PI*f
             velocity_publisher.publish(vel_msg)
             break
         rospy.sleep(f)
