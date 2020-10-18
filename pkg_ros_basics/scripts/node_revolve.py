@@ -37,7 +37,6 @@ def move():
 
         rospy.loginfo("Moving in Circle\n%f",(vel_msg.angular.z*(t1-t0)))#printing the radian measurement
         #below block is for stopping the turtle
-        print(y)
         global e
         def distance(v, w): return 2*PI * (v**2 + w**2)**0.5/w
         if(e==0):
@@ -49,22 +48,15 @@ def move():
                 #print("1")
                 continue
             e=e+1
-            # if(e<3):
-            #     e=e+1
-            #     print(e)
         elif((e==1)and(round(y,1)!=0.0)):
-            # vel_msg.linear.x = 2*2*PI*f
-            # vel_msg.linear.y = vel_msg.linear.z = vel_msg.angular.x = vel_msg.angular.y = 0
-            # vel_msg.angular.z =2*PI*f
             velocity_publisher.publish(vel_msg)
         else:
-
             vel_msg.linear.x = 0
             vel_msg.angular.z = 0
             velocity_publisher.publish(vel_msg)
             break
         rospy.sleep(f)
-    #rospy.loginfo("goal reached")
+    rospy.loginfo("goal reached")
     #waiting for user to terminate the program
     while not rospy.is_shutdown():
         vel_msg.angular.z =2*PI*0.2
