@@ -10,6 +10,6 @@
        <node name="rosbag_record_turtle" pkg="rosbag" type="record"
           args="record -O $(find pkg_task0)/bag_files/$(arg rec_name) --duration=$(arg duration) --chunksize=10 /turtle1/cmd_vel /turtle1/pose" output="screen"/>
 
-</group>
+   </group>
 
 </launch>
