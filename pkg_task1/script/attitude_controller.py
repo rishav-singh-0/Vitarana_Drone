@@ -44,7 +44,7 @@ class Edrone():
         self.setpoint_cmd = [0.0, 0.0, 0.0]
 
         # The setpoint of orientation in euler angles at which you want to stabilize the drone
-        # [r_setpoint, p_psetpoint, y_setpoint]
+        # [r_setpoint, p_setpoint, y_setpoint]
         self.setpoint_euler = [0.0, 0.0, 0.0]
 
         # Declaring pwm_cmd of message type prop_speed and initializing values
@@ -70,6 +70,10 @@ class Edrone():
         #                                                   self.min_values = [0, 0, 0, 0] corresponding to [prop1, prop2, prop3, prop4]
         #
         # ----------------------------------------------------------------------------------------------------------
+        self.prev_values = [0, 0, 0]
+
+        self.max_values = [1024, 1024, 1024, 1024]
+        self.max_values = [0, 0, 0, 0]
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 0.060  # in seconds
@@ -101,17 +105,17 @@ class Edrone():
     def imu_callback(self, msg):
 
         self.drone_orientation_quaternion[0] = msg.orientation.x
-        self.drone_orientation_quaternion[1] = msg.orienataion.y
-        self.drone_orientation_quaternion[2] = msg.orienataion.z
-        self.drone_orientation_quaternion[3] = msg.orienataion.w
+        # self.drone_orientation_quaternion[1] = msg.orienataion.y
+        # self.drone_orientation_quaternion[2] = msg.orienataion.z
+        # self.drone_orientation_quaternion[3] = msg.orienataion.w
 
         # --------------------Set the remaining co-ordinates of the drone from msg----------------------------------------------
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
-        self.setpoint_cmd[1] = msg.rcPitch
-        self.setpoint_cmd[2] = msg.rcYaw
-        self.setpoint_cmd[3] = msg.rcThrottle
+        # self.setpoint_cmd[1] = msg.rcPitch
+        # self.setpoint_cmd[2] = msg.rcYaw
+        # self.setpoint_cmd[3] = msg.rcThrottle
 
         # ---------------------------------------------------------------------------------------------------------------
 
@@ -136,7 +140,7 @@ class Edrone():
         #   2. Convert the setpoin that is in the range of 1000 to 2000 into angles with the limit from -10 degree to 10 degree in euler angles
         #   3. Compute error in each axis. eg: error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0], where error[0] corresponds to error in roll...
         #   4. Compute the error (for proportional), change in error (for derivative) and sum of errors (for integral) in each axis. Refer "Understanding PID.pdf" to understand PID equation.
-        #   5. Calculate the pid output required for each axis. For eg: calcuate self.out_roll, self.out_pitch, etc.
+        # * 5. Calculate the pid output required for each axis. For eg: calcuate self.out_roll, self.out_pitch, etc.
         #   6. Use this computed output value in the equations to compute the pwm for each propeller. LOOK OUT FOR SIGN (+ or -). EXPERIMENT AND FIND THE CORRECT SIGN
         #   7. Don't run the pid continously. Run the pid only at the a sample time. self.sampletime defined above is for this purpose. THIS IS VERY IMPORTANT.
         #   8. Limit the output value and the final command value between the maximum(0) and minimum(1024)range before publishing. For eg : if self.pwm_cmd.prop1 > self.max_values[1]:
@@ -152,16 +156,40 @@ class Edrone():
         self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
 
         # Complete the equations for pitch and yaw axis
+        self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
+        self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
+        # Because of physical limitations prop speed will never reach its max speed
+        # self.setpoint_euler[3] = self.setpoint_cmd[3] - 1000
+        #
+        '''
+        ep = current position / "drone_orientation"
+        op = output of current position
+        ei = integrated/covered area
+        loop:
+            ec = ref - op
+            dev = ( ep - ec )/dt
+            ep = ec
+            ei = ei + ec*dt
+            ip = kp*ec + kd*dev + ki*ei
+        '''
+        t0 = rospy.Time.now().to_sec()
+        ep = self.drone_orientation_euler[0]
+        ei = 0
+        error = [3, 3, 3]
+        while(True):
+            t1 = rospy.Time.now().to_sec()
+            dt = t1 - t0
+            error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
+            dev = (self.drone_orientation_euler[0] - error[0])
+            ep = error[0]
+            ei = ei + error[0] * dt
 
-        #
-        #
-        #
-        #
-        #
-        #
-        #
+            ip = self.Kp[0]*error[0] + self.Kd[0]*dev + self.Ki[0]*ei
+            rospy.loginfo(dt)
+            if dt >= self.sample_time:
+                break
         # ------------------------------------------------------------------------------------------------------------------------
 
         self.pwm_pub.publish(self.pwm_cmd)

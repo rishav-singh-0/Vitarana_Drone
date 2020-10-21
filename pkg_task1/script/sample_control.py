@@ -2,62 +2,40 @@
 import rospy
 from sensor_msgs.msg import NavSatFix
 from vitarana_drone.msg import prop_speed
-current_altitude, cnt = 0, 0
-
-kp = 41.6
-kd = 75
-ki = 0
-
-
+a,a0,cnt=0,0,0
 def frange(NavSatFix):
-    global current_altitude, a0, cnt
+    global a,a0,cnt
     if cnt == 0:
         cnt = 1
-        a0 = NavSatFix.altitude
-    current_altitude = NavSatFix.altitude
-
-
-# def pid(PidTune):
-#     global kp, kd, ki
-#     kp = PidTune.Kp/5
-#     kd = PidTune.Kd
-#     ki = PidTune.Ki/10
-    # print(kp, ki, kd)
-    # here i have taken the kp=208,kd=75,ki=0
-
-
-pwm = 512.0
-desired_altitude = 3
-# here is the catch
-ep = dev = ei = error = input_ctrl_signal = 0
-
-
+        a0=NavSatFix.altitude
+    a=NavSatFix.altitude
+    
+x=512.0
+c=0
 def stable():
-    global pwm
-    global desired_altitude, ep, dev, ei, error, output, kp, ki, kd
-    rospy.init_node("hover", anonymous=True)
-    p_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
-    prop = rospy.Publisher('/drone_command', prop_speed, queue_size=1)
-    p_msg = prop_speed()
-    rospy.Subscriber('/edrone/gps', NavSatFix, frange)
-    ep = 0
-    ei = 0
-    while(True):
-        # rospy.Subscriber("/pid_tuning", PidTune, pid)
-        error = desired_altitude - current_altitude
-        dt = 0.01
-        dev = (error-ep)/dt
-        ep = error
-        ei = ei + error*dt
-        output = kp*error + ki*ei + kd*dev
+    global x
+    global c
+    rospy.init_node("hover",anonymous=True)
+    p_pub = rospy.Publisher('/edrone/pwm',prop_speed,queue_size=1)
+    p_msg=prop_speed()
+    rospy.Subscriber('/edrone/gps',NavSatFix,frange)
 
-        p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = output + 500
-        print(output, current_altitude)
+    while not rospy.is_shutdown():
+        if(a>1):
+            x-=0.05
+            c=1
+        while(c==1 and a<1):
+            x+=0.05
+            p_msg.prop1=p_msg.prop2=p_msg.prop3=p_msg.prop4=x
+            p_pub.publish(p_msg)
+            if(a==1):
+                break
+
+        
+
+        p_msg.prop1=p_msg.prop2=p_msg.prop3=p_msg.prop4=x
         p_pub.publish(p_msg)
-        prop.publish(p_msg)
-
-        rospy.Rate(100).sleep()
-
+        print(a)
 
 if __name__ == '__main__':
     try:
