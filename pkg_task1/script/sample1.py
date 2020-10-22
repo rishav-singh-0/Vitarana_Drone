@@ -14,10 +14,10 @@ def frange(NavSatFix):
 
 
 pwm = 512.0
-desired_altitude = 3
+desired_altitude = 2
 # here is the catch
 ep = dev = ei = error = input_ctrl_signal = 0
-kp = 100
+kp = 0.01
 kd = 0.0
 ki = 0.0
 
@@ -36,13 +36,8 @@ def stable():
         error = desired_altitude - current_altitude
         output = kp*error
         ep = error
-
-        if(output < 0.0):
-            pwm = 500+(500/65.91)*output
-        else:
-            pwm = 500+((50/65.91)*output)
-
-        p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = pwm
+        print(output)
+        p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = 512
         p_pub.publish(p_msg)
 
 
