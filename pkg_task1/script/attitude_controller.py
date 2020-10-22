@@ -64,22 +64,23 @@ class Edrone():
         self.Kd = [0, 0, 0]
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
-
+        self.prev_error = [0, 0, 0]
+        self.max_values = [1024, 1024, 1024, 1024]
+        self.max_values = [0, 0, 0, 0]
         # Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0] where corresponds to [roll, pitch, yaw]
         #        Add variables for limiting the values like self.max_values = [1024, 1024, 1024, 1024] corresponding to [prop1, prop2, prop3, prop4]
         #                                                   self.min_values = [0, 0, 0, 0] corresponding to [prop1, prop2, prop3, prop4]
         #
         # ----------------------------------------------------------------------------------------------------------
-        self.prev_values = [0, 0, 0]
-
-        self.max_values = [1024, 1024, 1024, 1024]
-        self.max_values = [0, 0, 0, 0]
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
         self.sample_time = 0.060  # in seconds
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
+        self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
+        self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
+        self.yaw_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
         # ------------------------Add other ROS Publishers here-----------------------------------------------------
 
         # -----------------------------------------------------------------------------------------------------------
@@ -89,6 +90,9 @@ class Edrone():
                          self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
         rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+
         # -------------------------Add other ROS Subscribers here----------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------
 
@@ -113,9 +117,9 @@ class Edrone():
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
-        # self.setpoint_cmd[1] = msg.rcPitch
-        # self.setpoint_cmd[2] = msg.rcYaw
-        # self.setpoint_cmd[3] = msg.rcThrottle
+        self.setpoint_cmd[1] = msg.rcPitch
+        self.setpoint_cmd[2] = msg.rcYaw
+        self.setpoint_cmd[3] = msg.rcThrottle
 
         # ---------------------------------------------------------------------------------------------------------------
 
@@ -127,6 +131,18 @@ class Edrone():
         self.Kp[0] = roll.Kp * 0.06
         self.Ki[0] = roll.Ki * 0.008
         self.Kd[0] = roll.Kd * 0.3
+
+    def pitch_set_pid(self, pitch):
+        # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Kp[0] = pitch.Kp * 0.06
+        self.Ki[0] = pitch.Ki * 0.008
+        self.Kd[0] = pitch.Kd * 0.3
+
+    def yaw_set_pid(self, yaw):
+        # This is just for an example. You can change the ratio/fraction value accordingly
+        self.Kp[0] = yaw.Kp * 0.06
+        self.Ki[0] = yaw.Ki * 0.008
+        self.Kd[0] = yaw.Kd * 0.3
 
     # ----------------------------Define callback function like roll_set_pid to tune pitch, yaw--------------
 
@@ -187,7 +203,7 @@ class Edrone():
             ei = ei + error[0] * dt
 
             ip = self.Kp[0]*error[0] + self.Kd[0]*dev + self.Ki[0]*ei
-            rospy.loginfo(dt)
+            # rospy.loginfo(dt)
             if dt >= self.sample_time:
                 break
         # ------------------------------------------------------------------------------------------------------------------------
