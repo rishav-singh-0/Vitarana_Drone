@@ -17,7 +17,7 @@ pwm = 512.0
 desired_altitude = 2
 # here is the catch
 ep = dev = ei = error = input_ctrl_signal = 0
-kp = 0.01
+kp = 0.1
 kd = 0.0
 ki = 0.0
 

@@ -9,8 +9,11 @@ def get_const(PidTune):
     kp = PidTune.Kp
     kd = PidTune.Kd
     ki = PidTune.Ki
+    print(kp, kd, ki)
 
-    pass
 
+rospy.init_node("pid_constants", anonymous=True)
+rospy.Subscriber('/pid_tuning', PidTune, get_const)
 
-rospy.Subscriber('turtle1/pose', PidTune, get_cost)
+while True:
+    print(kp, ki, kd)
