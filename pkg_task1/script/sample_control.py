@@ -21,7 +21,7 @@ def pid(PidTune):
     kp = PidTune.Kp
     kd = PidTune.Kd/10
     ki = PidTune.Ki/10
-    print(kp, ki, kd)
+    # print(kp, ki, kd)
 
 
 pwm = 512.0
@@ -47,10 +47,10 @@ def stable():
         ep = error
         ei = ei + error*dt
         output = kp*error + ki*ei + kd*dev
-        if output > 1024:
-            output = 1024
+        if output > 1000:
+            output = 1000
         p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = output
-        print(current_altitude, output, kp)
+        print(output, kp)
         p_pub.publish(p_msg)
         rospy.Rate(100).sleep()
 
