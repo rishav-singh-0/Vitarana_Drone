@@ -12,6 +12,7 @@ def frange(NavSatFix):
     
 pwm=512.0
 desired_altitude=2
+#here is the catch
 ep=ed=ei=ec=input_ctrl_signal=t0=t1=0
 kp=0.01
 kd=0.2
