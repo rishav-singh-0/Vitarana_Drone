@@ -1,4 +1,11 @@
-#!/usr/bin/env python
+import tf
+import time
+import rospy
+from std_msgs.msg import Float32
+from sensor_msgs.msg import Imu
+from pid_tune.msg import PidTune
+from vitarana_drone.msg import *
+-  # !/usr/bin/env python
 
 '''
 This python file runs a ROS-node of name attitude_control which controls the roll pitch and yaw angles of the eDrone.
@@ -15,14 +22,6 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 '''
 
 # Importing the required libraries
-
-from vitarana_drone.msg import *
-from pid_tune.msg import PidTune
-from sensor_msgs.msg import Imu
-from std_msgs.msg import Float32
-import rospy
-import time
-import tf
 
 
 class Edrone():
@@ -185,25 +184,21 @@ class Edrone():
             ei = ei + ec*dt
             ip = kp*ec + kd*dev + ki*ei
         '''
-        t0 = rospy.Time.now().to_sec()
-        ep = self.drone_orientation_euler[0]
+        self.prev_error[0] = 0
         ei = 0
         error = [3, 3, 3]
         while(True):
-            t1 = rospy.Time.now().to_sec()
-            dt = t1 - t0
-            error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
-            dev = (self.drone_orientation_euler[0] - error[0])
-            ep = error[0]
-            ei = ei + error[0] * dt
 
-            ip = self.Kp[0]*error[0] + self.Kd[0]*dev + self.Ki[0]*ei
-            # rospy.loginfo(dt)
-            if dt >= self.sample_time:
-                break
+            dt = self.sample_time
+            self.error[0] = self.setpoint_euler[0] - \
+                self.drone_orientation_euler[0]
+            dev = (self.error[0] - self.prev_error[0])/dt
+            self.prev_error = error[0]
+            ei = ei + self.error[0] * dt
+            ip = self.Kp[0]*self.error[0] + self.Kd[0]*dev + self.Ki[0]*ei
+            self.pwm_pub.publish(self.pwm_cmd)
+            rospy.Rate(60).sleep()
         # ------------------------------------------------------------------------------------------------------------------------
-
-        self.pwm_pub.publish(self.pwm_cmd)
 
 
 if __name__ == '__main__':
