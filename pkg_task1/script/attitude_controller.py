@@ -66,12 +66,10 @@ class Edrone():
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
         self.prev_error = [0, 0, 0]
-        self.max_values = [1024, 1024, 1024, 1024]
+        # Taking max value of prop speed 1000 not 1024 cause in real world it is impossible to operate motors on its maximum speed
+        self.max_values = [1000, 1000, 1000, 1000]
         self.max_values = [0, 0, 0, 0]
         # Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0] where corresponds to [roll, pitch, yaw]
-        #        Add variables for limiting the values like self.max_values = [1024, 1024, 1024, 1024] corresponding to [prop1, prop2, prop3, prop4]
-        #                                                   self.min_values = [0, 0, 0, 0] corresponding to [prop1, prop2, prop3, prop4]
-        #
         # ----------------------------------------------------------------------------------------------------------
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
@@ -110,37 +108,32 @@ class Edrone():
     def imu_callback(self, msg):
 
         self.drone_orientation_quaternion[0] = msg.orientation.x
-        # self.drone_orientation_quaternion[1] = msg.orienataion.y
-        # self.drone_orientation_quaternion[2] = msg.orienataion.z
-        # self.drone_orientation_quaternion[3] = msg.orienataion.w
-
-        # --------------------Set the remaining co-ordinates of the drone from msg----------------------------------------------
+        self.drone_orientation_quaternion[1] = msg.orienataion.y
+        self.drone_orientation_quaternion[2] = msg.orienataion.z
+        self.drone_orientation_quaternion[3] = msg.orienataion.w
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
-        self.setpoint_cmd[3] = msg.rcThrottle
+        # self.setpoint_cmd[3] = msg.rcThrottle
 
         # ---------------------------------------------------------------------------------------------------------------
 
-    # Callback function for /pid_tuning_roll
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
-
     def roll_set_pid(self, roll):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = roll.Kp * 0.06
         self.Ki[0] = roll.Ki * 0.008
         self.Kd[0] = roll.Kd * 0.3
 
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = pitch.Kp * 0.06
         self.Ki[0] = pitch.Ki * 0.008
         self.Kd[0] = pitch.Kd * 0.3
 
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
     def yaw_set_pid(self, yaw):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = yaw.Kp * 0.06
         self.Ki[0] = yaw.Ki * 0.008
         self.Kd[0] = yaw.Kd * 0.3
@@ -175,6 +168,7 @@ class Edrone():
         # Complete the equations for pitch and yaw axis
         self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
         self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
+        # self.setpoint_euler[3] = self.setpoint_cmd[3] * 0.02 - 30
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
