@@ -15,13 +15,13 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 '''
 
 # Importing the required libraries
-from vitarana_drone.msg import *
-from pid_tune.msg import PidTune
-from sensor_msgs.msg import Imu
-from std_msgs.msg import Float32
-import rospy
-import time
 import tf
+import time
+import rospy
+from std_msgs.msg import Float32
+from sensor_msgs.msg import Imu
+from pid_tune.msg import PidTune
+from vitarana_drone.msg import *
 
 
 class Edrone():
@@ -65,12 +65,10 @@ class Edrone():
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
         self.prev_error = [0, 0, 0]
-        self.max_values = [1024, 1024, 1024, 1024]
+        # Taking max value of prop speed 1000 not 1024 cause in real world it is impossible to operate motors on its maximum speed
+        self.max_values = [1000, 1000, 1000, 1000]
         self.max_values = [0, 0, 0, 0]
         # Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0] where corresponds to [roll, pitch, yaw]
-        #        Add variables for limiting the values like self.max_values = [1024, 1024, 1024, 1024] corresponding to [prop1, prop2, prop3, prop4]
-        #                                                   self.min_values = [0, 0, 0, 0] corresponding to [prop1, prop2, prop3, prop4]
-        #
         # ----------------------------------------------------------------------------------------------------------
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
@@ -107,39 +105,33 @@ class Edrone():
     # rosmsg show sensor_msgs/Imu
 
     def imu_callback(self, msg):
-
         self.drone_orientation_quaternion[0] = msg.orientation.x
-        # self.drone_orientation_quaternion[1] = msg.orienataion.y
-        # self.drone_orientation_quaternion[2] = msg.orienataion.z
-        # self.drone_orientation_quaternion[3] = msg.orienataion.w
-
-        # --------------------Set the remaining co-ordinates of the drone from msg----------------------------------------------
+        self.drone_orientation_quaternion[1] = msg.orientation.y
+        self.drone_orientation_quaternion[2] = msg.orientation.z
+        self.drone_orientation_quaternion[3] = msg.orientation.w
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
-        self.setpoint_cmd[3] = msg.rcThrottle
+        # self.setpoint_cmd[3] = msg.rcThrottle
 
         # ---------------------------------------------------------------------------------------------------------------
 
-    # Callback function for /pid_tuning_roll
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
-
     def roll_set_pid(self, roll):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = roll.Kp * 0.06
         self.Ki[0] = roll.Ki * 0.008
         self.Kd[0] = roll.Kd * 0.3
 
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = pitch.Kp * 0.06
         self.Ki[0] = pitch.Ki * 0.008
         self.Kd[0] = pitch.Kd * 0.3
 
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
     def yaw_set_pid(self, yaw):
-        # This is just for an example. You can change the ratio/fraction value accordingly
         self.Kp[0] = yaw.Kp * 0.06
         self.Ki[0] = yaw.Ki * 0.008
         self.Kd[0] = yaw.Kd * 0.3
@@ -174,41 +166,34 @@ class Edrone():
         # Complete the equations for pitch and yaw axis
         self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
         self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
+        # self.setpoint_euler[3] = self.setpoint_cmd[3] * 0.02 - 30
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
         # self.setpoint_euler[3] = self.setpoint_cmd[3] - 1000
         #
-        '''
-        ep = current position / "drone_orientation"
-        op = output of current position
-        ei = integrated/covered area
-        loop:
-            ec = ref - op
-            dev = ( ep - ec )/dt
-            ep = ec
-            ei = ei + ec*dt
-            ip = kp*ec + kd*dev + ki*ei
-        '''
-        t0 = rospy.Time.now().to_sec()
-        ep = self.drone_orientation_euler[0]
+
+        self.prev_error[0] = 0
         ei = 0
-        error = [3, 3, 3]
+        global error
+        error = [0, 0, 0]
         while(True):
-            t1 = rospy.Time.now().to_sec()
-            dt = t1 - t0
-            error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0]
-            dev = (self.drone_orientation_euler[0] - error[0])
-            ep = error[0]
+
+            dt = self.sample_time
+            error[0] = self.setpoint_euler[0] - \
+                self.drone_orientation_euler[0]
+            # dev = (error[0] - self.prev_error[0])/dt
+            dev = 0
+            self.prev_error = error[0]
             ei = ei + error[0] * dt
+            ip = self.Kp[0] * error[0] + self.Kd[0]*dev + self.Ki[0]*ei
 
-            ip = self.Kp[0]*error[0] + self.Kd[0]*dev + self.Ki[0]*ei
-            # rospy.loginfo(dt)
-            if dt >= self.sample_time:
-                break
+            print(ip, self.setpoint_cmd[0])
+
+            self.pwm_pub.publish(self.pwm_cmd)
+            self.roll_pub.publish(error[0])
+            rospy.Rate(60).sleep()
         # ------------------------------------------------------------------------------------------------------------------------
-
-        self.pwm_pub.publish(self.pwm_cmd)
 
 
 if __name__ == '__main__':
