@@ -28,7 +28,7 @@ class Edrone():
     """docstring for Edrone"""
 
     def __init__(self):
-        # initializing ros node with name drone_control
+        # initializing ros node with name attitude_controller
         rospy.init_node('attitude_controller')
 
         # This corresponds to your current orientation of eDrone in quaternion format. This value must be updated each time in your imu callback
@@ -173,7 +173,6 @@ class Edrone():
         # self.setpoint_euler[3] = self.setpoint_cmd[3] - 1000
         #
 
-        self.prev_error[0] = 0
         ei = 0
         global error
         error = [0, 0, 0]
@@ -182,9 +181,8 @@ class Edrone():
             dt = self.sample_time
             error[0] = self.setpoint_euler[0] - \
                 self.drone_orientation_euler[0]
-            # dev = (error[0] - self.prev_error[0])/dt
-            dev = 0
-            self.prev_error = error[0]
+            dev = error[0] - self.prev_error[0]
+            self.prev_error[0] = error[0]
             ei = ei + error[0] * dt
             ip = self.Kp[0] * error[0] + self.Kd[0]*dev + self.Ki[0]*ei
 
