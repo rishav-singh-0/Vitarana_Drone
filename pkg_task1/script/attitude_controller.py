@@ -1,11 +1,4 @@
-import tf
-import time
-import rospy
-from std_msgs.msg import Float32
-from sensor_msgs.msg import Imu
-from pid_tune.msg import PidTune
-from vitarana_drone.msg import *
--  # !/usr/bin/env python
+#!/usr/bin/env python
 
 '''
 This python file runs a ROS-node of name attitude_control which controls the roll pitch and yaw angles of the eDrone.
@@ -22,6 +15,13 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 '''
 
 # Importing the required libraries
+import tf
+import time
+import rospy
+from std_msgs.msg import Float32
+from sensor_msgs.msg import Imu
+from pid_tune.msg import PidTune
+from vitarana_drone.msg import *
 
 
 class Edrone():
@@ -105,11 +105,10 @@ class Edrone():
     # rosmsg show sensor_msgs/Imu
 
     def imu_callback(self, msg):
-
         self.drone_orientation_quaternion[0] = msg.orientation.x
-        self.drone_orientation_quaternion[1] = msg.orienataion.y
-        self.drone_orientation_quaternion[2] = msg.orienataion.z
-        self.drone_orientation_quaternion[3] = msg.orienataion.w
+        self.drone_orientation_quaternion[1] = msg.orientation.y
+        self.drone_orientation_quaternion[2] = msg.orientation.z
+        self.drone_orientation_quaternion[3] = msg.orientation.w
 
     def drone_command_callback(self, msg):
         self.setpoint_cmd[0] = msg.rcRoll
@@ -173,30 +172,26 @@ class Edrone():
         # Because of physical limitations prop speed will never reach its max speed
         # self.setpoint_euler[3] = self.setpoint_cmd[3] - 1000
         #
-        '''
-        ep = current position / "drone_orientation"
-        op = output of current position
-        ei = integrated/covered area
-        loop:
-            ec = ref - op
-            dev = ( ep - ec )/dt
-            ep = ec
-            ei = ei + ec*dt
-            ip = kp*ec + kd*dev + ki*ei
-        '''
+
         self.prev_error[0] = 0
         ei = 0
-        error = [3, 3, 3]
+        global error
+        error = [0, 0, 0]
         while(True):
 
             dt = self.sample_time
-            self.error[0] = self.setpoint_euler[0] - \
+            error[0] = self.setpoint_euler[0] - \
                 self.drone_orientation_euler[0]
-            dev = (self.error[0] - self.prev_error[0])/dt
+            # dev = (error[0] - self.prev_error[0])/dt
+            dev = 0
             self.prev_error = error[0]
-            ei = ei + self.error[0] * dt
-            ip = self.Kp[0]*self.error[0] + self.Kd[0]*dev + self.Ki[0]*ei
+            ei = ei + error[0] * dt
+            ip = self.Kp[0] * error[0] + self.Kd[0]*dev + self.Ki[0]*ei
+
+            print(ip, self.setpoint_cmd[0])
+
             self.pwm_pub.publish(self.pwm_cmd)
+            self.roll_pub.publish(error[0])
             rospy.Rate(60).sleep()
         # ------------------------------------------------------------------------------------------------------------------------
 
