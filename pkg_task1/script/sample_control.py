@@ -18,14 +18,15 @@ def frange(NavSatFix):
 
 def pid(PidTune):
     global kp, kd, ki
-    kp = PidTune.Kp
-    kd = PidTune.Kd/10
+    kp = PidTune.Kp/5
+    kd = PidTune.Kd
     ki = PidTune.Ki/10
     # print(kp, ki, kd)
+    # here i have taken the kp=208,kd=75,ki=0
 
 
 pwm = 512.0
-desired_altitude = 5
+desired_altitude = 3
 # here is the catch
 ep = dev = ei = error = input_ctrl_signal = 0
 
@@ -41,16 +42,17 @@ def stable():
     ei = 0
     while(True):
         rospy.Subscriber("/pid_tuning", PidTune, pid)
-        error = desired_altitude - current_altitude
+        error = desired_altitude - (current_altitude-0.3099987281832533)
         dt = 0.01
-        dev = (ep - error)/dt
+        dev = (error-ep)/dt
         ep = error
         ei = ei + error*dt
-        output = kp*error + ki*ei + kd*dev
-        if output > 1000:
-            output = 1000
+        output = kp*error + ki*ei + kd*dev + 500.0
+        if(output < 0):
+            output = 0
+
         p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = output
-        print(output, kp)
+        print(output, current_altitude)
         p_pub.publish(p_msg)
         rospy.Rate(100).sleep()
 
