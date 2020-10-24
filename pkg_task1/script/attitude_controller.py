@@ -64,10 +64,22 @@ class Edrone():
         self.Kd = [0, 0, 0]
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
+        self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
-        # Taking max value of prop speed 1000 not 1024 cause in real world it is impossible to operate motors on its maximum speed
-        self.max_values = [1000, 1000, 1000, 1000]
+        self.change = [0, 0, 0]
+        self.sum = [0, 0, 0]
+        self.output = [0, 0, 0]
+        # Taking max value of prop speed 1024
+        self.max_values = [1024, 1024, 1024, 1024]
         self.max_values = [0, 0, 0, 0]
+
+        # initialising rcThrottle which is to be subscribed
+        self.rcThrottle = 0
+
+        self.roll_cmd = 0
+        self.pitch_cmd = 0
+        self.yaw_cmd = 0
+
         # Hint : Add variables for storing previous errors in each axis, like self.prev_values = [0,0,0] where corresponds to [roll, pitch, yaw]
         # ----------------------------------------------------------------------------------------------------------
 
@@ -114,7 +126,7 @@ class Edrone():
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
-        # self.setpoint_cmd[3] = msg.rcThrottle
+        self.rcThrottle = msg.rcThrottle
 
         # ---------------------------------------------------------------------------------------------------------------
 
@@ -144,53 +156,62 @@ class Edrone():
         # -----------------------------Write the PID algorithm here--------------------------------------------------------------
 
         # Steps:
-        #   1. Convert the quaternion format of orientation to euler angles
-        #   2. Convert the setpoin that is in the range of 1000 to 2000 into angles with the limit from -10 degree to 10 degree in euler angles
+        # - 1. Convert the quaternion format of orientation to euler angles
+        # - 2. Convert the setpoin that is in the range of 1000 to 2000 into angles with the limit from -10 degree to 10 degree in euler angles
         #   3. Compute error in each axis. eg: error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0], where error[0] corresponds to error in roll...
-        #   4. Compute the error (for proportional), change in error (for derivative) and sum of errors (for integral) in each axis. Refer "Understanding PID.pdf" to understand PID equation.
+        # - 4. Compute the error (for proportional), change in error (for derivative) and sum of errors (for integral) in each axis. Refer "Understanding PID.pdf" to understand PID equation.
         # * 5. Calculate the pid output required for each axis. For eg: calcuate self.out_roll, self.out_pitch, etc.
-        #   6. Use this computed output value in the equations to compute the pwm for each propeller. LOOK OUT FOR SIGN (+ or -). EXPERIMENT AND FIND THE CORRECT SIGN
+        # - 6. Use this computed output value in the equations to compute the pwm for each propeller. LOOK OUT FOR SIGN (+ or -). EXPERIMENT AND FIND THE CORRECT SIGN
         #   7. Don't run the pid continously. Run the pid only at the a sample time. self.sampletime defined above is for this purpose. THIS IS VERY IMPORTANT.
         #   8. Limit the output value and the final command value between the maximum(0) and minimum(1024)range before publishing. For eg : if self.pwm_cmd.prop1 > self.max_values[1]:
         #                                                                                                                                      self.pwm_cmd.prop1 = self.max_values[1]
-        #   8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
+        # - 8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
         #   9. Add error_sum to use for integral component
 
         # Converting quaternion to euler angles
         (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
-        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll axis
-        self.setpoint_euler[0] = self.setpoint_cmd[0] * 0.02 - 30
-
-        # Complete the equations for pitch and yaw axis
-        self.setpoint_euler[1] = self.setpoint_cmd[1] * 0.02 - 30
-        self.setpoint_euler[2] = self.setpoint_cmd[2] * 0.02 - 30
+        # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
+        for i in range(3):
+            self.setpoint_euler[i] = self.setpoint_cmd[i] * 0.02 - 30
         # self.setpoint_euler[3] = self.setpoint_cmd[3] * 0.02 - 30
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
-        # self.setpoint_euler[3] = self.setpoint_cmd[3] - 1000
         #
+        def prop_convert(x): return x - 1000
+        self.throttle_cmd = prop_convert(self.rcThrottle)
 
-        ei = 0
-        global error
-        error = [0, 0, 0]
-        while(True):
+        for i in range(3):
+            self.error[i] = self.setpoint_euler[i] - \
+                self.drone_orientation_euler[i]
+            self.change[i] = (
+                self.error[i] - self.prev_error[i]) / self.sample_time
+            self.prev_error[i] = self.error[i]
+            self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
+            self.output[i] = self.Kp[i] * self.error[i] + \
+                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
-            dt = self.sample_time
-            error[0] = self.setpoint_euler[0] - \
-                self.drone_orientation_euler[0]
-            dev = error[0] - self.prev_error[0]
-            self.prev_error[0] = error[0]
-            ei = ei + error[0] * dt
-            ip = self.Kp[0] * error[0] + self.Kd[0]*dev + self.Ki[0]*ei
+        # converting range 1000 t0 2000 to 0 to 1024
+        self.roll_cmd = prop_convert(self.output[0])
+        self.pitch_cmd = prop_convert(self.output[1])
+        self.yaw_cmd = prop_convert(self.output[2])
 
-            print(ip, self.setpoint_cmd[0])
+        self.pwm_cmd.prop1 = self.thrust_cmd + \
+            self.roll_cmd + self.pitch_cmd + self.yaw_cmd
+        self.pwm_cmd.prop2 = self.thrust_cmd - \
+            self.roll_cmd + self.pitch_cmd - self.yaw_cmd
+        self.pwm_cmd.prop3 = self.thrust_cmd + \
+            self.roll_cmd - self.pitch_cmd + self.yaw_cmd
+        self.pwm_cmd.prop4 = self.thrust_cmd - \
+            self.roll_cmd - self.pitch_cmd - self.yaw_cmd
 
-            self.pwm_pub.publish(self.pwm_cmd)
-            self.roll_pub.publish(error[0])
-            rospy.Rate(60).sleep()
+        self.roll_pub.publish(self.error[0])
+        self.pitch_pub.publish(self.error[1])
+        self.yaw_pub.publish(self.error[3])
+        self.pwm_pub.publish(self.pwm_cmd)
+        self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
 
 

@@ -5,7 +5,9 @@ from vitarana_drone.msg import prop_speed
 from pid_tune.msg import PidTune
 current_altitude, cnt = 0, 0
 
-kp = ki = kd = 0
+kp = 41.6
+kd = 75
+ki = 0
 
 
 def frange(NavSatFix):
@@ -16,11 +18,11 @@ def frange(NavSatFix):
     current_altitude = NavSatFix.altitude
 
 
-def pid(PidTune):
-    global kp, kd, ki
-    kp = PidTune.Kp/5
-    kd = PidTune.Kd
-    ki = PidTune.Ki/10
+# def pid(PidTune):
+#     global kp, kd, ki
+#     kp = PidTune.Kp/5
+#     kd = PidTune.Kd
+#     ki = PidTune.Ki/10
     # print(kp, ki, kd)
     # here i have taken the kp=208,kd=75,ki=0
 
@@ -36,24 +38,25 @@ def stable():
     global desired_altitude, ep, dev, ei, error, output, kp, ki, kd
     rospy.init_node("hover", anonymous=True)
     p_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
+    prop = rospy.Publisher('/drone_command', prop_speed, queue_size=1)
     p_msg = prop_speed()
     rospy.Subscriber('/edrone/gps', NavSatFix, frange)
     ep = 0
     ei = 0
     while(True):
-        rospy.Subscriber("/pid_tuning", PidTune, pid)
-        error = desired_altitude - (current_altitude-0.3099987281832533)
+        # rospy.Subscriber("/pid_tuning", PidTune, pid)
+        error = desired_altitude - current_altitude
         dt = 0.01
         dev = (error-ep)/dt
         ep = error
         ei = ei + error*dt
-        output = kp*error + ki*ei + kd*dev + 500.0
-        if(output < 0):
-            output = 0
+        output = kp*error + ki*ei + kd*dev
 
-        p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = output
+        p_msg.prop1 = p_msg.prop2 = p_msg.prop3 = p_msg.prop4 = output + 500
         print(output, current_altitude)
         p_pub.publish(p_msg)
+        prop.publish(p_msg)
+
         rospy.Rate(100).sleep()
 
 
