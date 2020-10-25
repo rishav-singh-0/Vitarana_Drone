@@ -173,6 +173,8 @@ class Edrone():
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
+        def degree_convert(operator): return operator * 102.4
+
         for i in range(3):
             self.setpoint_euler[i] = self.setpoint_cmd[i] * 0.02 - 30
         # self.setpoint_euler[3] = self.setpoint_cmd[3] * 0.02 - 30
@@ -180,8 +182,8 @@ class Edrone():
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
         #
-        def prop_convert(x): return x - 1000
-        self.throttle_cmd = prop_convert(self.rcThrottle)
+
+        self.throttle_cmd = self.rcThrottle - 1000 +12
 
         for i in range(3):
             self.error[i] = self.setpoint_euler[i] - \
@@ -194,9 +196,9 @@ class Edrone():
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # converting range 1000 t0 2000 to 0 to 1024
-        self.roll_cmd = prop_convert(self.output[0])
-        self.pitch_cmd = prop_convert(self.output[1])
-        self.yaw_cmd = prop_convert(self.output[2])
+        self.roll_cmd = degree_convert(self.output[0])
+        self.pitch_cmd = degree_convert(self.output[1])
+        self.yaw_cmd = degree_convert(self.output[2])
 
         self.pwm_cmd.prop1 = self.throttle_cmd + \
             self.roll_cmd + self.pitch_cmd + self.yaw_cmd
@@ -210,6 +212,7 @@ class Edrone():
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
+        print(self.pwm_cmd,'\n')
         self.pwm_pub.publish(self.pwm_cmd)
         self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
