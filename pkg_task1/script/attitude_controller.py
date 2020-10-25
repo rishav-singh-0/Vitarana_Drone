@@ -198,18 +198,18 @@ class Edrone():
         self.pitch_cmd = prop_convert(self.output[1])
         self.yaw_cmd = prop_convert(self.output[2])
 
-        self.pwm_cmd.prop1 = self.thrust_cmd + \
+        self.pwm_cmd.prop1 = self.throttle_cmd + \
             self.roll_cmd + self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop2 = self.thrust_cmd - \
+        self.pwm_cmd.prop2 = self.throttle_cmd - \
             self.roll_cmd + self.pitch_cmd - self.yaw_cmd
-        self.pwm_cmd.prop3 = self.thrust_cmd + \
+        self.pwm_cmd.prop3 = self.throttle_cmd + \
             self.roll_cmd - self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop4 = self.thrust_cmd - \
+        self.pwm_cmd.prop4 = self.throttle_cmd - \
             self.roll_cmd - self.pitch_cmd - self.yaw_cmd
 
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
-        self.yaw_pub.publish(self.error[3])
+        self.yaw_pub.publish(self.error[2])
         self.pwm_pub.publish(self.pwm_cmd)
         self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
