@@ -84,7 +84,7 @@ class Edrone():
         # ----------------------------------------------------------------------------------------------------------
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
-        self.sample_time = 0.160  # in seconds
+        self.sample_time = 0.010  # in seconds
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
@@ -189,7 +189,7 @@ class Edrone():
         # Because of physical limitations prop speed will never reach its max speed
         #
 
-        self.throttle_cmd = self.rcThrottle - 1000 + 12
+        self.throttle_cmd = (self.rcThrottle - 1000) * 1.024
 
         for i in range(3):
             self.error[i] = self.setpoint_euler[i] - \
@@ -201,7 +201,7 @@ class Edrone():
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
-        # converting range 1000 t0 2000 to 0 to 1024
+        # converting range 1000 t0 2000 to degrees
         self.roll_cmd = degree_convert(self.output[0])
         self.pitch_cmd = degree_convert(self.output[1])
         self.yaw_cmd = degree_convert(self.output[2])
@@ -234,7 +234,7 @@ if __name__ == '__main__':
 
     e_drone = Edrone()
     # specify rate in Hz based upon your desired PID sampling time, i.e. if desired sample time is 33ms specify rate as 30Hz
-    r = rospy.Rate(e_drone.sample_time)
+    r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
         e_drone.pid()
         r.sleep()
