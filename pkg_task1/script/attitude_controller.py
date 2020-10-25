@@ -71,7 +71,7 @@ class Edrone():
         self.output = [0, 0, 0]
         # Taking max value of prop speed 1024
         self.max_values = [1024, 1024, 1024, 1024]
-        self.max_values = [0, 0, 0, 0]
+        self.min_values = [0, 0, 0, 0]
 
         # initialising rcThrottle which is to be subscribed
         self.rcThrottle = 0
@@ -84,7 +84,7 @@ class Edrone():
         # ----------------------------------------------------------------------------------------------------------
 
         # # This is the sample time in which you need to run pid. Choose any time which you seem fit. Remember the stimulation step time is 50 ms
-        self.sample_time = 0.060  # in seconds
+        self.sample_time = 0.160  # in seconds
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
@@ -115,6 +115,12 @@ class Edrone():
     # We need to convert the quaternion format to euler angles format to understand the orienataion of the edrone in an easy manner.
     # Hint: To know the message structure of sensor_msgs/Imu, execute the following command in the terminal
     # rosmsg show sensor_msgs/Imu
+
+    def check(self, operator):
+        if operator > self.max_values:
+            operator = self.max_values
+        if operator < self.min_values:
+            operator = self.min_values
 
     def imu_callback(self, msg):
         self.drone_orientation_quaternion[0] = msg.orientation.x
@@ -158,15 +164,15 @@ class Edrone():
         # Steps:
         # - 1. Convert the quaternion format of orientation to euler angles
         # - 2. Convert the setpoin that is in the range of 1000 to 2000 into angles with the limit from -10 degree to 10 degree in euler angles
-        #   3. Compute error in each axis. eg: error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0], where error[0] corresponds to error in roll...
+        # - 3. Compute error in each axis. eg: error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0], where error[0] corresponds to error in roll...
         # - 4. Compute the error (for proportional), change in error (for derivative) and sum of errors (for integral) in each axis. Refer "Understanding PID.pdf" to understand PID equation.
         # * 5. Calculate the pid output required for each axis. For eg: calcuate self.out_roll, self.out_pitch, etc.
         # - 6. Use this computed output value in the equations to compute the pwm for each propeller. LOOK OUT FOR SIGN (+ or -). EXPERIMENT AND FIND THE CORRECT SIGN
-        #   7. Don't run the pid continously. Run the pid only at the a sample time. self.sampletime defined above is for this purpose. THIS IS VERY IMPORTANT.
-        #   8. Limit the output value and the final command value between the maximum(0) and minimum(1024)range before publishing. For eg : if self.pwm_cmd.prop1 > self.max_values[1]:
+        # - 7. Don't run the pid continously. Run the pid only at the a sample time. self.sampletime defined above is for this purpose. THIS IS VERY IMPORTANT.
+        # - 8. Limit the output value and the final command value between the maximum(0) and minimum(1024)range before publishing. For eg : if self.pwm_cmd.prop1 > self.max_values[1]:
         #                                                                                                                                      self.pwm_cmd.prop1 = self.max_values[1]
         # - 8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
-        #   9. Add error_sum to use for integral component
+        # - 9. Add error_sum to use for integral component
 
         # Converting quaternion to euler angles
         (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
@@ -183,7 +189,7 @@ class Edrone():
         # Because of physical limitations prop speed will never reach its max speed
         #
 
-        self.throttle_cmd = self.rcThrottle - 1000 +12
+        self.throttle_cmd = self.rcThrottle - 1000 + 12
 
         for i in range(3):
             self.error[i] = self.setpoint_euler[i] - \
@@ -204,15 +210,21 @@ class Edrone():
             self.roll_cmd + self.pitch_cmd + self.yaw_cmd
         self.pwm_cmd.prop2 = self.throttle_cmd - \
             self.roll_cmd + self.pitch_cmd - self.yaw_cmd
-        self.pwm_cmd.prop3 = self.throttle_cmd + \
+        self.pwm_cmd.prop3 = self.throttle_cmd - \
             self.roll_cmd - self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop4 = self.throttle_cmd - \
+        self.pwm_cmd.prop4 = self.throttle_cmd + \
             self.roll_cmd - self.pitch_cmd - self.yaw_cmd
+
+        self.check(self.pwm_cmd.prop1)
+        self.check(self.pwm_cmd.prop2)
+        self.check(self.pwm_cmd.prop3)
+        self.check(self.pwm_cmd.prop4)
 
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
-        print(self.pwm_cmd,'\n')
+        print(self.pwm_cmd)
+        print("")
         self.pwm_pub.publish(self.pwm_cmd)
         self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
