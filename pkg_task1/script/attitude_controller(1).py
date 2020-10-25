@@ -16,9 +16,11 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 
 # Importing the required libraries
 import tf
+import time
 import rospy
 from std_msgs.msg import Float32
 from sensor_msgs.msg import Imu
+from pid_tune.msg import PidTune
 from vitarana_drone.msg import *
 import math
 
@@ -58,10 +60,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [26*0.01, 26*0.01, 93*0.06]
-        self.Ki = [0, 0, 1*0.008]
-        self.Kd = [10*0.01, 10*0.01, 2*0.01]
-
+        self.Kp = [0, 0, 0]
+        self.Ki = [0, 0, 0]
+        self.Kd = [0, 0, 0]
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
         self.error = [0, 0, 0]
@@ -99,9 +100,9 @@ class Edrone():
         rospy.Subscriber('/drone_command', edrone_cmd,
                          self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
         # -------------------------Add other ROS Subscribers here----------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------
@@ -138,15 +139,15 @@ class Edrone():
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp*0.01
-        self.Ki[0] = roll.Ki*0.008
-        self.Kd[0] = roll.Kd*0.01
+        self.Kp[1] = 7 * 0.01
+        self.Ki[1] = 0 * 0.008
+        self.Kd[1] = 30 * 0.001
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
-        self.Kp[1] = pitch.Kp * 0.01
-        self.Ki[1] = pitch.Ki * 0.008
-        self.Kd[1] = pitch.Kd * 0.01
+        self.Kp[0] = pitch.Kp * 0.01
+        self.Ki[0] = pitch.Ki * 0.008
+        self.Kd[0] = pitch.Kd * 0.01
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
     def yaw_set_pid(self, yaw):
@@ -175,7 +176,7 @@ class Edrone():
         # - 9. Add error_sum to use for integral component
 
         # Converting quaternion to euler angles
-        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
+        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
@@ -200,11 +201,10 @@ class Edrone():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-            # print(i, math.degrees(self.drone_orientation_euler[i]))
 
         # converting range 1000 t0 2000 to 0 to 1024
-        self.roll_cmd = degree_convert(self.output[0])
-        self.pitch_cmd = degree_convert(self.output[1])
+        self.roll_cmd = degree_convert(self.output[1])
+        self.pitch_cmd = degree_convert(self.output[0])
         self.yaw_cmd = degree_convert(self.output[2])
 
         self.pwm_cmd.prop1 = self.throttle_cmd - \
@@ -221,15 +221,15 @@ class Edrone():
         self.check(self.pwm_cmd.prop3)
         self.check(self.pwm_cmd.prop4)
 
-        self.roll_pub.publish(self.error[0])
-        self.pitch_pub.publish(self.error[1])
+        self.roll_pub.publish(self.error[1])
+        self.pitch_pub.publish(self.error[0])
         self.yaw_pub.publish(self.error[2])
         self.zero_pub.publish(0)
         # print(self.pwm_cmd)
         # print("")
         # print(math.degrees(self.drone_orientation_euler[1]))
-        # print(math.degrees(self.drone_orientation_euler[0]), "\n", math.degrees(
-        #     self.drone_orientation_euler[1]), "\n", math.degrees(self.drone_orientation_euler[2]), "\n\n")
+        print(math.degrees(self.drone_orientation_euler[0]), "\n", math.degrees(
+            self.drone_orientation_euler[1]), "\n", math.degrees(self.drone_orientation_euler[2]), "\n\n")
         self.pwm_pub.publish(self.pwm_cmd)
         self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
@@ -242,4 +242,5 @@ if __name__ == '__main__':
     r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
         e_drone.pid()
+        print("hello")
         r.sleep()
