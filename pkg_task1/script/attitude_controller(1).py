@@ -60,9 +60,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [26*0.01, 16*0.01, 93*0.06]
-        self.Ki = [0*0.008, 0*0.008, 1*0.008]
-        self.Kd = [10*0.01, 32*0.001, 2*0.01]
+        self.Kp = [0, 0, 0]
+        self.Ki = [0, 0, 0]
+        self.Kd = [0, 0, 0]
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
         self.error = [0, 0, 0]
@@ -100,9 +100,9 @@ class Edrone():
         rospy.Subscriber('/drone_command', edrone_cmd,
                          self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
         # -------------------------Add other ROS Subscribers here----------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------
@@ -138,22 +138,22 @@ class Edrone():
         # ---------------------------------------------------------------------------------------------------------------
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
-    # def roll_set_pid(self, roll):
-    #     self.Kp[1] = 7 * 0.01
-    #     self.Ki[1] = 0 * 0.008
-    #     self.Kd[1] = 30 * 0.001
+    def roll_set_pid(self, roll):
+        self.Kp[1] = 7 * 0.01
+        self.Ki[1] = 0 * 0.008
+        self.Kd[1] = 30 * 0.001
 
-    # # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
-    # def pitch_set_pid(self, pitch):
-    #     self.Kp[0] = pitch.Kp * 0.01
-    #     self.Ki[0] = pitch.Ki * 0.008
-    #     self.Kd[0] = pitch.Kd * 0.01
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
+    def pitch_set_pid(self, pitch):
+        self.Kp[0] = pitch.Kp * 0.01
+        self.Ki[0] = pitch.Ki * 0.008
+        self.Kd[0] = pitch.Kd * 0.01
 
-    # # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
-    # def yaw_set_pid(self, yaw):
-    #     self.Kp[2] = yaw.Kp * 0.06
-    #     self.Ki[2] = yaw.Ki * 0.008
-    #     self.Kd[2] = yaw.Kd * 0.01
+    # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
+    def yaw_set_pid(self, yaw):
+        self.Kp[2] = yaw.Kp * 0.06
+        self.Ki[2] = yaw.Ki * 0.008
+        self.Kd[2] = yaw.Kd * 0.01
 
     # ----------------------------Define callback function like roll_set_pid to tune pitch, yaw--------------
 
@@ -225,6 +225,9 @@ class Edrone():
         self.pitch_pub.publish(self.error[0])
         self.yaw_pub.publish(self.error[2])
         self.zero_pub.publish(0)
+        # print(self.pwm_cmd)
+        # print("")
+        # print(math.degrees(self.drone_orientation_euler[1]))
         print(math.degrees(self.drone_orientation_euler[0]), "\n", math.degrees(
             self.drone_orientation_euler[1]), "\n", math.degrees(self.drone_orientation_euler[2]), "\n\n")
         self.pwm_pub.publish(self.pwm_cmd)
@@ -239,4 +242,5 @@ if __name__ == '__main__':
     r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
         e_drone.pid()
+        print("hello")
         r.sleep()
