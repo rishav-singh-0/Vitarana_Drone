@@ -38,6 +38,7 @@ class Command():
         self.output = [0, 0, 0]
 
         self.sample_time = 1.060
+        self.equilibrium_value = 1500
 
         self.setpoint_cmd = edrone_cmd()
 
@@ -84,7 +85,7 @@ class Command():
 
     def pid(self):
 
-        for i in range(3):
+        for i in range(2, 3):
             self.error[i] = self.destination1[i] - self.gps_position[i]
             self.change[i] = (
                 self.error[i] - self.prev_error[i]) / self.sample_time
@@ -92,18 +93,22 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.kp[i] * self.error[i] + \
                 self.kd[i]*self.change[i] + self.ki[i]*self.sum[i]
+            print(self.kp, self.kd, self.ki)
 
-        print(self.output)
+        # print(self.output)
 
-        self.setpoint_cmd.rcRoll = self.check(self.output[0])
-        self.setpoint_cmd.rcPitch = self.check(self.output[1])
+        # self.setpoint_cmd.rcRoll = self.check(self.output[0])
+        self.setpoint_cmd.rcRoll = self.equilibrium_value
+        # self.setpoint_cmd.rcPitch = self.check(self.output[1])
+        self.setpoint_cmd.rcPitch = self.equilibrium_value
         self.setpoint_cmd.rcThrottle = self.check(self.output[2])
+        self.setpoint_cmd.rcYaw = self.equilibrium_value
 
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
-        print(self.setpoint_cmd)
-        print("")
+        print(self.setpoint_cmd.rcThrottle)
+        # print("")
         self.setpoint_pub.publish(self.setpoint_cmd)
 
 
