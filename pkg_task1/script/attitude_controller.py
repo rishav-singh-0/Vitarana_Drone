@@ -18,6 +18,7 @@ CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MA
 import tf
 import time
 import rospy
+from math import degrees
 from std_msgs.msg import Float32
 from sensor_msgs.msg import Imu
 from pid_tune.msg import PidTune
@@ -178,6 +179,7 @@ class Edrone():
         (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
+        # print(self.drone_orientation_euler)
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
         def degree_convert(operator): return operator * 102.4
 
@@ -193,7 +195,7 @@ class Edrone():
 
         for i in range(3):
             self.error[i] = self.setpoint_euler[i] - \
-                self.drone_orientation_euler[i]
+                degrees(self.drone_orientation_euler[i])
             self.change[i] = (
                 self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
@@ -206,14 +208,14 @@ class Edrone():
         self.pitch_cmd = degree_convert(self.output[1])
         self.yaw_cmd = degree_convert(self.output[2])
 
-        self.pwm_cmd.prop1 = self.throttle_cmd + \
-            self.roll_cmd + self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop2 = self.throttle_cmd - \
+        self.pwm_cmd.prop1 = self.throttle_cmd - \
             self.roll_cmd + self.pitch_cmd - self.yaw_cmd
-        self.pwm_cmd.prop3 = self.throttle_cmd - \
+        self.pwm_cmd.prop2 = self.throttle_cmd - \
             self.roll_cmd - self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop4 = self.throttle_cmd + \
+        self.pwm_cmd.prop3 = self.throttle_cmd + \
             self.roll_cmd - self.pitch_cmd - self.yaw_cmd
+        self.pwm_cmd.prop4 = self.throttle_cmd + \
+            self.roll_cmd + self.pitch_cmd + self.yaw_cmd
 
         self.check(self.pwm_cmd.prop1)
         self.check(self.pwm_cmd.prop2)
@@ -221,10 +223,11 @@ class Edrone():
         self.check(self.pwm_cmd.prop4)
 
         self.roll_pub.publish(self.error[0])
+        # print(self.roll_cmd, self.pitch_cmd)
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
-        print(self.pwm_cmd)
-        print("")
+        # print(self.pwm_cmd)
+        # print("")
         self.pwm_pub.publish(self.pwm_cmd)
         self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
