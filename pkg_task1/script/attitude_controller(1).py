@@ -131,8 +131,8 @@ class Edrone():
         self.drone_orientation_quaternion[3] = msg.orientation.w
 
     def drone_command_callback(self, msg):
-        self.setpoint_cmd[0] = msg.rcRoll
-        self.setpoint_cmd[1] = msg.rcPitch
+        self.setpoint_cmd[1] = msg.rcRoll
+        self.setpoint_cmd[0] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
         self.rcThrottle = msg.rcThrottle
 
@@ -140,9 +140,9 @@ class Edrone():
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp * 0.01
-        self.Ki[0] = roll.Ki * 0.008
-        self.Kd[0] = roll.Kd * 0.001
+        self.Kp[0] = roll.Kp
+        self.Ki[0] = roll.Ki
+        self.Kd[0] = roll.Kd
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
