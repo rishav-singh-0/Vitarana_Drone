@@ -131,8 +131,8 @@ class Edrone():
         self.drone_orientation_quaternion[3] = msg.orientation.w
 
     def drone_command_callback(self, msg):
-        self.setpoint_cmd[1] = msg.rcRoll
-        self.setpoint_cmd[0] = msg.rcPitch
+        self.setpoint_cmd[0] = msg.rcRoll
+        self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
         self.rcThrottle = msg.rcThrottle
 
@@ -140,9 +140,9 @@ class Edrone():
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp
-        self.Ki[0] = roll.Ki
-        self.Kd[0] = roll.Kd
+        self.Kp[0] = roll.Kp*0.01
+        self.Ki[0] = roll.Ki*0.008
+        self.Kd[0] = roll.Kd*0.01
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
@@ -177,7 +177,7 @@ class Edrone():
         # - 9. Add error_sum to use for integral component
 
         # Converting quaternion to euler angles
-        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
+        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
@@ -202,10 +202,11 @@ class Edrone():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+            print(i, math.degrees(self.drone_orientation_euler[i]))
 
         # converting range 1000 t0 2000 to 0 to 1024
-        self.roll_cmd = degree_convert(self.output[1])
-        self.pitch_cmd = degree_convert(self.output[0])
+        self.roll_cmd = degree_convert(self.output[0])
+        self.pitch_cmd = degree_convert(self.output[1])
         self.yaw_cmd = degree_convert(self.output[2])
 
         self.pwm_cmd.prop1 = self.throttle_cmd - \
@@ -222,8 +223,8 @@ class Edrone():
         self.check(self.pwm_cmd.prop3)
         self.check(self.pwm_cmd.prop4)
 
-        self.roll_pub.publish(self.error[1])
-        self.pitch_pub.publish(self.error[0])
+        self.roll_pub.publish(self.error[0])
+        self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
         self.zero_pub.publish(0)
         # print(self.pwm_cmd)
