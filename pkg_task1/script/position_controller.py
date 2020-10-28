@@ -97,8 +97,8 @@ class Command():
 
         # print(self.output)
 
-        self.setpoint_cmd.rcRoll = self.check(self.output[0])
-        # self.setpoint_cmd.rcRoll = self.equilibrium_value
+        # self.setpoint_cmd.rcRoll = self.check(self.output[0])
+        self.setpoint_cmd.rcRoll = self.equilibrium_value
         # self.setpoint_cmd.rcPitch = self.check(self.output[1])
         self.setpoint_cmd.rcPitch = self.equilibrium_value
         self.setpoint_cmd.rcThrottle = self.check(self.output[2])
