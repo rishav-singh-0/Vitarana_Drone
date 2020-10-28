@@ -2,5 +2,5 @@
     <node pkg="pkg_task1" type="attitude_controller(1).py" name="attitude_controller" />
     <node pkg="pkg_task1" type="position_controller.py" name="position_controller" />
     <!-- <node pkg="pid_tune" type="pid_tune_drone.py" name="pid_tuning_altitude" /> -->
-    <node pkg="plotjuggler" type="PlotJuggler" name="PlotJuggler" />
+    <!-- <node pkg="plotjuggler" type="PlotJuggler" name="PlotJuggler" /> -->
 </launch>
