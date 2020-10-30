@@ -28,9 +28,9 @@ class Command():
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
-        self.Kp = [0, 0, 12947]
-        self.Ki = [0, 0, 23]
-        self.Kd = [0, 0, 6900]
+        self.Kp = [0, 0, 1024*4]
+        self.Ki = [0, 0, 0]
+        self.Kd = [0, 0, 2751*1]
 
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
@@ -93,13 +93,14 @@ class Command():
         if -0.000004517 < self.error[0] < 0.000004517:
            if -0.0000047487 <self.error[1]< 0.0000047487: 
               if -0.2< self.error[2]<0.2 :
-                 return self.next_destination+=1
+                 self.next_destination+=1
+                 return
         
 
     def pid(self):
 
         for i in [0, 1, 2]:
-            self.error[i] = self.destination1[i] - self.gps_position[i]
+            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
             self.change[i] = (
                 self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
