@@ -202,7 +202,7 @@ class Edrone():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-            print(i, math.degrees(self.drone_orientation_euler[i]))
+            # print(i, math.degrees(self.drone_orientation_euler[i]))
 
         # converting range 1000 t0 2000 to 0 to 1024
         self.roll_cmd = degree_convert(self.output[0])
