@@ -21,15 +21,16 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination1 = [19.0, 72.0, 3]
-        self.destination2 = [19.0000451704, 72.0, 3]
-        self.destination3 = [19.0000451704, 72.0, 0.31]
+        self.destination = [[19.0, 72.0, 3],
+                             [19.0000451704, 72.0, 3],
+                             [19.0000451704, 72.0, 0.31]]
+        self.next_destination = 0
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
-        self.Kp = [0, 0, 12947]
-        self.Ki = [0, 0, 23]
-        self.Kd = [0, 0, 6800]
+        self.Kp = [0, 0, 1024*4]
+        self.Ki = [0, 0, 0]
+        self.Kd = [0, 0, 2751*1]
 
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
@@ -82,11 +83,24 @@ class Command():
             return 1000
         else:
             return operator
+    
+    def destination_check(self):
+        
+        i = self.next_destination
+        if i==3:
+            return
+
+        if -0.000004517 < self.error[0] < 0.000004517:
+           if -0.0000047487 <self.error[1]< 0.0000047487: 
+              if -0.2< self.error[2]<0.2 :
+                 self.next_destination+=1
+                 return
+        
 
     def pid(self):
 
-        for i in [0, 2]:
-            self.error[i] = self.destination1[i] - self.gps_position[i]
+        for i in [0, 1, 2]:
+            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
             self.change[i] = (
                 self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
@@ -119,4 +133,5 @@ if __name__ == '__main__':
     rate = rospy.Rate(1/command.sample_time)
     while not rospy.is_shutdown():
         command.pid()
+        command.destination_check()
         rate.sleep()
