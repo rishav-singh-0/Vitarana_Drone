@@ -27,9 +27,9 @@ class Command():
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
-        self.Kp = [0, 0, 852*4]
+        self.Kp = [0, 0, 0]
         self.Ki = [0, 0, 0]
-        self.Kd = [0, 0, 3775*0.5]
+        self.Kd = [0, 0, 0]
 
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
@@ -52,18 +52,18 @@ class Command():
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        # rospy.Subscriber('/pid_tuning_altitude',
-        #                  PidTune, self.throttle_set_pid)
-        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        rospy.Subscriber('/pid_tuning_altitude',
+                         PidTune, self.throttle_set_pid)
+        #rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp*10
+        self.Kp[0] = roll.Kp*1000
         self.Ki[0] = roll.Ki
-        self.Kd[0] = roll.Kd
+        self.Kd[0] = roll.Kd*1000*5
 
     def pitch_set_pid(self, pitch):
         self.Kp[1] = pitch.Kp * 10000
@@ -73,7 +73,7 @@ class Command():
     def throttle_set_pid(self, throttle):
         self.Kp[2] = throttle.Kp * 4
         self.Ki[2] = throttle.Ki * 0.25
-        self.Kd[2] = throttle.Kd * 0.5
+        self.Kd[2] = throttle.Kd
 
     def check(self, operator):
         if operator > 2000:
@@ -93,39 +93,43 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+            print(self.error[i])
             # print(self.Kp[i], self.Ki[i], self.Kd[i])
-        if(round(self.gps_position[2], 1) == 2.6):
-            for i in range(1):
-                self.error[i] = 10000 * \
-                    (self.destination2[i]-self.gps_position[i])
-                self.change[i] = (
-                    self.error[i] - self.prev_error[i]) / self.sample_time
-                self.prev_error[i] = self.error[i]
-                self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-                self.output[i] = self.Kp[i] * self.error[i] + \
-                    self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-                self.setpoint_cmd.rcRoll = self.check(self.output[0])
-                print(self.output[0])
-                print(self.error[i])
-            #print(self.Kp[i], self.Ki[i], self.Kd[i])
-        else:
-            self.setpoint_cmd.rcRoll = self.equilibrium_value
+        # if(round(self.gps_position[2], 1) == 3.0):
+        #     for i in range(1):
+        #         self.error[i] = (self.destination2[i]-self.gps_position[i])
+        #         self.change[i] = (
+        #             self.error[i] - self.prev_error[i]) / self.sample_time
+        #         self.prev_error[i] = self.error[i]
+        #         self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
+        #         self.output[i] = self.Kp[i] * self.error[i] + \
+        #             self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+        #         #self.setpoint_cmd.rcPitch = self.check(1500+self.output[1])
+        #         self.setpoint_cmd.rcRoll = self.check(1500+self.output[0])
+        #         # print(self.output[0])
+        #         # print(self.output[0])
+        #         # print(self.setpoint_cmd.rcRoll)
+        #     # print(self.error[i])
+        #     # print(self.Kp[i], self.Ki[i], self.Kd[i])
+        # else:
+        #     self.setpoint_cmd.rcRoll = self.equilibrium_value
+        #     # self.setpoint_cmd.rcPitch = self.equilibrium_value
 
         # print(self.error[2])
         # print()
         # print(self.gps_position[2])
 
-        #self.setpoint_cmd.rcRoll = self.check(self.output[1])
-        #self.setpoint_cmd.rcRoll = self.equilibrium_value
+        # self.setpoint_cmd.rcRoll = self.check(self.output[1])
+        self.setpoint_cmd.rcRoll = self.equilibrium_value
         self.setpoint_cmd.rcPitch = self.equilibrium_value
-        #self.setpoint_cmd.rcPitch = self.check(self.output[0])
-        self.setpoint_cmd.rcThrottle = self.check(self.output[2])
+        # self.setpoint_cmd.rcPitch = self.check(self.output[0])
+        self.setpoint_cmd.rcThrottle = self.check(1500+self.output[2])
         self.setpoint_cmd.rcYaw = self.equilibrium_value
 
-        self.roll_pub.publish((self.error[0]))
+        self.roll_pub.publish((self.output[0]))
         self.pitch_pub.publish((self.error[1]))
         self.throttle_pub.publish(self.error[2])
-        # print(self.setpoint_cmd.rcThrottle)
+        #
         # print("")
         self.setpoint_pub.publish(self.setpoint_cmd)
 
