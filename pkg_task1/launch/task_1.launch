@@ -1,0 +1,11 @@
+<launch>
+    <node pkg="pkg_task1" type="attitude_controller.py" name="attitude_controller" />
+    <node pkg="pkg_task1" type="position_controller.py" name="position_controller" />
+    <node pkg="pid_tune" type="pid_tune_drone.py" name="pid_tuning_altitude"> 
+       <param name="ppid_ui_enable" value="false"/>
+       <param name="rpid_ui_enable" value="false"/>
+       <param name="ypid_ui_enable" value="false"/>
+       <param name="tpid_ui_enable" value="true"/>
+    </node>
+    <node pkg="plotjuggler" type="PlotJuggler" name="PlotJuggler" /> 
+</launch>
