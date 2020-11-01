@@ -60,9 +60,9 @@ class Edrone():
 
         # initial setting of Kp, Kd and ki for [roll, pitch, yaw]. eg: self.Kp[2] corresponds to Kp value in yaw axis
         # after tuning and computing corresponding PID parameters, change the parameters
-        self.Kp = [0, 0, 0]
-        self.Ki = [0, 0, 0]
-        self.Kd = [0, 0, 0]
+        self.Kp = [26*0.01, 26*0.01, 93*0.06]
+        self.Ki = [0, 0, 1*0.008]
+        self.Kd = [10*0.01, 10*0.01, 2*0.01]
         # -----------------------Add other required variables for pid here ----------------------------------------------
         #
         self.error = [0, 0, 0]
@@ -100,9 +100,9 @@ class Edrone():
         rospy.Subscriber('/drone_command', edrone_cmd,
                          self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
         # -------------------------Add other ROS Subscribers here----------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------
@@ -139,21 +139,21 @@ class Edrone():
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
     def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp * 0.06
+        self.Kp[0] = roll.Kp * 0.01
         self.Ki[0] = roll.Ki * 0.008
-        self.Kd[0] = roll.Kd * 0.3
+        self.Kd[0] = roll.Kd * 0.02
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
     def pitch_set_pid(self, pitch):
-        self.Kp[0] = pitch.Kp * 0.06
+        self.Kp[0] = pitch.Kp * 0.01
         self.Ki[0] = pitch.Ki * 0.008
-        self.Kd[0] = pitch.Kd * 0.3
+        self.Kd[0] = pitch.Kd * 0.02
 
     # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
     def yaw_set_pid(self, yaw):
-        self.Kp[0] = yaw.Kp * 0.06
-        self.Ki[0] = yaw.Ki * 0.008
-        self.Kd[0] = yaw.Kd * 0.3
+        self.Kp[2] = yaw.Kp * 0.03
+        self.Ki[2] = yaw.Ki * 0.008
+        self.Kd[2] = yaw.Kd * 0.1
 
     # ----------------------------Define callback function like roll_set_pid to tune pitch, yaw--------------
 
@@ -176,16 +176,14 @@ class Edrone():
         # - 9. Add error_sum to use for integral component
 
         # Converting quaternion to euler angles
-        (self.drone_orientation_euler[0], self.drone_orientation_euler[1], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
+        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
-        # print(self.drone_orientation_euler)
         # Convertng the range from 1000 to 2000 in the range of -10 degree to 10 degree for roll, pitch and yaw axis
         def degree_convert(operator): return operator * 102.4
 
         for i in range(3):
             self.setpoint_euler[i] = self.setpoint_cmd[i] * 0.02 - 30
-        # self.setpoint_euler[3] = self.setpoint_cmd[3] * 0.02 - 30
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
@@ -223,7 +221,6 @@ class Edrone():
         self.check(self.pwm_cmd.prop4)
 
         self.roll_pub.publish(self.error[0])
-        # print(self.roll_cmd, self.pitch_cmd)
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
         # print(self.pwm_cmd)
