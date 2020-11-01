@@ -92,7 +92,6 @@ class Edrone():
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.yaw_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
-        # ------------------------Add other ROS Publishers here-----------------------------------------------------
 
         # -----------------------------------------------------------------------------------------------------------
 
@@ -104,23 +103,13 @@ class Edrone():
         # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
-        # -------------------------Add other ROS Subscribers here----------------------------------------------------
         # ------------------------------------------------------------------------------------------------------------
 
-    # Imu callback function
-    # The function gets executed each time when imu publishes /edrone/imu/data
-
-    # Note: The imu publishes various kind of data viz angular velocity, linear acceleration, magnetometer reading (if present),
-    # but here we are interested in the orientation which can be calculated by a complex algorithm called filtering which is not in the scope of this task,
-    # so for your ease, we have the orientation published directly BUT in quaternion format and not in euler angles.
-    # We need to convert the quaternion format to euler angles format to understand the orienataion of the edrone in an easy manner.
-    # Hint: To know the message structure of sensor_msgs/Imu, execute the following command in the terminal
-    # rosmsg show sensor_msgs/Imu
-
     def check(self, operator):
+        ''' Vreifying if prop speed is within range if not making it '''
         if operator > self.max_values:
             operator = self.max_values
-        if operator < self.min_values:
+        elif operator < self.min_values:
             operator = self.min_values
 
     def imu_callback(self, msg):
@@ -155,8 +144,6 @@ class Edrone():
         self.Ki[2] = yaw.Ki * 0.008
         self.Kd[2] = yaw.Kd * 0.1
 
-    # ----------------------------Define callback function like roll_set_pid to tune pitch, yaw--------------
-
     # ----------------------------------------------------------------------------------------------------------------------
 
     def pid(self):
@@ -187,8 +174,6 @@ class Edrone():
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
-        #
-
         self.throttle_cmd = (self.rcThrottle - 1000) * 1.024
 
         for i in range(3):
@@ -201,7 +186,7 @@ class Edrone():
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
-        # converting range 1000 t0 2000 to degrees
+        # Converting range 1000 to 2000 to degrees
         self.roll_cmd = degree_convert(self.output[0])
         self.pitch_cmd = degree_convert(self.output[1])
         self.yaw_cmd = degree_convert(self.output[2])
@@ -215,18 +200,19 @@ class Edrone():
         self.pwm_cmd.prop4 = self.throttle_cmd + \
             self.roll_cmd + self.pitch_cmd + self.yaw_cmd
 
+        # Vreifying if prop speed is within range if not making it
         self.check(self.pwm_cmd.prop1)
         self.check(self.pwm_cmd.prop2)
         self.check(self.pwm_cmd.prop3)
         self.check(self.pwm_cmd.prop4)
 
+        # Publishing error messages
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.yaw_pub.publish(self.error[2])
-        # print(self.pwm_cmd)
-        # print("")
+
+        # Publishing Prop Speeds
         self.pwm_pub.publish(self.pwm_cmd)
-        self.roll_pub.publish(self.error[i])
         # ------------------------------------------------------------------------------------------------------------------------
 
 
