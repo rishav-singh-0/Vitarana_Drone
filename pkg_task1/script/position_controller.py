@@ -31,9 +31,10 @@ class Command():
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
-        self.Kp = [630*100,  630*100,  290*1]
-        self.Ki = [15*0.008, 15*0.008,  0*0.25]
-        self.Kd = [1503*40,  1503*40,   284*1]
+
+        self.Kp = [1507*10000,  1507*10000,  290*1]
+        self.Ki = [0*0.008, 0*0.008,  0*0.25]
+        self.Kd = [655*10000*5,  655*10000*5,   284*1]
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
@@ -43,7 +44,7 @@ class Command():
         self.sum = [0, 0, 0]
         self.output = [0, 0, 0]
 
-        self.sample_time = 0.010  # sample time
+        self.sample_time = 0.1  # sample time
         # equilibrium point for all the angle(roll,pitch,yaw) and throttle
         self.equilibrium_value = 1500
         # object for publishing the rc messages
@@ -66,10 +67,10 @@ class Command():
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
-    # def roll_set_pid(self, roll):
-    #     self.Kp[0] = roll.Kp * 100
-    #     self.Ki[0] = roll.Ki * 0.008
-    #     self.Kd[0] = roll.Kd * 40
+    def roll_set_pid(self, roll):
+        self.Kp[0] = roll.Kp * 1000
+        self.Ki[0] = roll.Ki * 0.008
+        self.Kd[0] = roll.Kd * 1000*5
 
     # def pitch_set_pid(self, pitch):
     #     self.Kp[1] = pitch.Kp * 100
@@ -99,9 +100,10 @@ class Command():
         if i == 2:
             return
 
-        if -0.000004517 < self.error[0] < 0.000004517:
-            if -0.0000047487 < self.error[1] < 0.0000047487:
-                if -0.2 < self.error[2] < 0.2:
+        if -0.000004517 <= self.error[0] <= 0.000004517:
+            if -0.0000047487 <= self.error[1] <= 0.0000047487:
+                # here we have taken more accuracy apart from Threshould box
+                if -0.2 <= self.error[2] <= 0.2:
                     self.next_destination += 1
                     print("destination reached")
     # function for implimenting the pid algorithm
