@@ -34,7 +34,9 @@ class Command():
         self.Kp = [630*100,  630*100,  290*1]
         self.Ki = [15*0.008, 15*0.008,  0*0.25]
         self.Kd = [1503*40,  1503*40,   284*1]
+
         # necessary variables for calculation of desired position for roll,pitch and throttle
+        # [roll, pitch, throttle]
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
         self.change = [0, 0, 0]
@@ -78,17 +80,20 @@ class Command():
     #     self.Kp[2] = throttle.Kp * 1
     #     self.Ki[2] = throttle.Ki * 0.25
     #     self.Kd[2] = throttle.Kd * 1
+
     # this function will convert all rc messages in the range of 1000 to 2000
     def check(self, operator):
+        ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
+        operator self.equilibrium_value + operator*100
         if operator > 2000:
             return 2000
         elif operator < 1000:
             return 1000
         else:
             return operator
-    # function will hendle all desired positions
 
     def destination_check(self):
+        ''' function will hendle all desired positions '''
 
         i = self.next_destination
         if i == 2:
@@ -112,14 +117,13 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+
         # figure out the values  for roll,pitch and throttle
-        self.setpoint_cmd.rcRoll = self.check(
-            self.equilibrium_value + 100*self.output[0])
-        self.setpoint_cmd.rcPitch = self.check(
-            self.equilibrium_value + 100*self.output[1])
-        self.setpoint_cmd.rcThrottle = self.check(
-            self.equilibrium_value + self.output[2])
+        self.setpoint_cmd.rcRoll = self.check(self.output[0])
+        self.setpoint_cmd.rcPitch = self.check(self.output[1])
+        self.setpoint_cmd.rcThrottle = self.check(self.output[2])
         self.setpoint_cmd.rcYaw = self.equilibrium_value
+
         # publishing all the values to attitude_controller and for plotting purpose
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
