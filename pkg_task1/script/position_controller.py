@@ -85,7 +85,7 @@ class Command():
     # this function will convert all rc messages in the range of 1000 to 2000
     def check(self, operator):
         ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
-        operator = self.equilibrium_value + operator*100
+        operator = self.equilibrium_value + operator
         if operator > 2000:
             return 2000
         elif operator < 1000:
