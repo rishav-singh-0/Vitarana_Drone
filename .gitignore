@@ -2,6 +2,7 @@
 #packages
 pid_tune/
 vitarana_drone/
+additional_package_for_vd/
 
 #swp files
 **/*.swp
