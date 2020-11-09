@@ -53,7 +53,7 @@ class image_proc():
             for code in barcode:
                 data = code.data.decode('utf-8')
                 data = list(map(float,data.split(',')))
-                print(data)
+                # print(data)
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
             
