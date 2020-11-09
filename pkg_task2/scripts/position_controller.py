@@ -49,10 +49,12 @@ class Command():
         self.setpoint_cmd = edrone_cmd()
 
         # Publishing /pitch_error, /roll_error, /throttle_error
-        self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
+        self.setpoint_pub = rospy.Publisher(
+            '/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
+        self.throttle_pub = rospy.Publisher(
+            '/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
@@ -101,16 +103,18 @@ class Command():
                     self.next_destination += 1
                     print("destination reached")
 
-
     def pid(self):
         '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
-            self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
+            self.error[i] = self.destination[self.next_destination][i] - \
+                self.gps_position[i]
+            self.change[i] = (
+                self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-            self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+            self.output[i] = self.Kp[i] * self.error[i] + \
+                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
