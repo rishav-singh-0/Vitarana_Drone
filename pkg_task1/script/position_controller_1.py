@@ -78,10 +78,9 @@ class Command():
     def check(self, operator):
         if operator > 2000:
             return 2000
-        elif operator < 1000:
+        if operator < 1000:
             return 1000
-        else:
-            return operator
+        return operator
 
     def pid(self):
 
