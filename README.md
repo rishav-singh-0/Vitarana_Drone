@@ -1,5 +1,3 @@
-# Vitarana_Drone_eyrc20
-
 # Project Title: Vitarana Drone
 
 # Introduction: 
