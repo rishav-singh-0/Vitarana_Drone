@@ -3,7 +3,9 @@ from vitarana_drone.srv import *
 from vitarana_drone.msg import *
 import rospy
 from std_msgs.msg import String
+from std_msgs.msg import Float32
 i = None
+j = None
 
 
 def call_back(S):
@@ -19,14 +21,27 @@ def client(x):
     return reasult.result
 
 
+def detech_msg(msg):
+    global j
+    j = msg.data
+
+
+w = 0
+
+
 def main():
+    global w
     rospy.init_node('pose')
     rospy.Subscriber('/edrone/gripper_check', String, call_back)
+    rospy.Subscriber('op_flag', Float32, detech_msg)
     # print(i)
     if(i == 'True'):
         print(client(bool(1)))
-    else:
+    elif(j == 1):
         print(client(bool(0)))
+    elif(w == 0):
+        print(client(bool(0)))
+        w += 1
 
     # x = i
     # print(client(i))
