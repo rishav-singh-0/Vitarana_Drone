@@ -24,17 +24,16 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [0, 0, 0]            # destination ehere drone is currrently heded
-        self.final_destination = [0, 0, 0]      # container for final destination 
-        
-        # this will be true if drone has reached its currently provided setpoint
-        self.take_destination = True            
+        self.destination = [[19.0, 72.0, 3],
+                            [19.0000451704, 72.0, 3],
+                            [19.0000451704, 72.0, 0.31]]
+        self.next_destination = 0
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1007*10000,  1097*10000,  375]
-        self.Ki = [7*0.008, 7*0.008,  3*0.25]
-        self.Kd = [592*50000, 590*50000,  354]
+        self.Kp = [1507*10000,  1507*10000,  290*1]
+        self.Ki = [0*0.008, 0*0.008,  0*0.25]
+        self.Kd = [655*10000*5,  655*10000*5,   284*1]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -63,10 +62,10 @@ class Command():
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
-    def checkpoint_callback(self, msg):
-        '''Taking checkpoints from path_planner.py'''
-
-        container = [msg.latitude, msg.longitude, msg.altitude]
+    # def roll_set_pid(self, roll):
+    #     self.Kp[0] = roll.Kp * 1000
+    #     self.Ki[0] = roll.Ki * 0.008
+    #     self.Kd[0] = roll.Kd * 1000*5
 
         if self.take_destination:
             # checking if the drone is hovering over final destination
@@ -99,18 +98,26 @@ class Command():
                     self.take_destination = True
                     # print("destination reached")
 
+        i = self.next_destination
+        if i == 2:
+            return
+
+        if -0.000004517 <= self.error[0] <= 0.000004517:
+            if -0.0000047487 <= self.error[1] <= 0.0000047487:
+                if -0.2 <= self.error[2] <= 0.2:
+                    self.next_destination += 1
+                    print("destination reached")
+
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            # rospy.loginfo(self.destination)
-            self.error[i] = self.destination[i] - self.gps_position[i]
+            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
             self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
