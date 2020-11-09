@@ -75,7 +75,8 @@ class Command():
         self.Ki[2] = throttle.Ki * 0.25
         self.Kd[2] = throttle.Kd
 
-    def check(self, operator):
+    @staticmethod
+    def check(operator):
         if operator > 2000:
             return 2000
         if operator < 1000:
