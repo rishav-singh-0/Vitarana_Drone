@@ -3,8 +3,9 @@
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
-from pyzbar.pyzbar import decode
+from pyzbar.pyzbar import decode # For decoding qrcode
 import numpy as np
+from sensor_msgs.msg import NavSatFix
 import rospy
 
 
@@ -17,10 +18,24 @@ class image_proc():
         # This will contain your image frame from camera
         self.img = np.empty([])
 
-        # Subscribing to the camera topic
-        self.image_sub = rospy.Subscriber(
-            "/edrone/camera/image_raw", Image, self.image_callback)
+        # initializing the final destination which is to be decoded from qrcode
+        # [latitude, longitude, altitude]
+        self.destination = NavSatFix()
+
+
+        # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
+
+        # sample time used for defining certain frequency of data input
+        self.sample_time = 0.1
+
+        # Publishing the scanned destination
+        self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
+
+        # Subscribing to the camera topic
+        self.image_sub = rospy.Subscriber("/edrone/camera/image_raw", Image, self.image_callback)
+
+
 
     # Callback function of camera topic
 
@@ -28,29 +43,35 @@ class image_proc():
         try:
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-            cv2.imshow("Image window", self.img)
         except CvBridgeError as e:
             print(e)
             return
 
     def read_qr(self):
-        print(type(self.img), int(self.img))
-        # barcode = decode(self.img)
-        print(self.img)
-        # # (rows, cols, channels) = self.img.shape
-        # if cols > 60 and rows > 60:
-        #     cv2.circle(self.img, (50, 50), 10, 255)
-
-        cv2.imshow("Image window", self.img)
-        # cv2.imshow(self.img)
-        # for code in barcode:
-        #     print(code.data.decode('utf-8'))
+        try:
+            barcode = decode(self.img)
+            # used for loop to eleminate the possibility of multiple or null qrcode check 
+            for code in barcode:
+                data = code.data.decode('utf-8')
+                data = list(map(float,data.split(',')))
+                print(data)
+            # cv2.imshow("show",self.img)
+            # cv2.waitKey(100)
+            self.destination.latitude = data[0]
+            self.destination.longitude = data[1]
+            self.destination.altitude = data[2]
+            self.final_destination.publish(self.destination)
+            
+                
+        except ValueError:
+            pass
 
 
 if __name__ == '__main__':
     image_proc_obj = image_proc()
-    r = rospy.Rate(1/1)
+    r = rospy.Rate(1/image_proc_obj.sample_time)
     while not rospy.is_shutdown():
         image_proc_obj.read_qr()
         r.sleep()
+    cv2.destroyAllWindows()
     rospy.spin()
