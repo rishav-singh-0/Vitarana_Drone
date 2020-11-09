@@ -28,7 +28,7 @@ class Command():
 
         # [roll, pitch, throttle]
         self.Kp = [0, 0, 290]
-        self.Ki = [0, 0, 0*0.25]
+        self.Ki = [0, 0, 25*0.25]
         self.Kd = [0, 0, 284]
 
         self.error = [0, 0, 0]
@@ -53,8 +53,8 @@ class Command():
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         # rospy.Subscriber('/pid_tuning_altitude',
-        #               PidTune, self.throttle_set_pid)
-        rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        #                  PidTune, self.throttle_set_pid)
+        #rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
         #rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
 
     def gps_callback(self, msg):
@@ -71,7 +71,7 @@ class Command():
         self.Kd[1] = pitch.Kd * 0.3
 
     def throttle_set_pid(self, throttle):
-        self.Kp[2] = throttle.Kp
+        self.Kp[2] = throttle.Kp*10
         self.Ki[2] = throttle.Ki * 0.25
         self.Kd[2] = throttle.Kd
 
@@ -86,7 +86,7 @@ class Command():
     def pid(self):
 
         for i in range(2, 3):
-            self.error[i] = self.destination1[i] - self.gps_position[i]-0.30
+            self.error[i] = self.destination1[i] - self.gps_position[i]
             self.change[i] = (
                 self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
@@ -94,53 +94,11 @@ class Command():
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
             print("and the thottle is", self.error[i])
+            print(self.output[i])
             # print(self.Kp[i], self.Ki[i], self.Kd[i])
-        if(round(self.gps_position[2], 0) == 3):
-            for i in range(1):
-                self.error[i] = (self.destination2[i]-self.gps_position[i])
-                self.change[i] = (
-                    self.error[i] - self.prev_error[i]) / self.sample_time
-                self.prev_error[i] = self.error[i]
-                self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-                self.output[i] = self.Kp[i] * self.error[i] + \
-                    self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-                #self.setpoint_cmd.rcPitch = self.check(1500+self.output[1])
-                self.setpoint_cmd.rcRoll = self.check(1500+self.output[0])
-                print(self.output[0])
-                # print(self.output[0])
-                print(self.setpoint_cmd.rcRoll)
-            # print(self.error[i])
-            # print(self.Kp[i], self.Ki[i], self.Kd[i])
-        else:
-            self.setpoint_cmd.rcRoll = self.equilibrium_value
-            # self.setpoint_cmd.rcPitch = self.equilibrium_value
-        if(self.gps_position[0] >= (19.000045167-0.000004517) and self.gps_position[0] <= (19.000045167+0.000004517)):
-            for i in range(1):
-                self.error[i+2] = (self.destination3[i+2] -
-                                   self.gps_position[i+2])
-                self.change[i+2] = (
-                    self.error[i+2] - self.prev_error[i+2]) / self.sample_time
-                self.prev_error[i+2] = self.error[i]
-                self.sum[i+2] = self.sum[i+2] + \
-                    self.error[i+2] * self.sample_time
-                self.output[i+2] = self.Kp[i+2] * self.error[i+2] + \
-                    self.Kd[i+2]*self.change[i+2] + self.Ki[i+2]*self.sum[i+2]
-                #self.setpoint_cmd.rcPitch = self.check(1500+self.output[1])
-                self.setpoint_cmd.rcThrottle = self.check(1500+self.output[2])
-                print("jo baka", self.output[2])
-                # print(self.output[0])
-                print(self.setpoint_cmd.rcThrottle)
-            # print(self.error[i])
-            # print(self.Kp[i], self.Ki[i], self.Kd[i])
-        else:
-            self.setpoint_cmd.rcThrottle = self.equilibrium_value
-
-        # # print(self.error[2])
-        # # print()
-        # # print(self.gps_position[2])
 
         # self.setpoint_cmd.rcRoll = self.check(self.output[1])
-        #self.setpoint_cmd.rcRoll = self.equilibrium_value
+        self.setpoint_cmd.rcRoll = self.equilibrium_value
         self.setpoint_cmd.rcPitch = self.equilibrium_value
         # self.setpoint_cmd.rcPitch = self.check(self.output[0])
         self.setpoint_cmd.rcThrottle = self.check(1500+self.output[2])
