@@ -18,10 +18,8 @@ class image_proc():
         # This will contain your image frame from camera
         self.img = np.empty([])
 
-        # initializing the final destination which is to be decoded from qrcode
-        # [latitude, longitude, altitude]
+        # initializing the final destination container
         self.destination = NavSatFix()
-
 
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
@@ -36,10 +34,8 @@ class image_proc():
         self.image_sub = rospy.Subscriber("/edrone/camera/image_raw", Image, self.image_callback)
 
 
-
-    # Callback function of camera topic
-
     def image_callback(self, data):
+        ''' Callback function of camera topic'''
         try:
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -47,7 +43,9 @@ class image_proc():
             print(e)
             return
 
+
     def read_qr(self):
+        '''Image QR-Code scanning and publishing algo'''
         try:
             barcode = decode(self.img)
             data = [0, 0, 0]
@@ -58,12 +56,15 @@ class image_proc():
                 print(data)
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
+            
+            # giving the scanned valut to publisher container
             self.destination.latitude = data[0]
             self.destination.longitude = data[1]
             self.destination.altitude = data[2]
+
+            # Publishing the scanned data through /final_destination topic
             self.final_destination.publish(self.destination)
             
-                
         except ValueError:
             pass
 
@@ -74,5 +75,5 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         image_proc_obj.read_qr()
         r.sleep()
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     rospy.spin()
