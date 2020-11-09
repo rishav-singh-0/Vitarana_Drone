@@ -13,10 +13,12 @@ class edrone_gripper():
     def __init__(self):
 
         rospy.init_node('node_service_server_gripper')
-        self._attach_srv_a = rospy.ServiceProxy('/link_attacher_node/attach', Attach)
+        self._attach_srv_a = rospy.ServiceProxy(
+            '/link_attacher_node/attach', Attach)
         self._attach_srv_a.wait_for_service()
 
-        self._attach_srv_d = rospy.ServiceProxy('/link_attacher_node/detach', Attach)
+        self._attach_srv_d = rospy.ServiceProxy(
+            '/link_attacher_node/detach', Attach)
         self._attach_srv_d.wait_for_service()
         self.model_state_msg = ModelStates()
         self.box_model_name = 'cardboard_box'
@@ -27,9 +29,12 @@ class edrone_gripper():
 
         self.box_coordinates = [0.0, 0.0, 0.0]
         self.drone_coordinates = [0.0, 0.0, 0.0]
-        rospy.Subscriber('/gazebo/model_states_throttle', ModelStates, self.model_state_callback)
-        self.check_pub = rospy.Publisher('/edrone/gripper_check', String, queue_size=1)
-        self.gripper_service = rospy.Service('/edrone/activate_gripper', Gripper, self.callback_service_on_request)
+        rospy.Subscriber('/gazebo/model_states_throttle',
+                         ModelStates, self.model_state_callback)
+        self.check_pub = rospy.Publisher(
+            '/edrone/gripper_check', String, queue_size=1)
+        self.gripper_service = rospy.Service(
+            '/edrone/activate_gripper', Gripper, self.callback_service_on_request)
 
     # Destructor
     def __del__(self):
@@ -41,10 +46,12 @@ class edrone_gripper():
         self.model_state_msg.twist = msg.twist
 
     def callback_service_on_request(self, req):
-        rospy.loginfo('\033[94m' + " >>> Gripper Activate: {}".format(req.activate_gripper) + '\033[0m')
-        rospy.loginfo('\033[94m' + " >>> Gripper Flag Pickable: {}".format(self.pickable_flag) + '\033[0m')
+        rospy.loginfo(
+            '\033[94m' + " >>> Gripper Activate: {}".format(req.activate_gripper) + '\033[0m')
+        rospy.loginfo(
+            '\033[94m' + " >>> Gripper Flag Pickable: {}".format(self.pickable_flag) + '\033[0m')
 
-        if((req.activate_gripper == True) and (self.pickable_flag == 'True') ):
+        if((req.activate_gripper == True) and (self.pickable_flag == 'True')):
             self.activate_gripper()
             return GripperResponse(True)
         else:
@@ -71,22 +78,24 @@ class edrone_gripper():
 
     def check(self):
         try:
-            self.box_index = self.model_state_msg.name.index(self.box_model_name)
+            self.box_index = self.model_state_msg.name.index(
+                self.box_model_name)
             self.box_coordinates[0] = self.model_state_msg.pose[self.box_index].position.x
             self.box_coordinates[1] = self.model_state_msg.pose[self.box_index].position.y
             self.box_coordinates[2] = self.model_state_msg.pose[self.box_index].position.z
         except Exception as err:
             self.box_index = -1
         try:
-            self.drone_index = self.model_state_msg.name.index(self.drone_model_name)
+            self.drone_index = self.model_state_msg.name.index(
+                self.drone_model_name)
             self.drone_coordinates[0] = self.model_state_msg.pose[self.drone_index].position.x
             self.drone_coordinates[1] = self.model_state_msg.pose[self.drone_index].position.y
             self.drone_coordinates[2] = self.model_state_msg.pose[self.drone_index].position.z
         except Exception as err:
             self.drone_index = -1
 
-        if (self.box_index != -1 and self.drone_index !=-1 ):
-            if(abs(self.drone_coordinates[0] - self.box_coordinates[0]) < 0.1 and abs(self.drone_coordinates[1] - self.box_coordinates[1]) < 0.1 and (self.box_coordinates[2]-self.drone_coordinates[2])>0.105 and (self.box_coordinates[2]-self.drone_coordinates[2])>0):
+        if (self.box_index != -1 and self.drone_index != -1):
+            if(abs(self.drone_coordinates[0] - self.box_coordinates[0]) < 0.1 and abs(self.drone_coordinates[1] - self.box_coordinates[1]) < 0.1 and (self.box_coordinates[2]-self.drone_coordinates[2]) > 0.105 and (self.box_coordinates[2]-self.drone_coordinates[2]) > 0):
                 self.pickable_flag = 'True'
             else:
                 self.pickable_flag = 'False'
