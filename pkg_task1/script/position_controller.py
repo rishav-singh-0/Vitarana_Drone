@@ -34,7 +34,7 @@ class Command():
 
         self.Kp = [1507*10000,  1507*10000,  290*1]
         self.Ki = [0*0.008, 0*0.008,  0*0.25]
-        self.Kd = [655*10000*5,  655*10000*5,   284*1]
+        self.Kd = [755*10000*5,  655*10000*5,   284*1]
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
@@ -85,7 +85,7 @@ class Command():
     # this function will convert all rc messages in the range of 1000 to 2000
     def check(self, operator):
         ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
-        operator = self.equilibrium_value + operator*100
+        operator = self.equilibrium_value + operator
         if operator > 2000:
             return 2000
         elif operator < 1000:

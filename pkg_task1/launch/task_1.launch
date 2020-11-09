@@ -11,7 +11,7 @@
     <node pkg="plotjuggler" type="PlotJuggler" name="PlotJuggler" />  -->
 
     <arg name="record" default="false"/>
-    <arg name="duration" default="30"/>
+    <arg name="duration" default="35"/>
     <arg name="rec_name" default="Task_1_VD.bag"/>
 
     <group if="$(arg record)">
