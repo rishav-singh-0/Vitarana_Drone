@@ -13,6 +13,12 @@ add_message_files(
   myMessage.msg
 )
 
+add_service_files(
+  FILES
+  example.srv
+)
+
+
 generate_messages(
   DEPENDENCIES
   geometry_msgs
