@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
 # importing required libraries
-from turtlesim.msg import Pose
 import rospy
-from geometry_msgs.msg import Twist
 from vitarana_drone.msg import prop_speed
 
 

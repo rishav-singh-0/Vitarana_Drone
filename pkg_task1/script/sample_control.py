@@ -2,7 +2,6 @@
 import rospy
 from sensor_msgs.msg import NavSatFix
 from vitarana_drone.msg import prop_speed
-from pid_tune.msg import PidTune
 current_altitude, cnt = 0, 0
 
 kp = 41.6

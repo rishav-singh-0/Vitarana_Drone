@@ -3,6 +3,7 @@ import rospy
 from turtlesim.msg import Pose
 from geometry_msgs.msg import Twist
 import time
+
 y = 0  # it is defined as global variable to take the theta from the 'turtle1/pose' topic
 speed = 5  # it is linear velocity of the x
 z = 0
