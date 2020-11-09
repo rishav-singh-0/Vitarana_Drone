@@ -50,6 +50,7 @@ class image_proc():
     def read_qr(self):
         try:
             barcode = decode(self.img)
+            data = [0, 0, 0]
             # used for loop to eleminate the possibility of multiple or null qrcode check 
             for code in barcode:
                 data = code.data.decode('utf-8')
