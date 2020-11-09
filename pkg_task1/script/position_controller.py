@@ -28,6 +28,7 @@ class Command():
                             [19.0000451704, 72.0, 3],
                             [19.0000451704, 72.0, 0.31]]
         self.next_destination = 0
+        self.detech = 0
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
@@ -57,6 +58,7 @@ class Command():
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
         self.throttle_pub = rospy.Publisher(
             '/throttle_error', Float32, queue_size=1)
+        self.det_pub = rospy.Publisher('op_flag', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
@@ -125,19 +127,24 @@ class Command():
         self.setpoint_cmd.rcPitch = self.check(self.output[1])
         self.setpoint_cmd.rcThrottle = self.check(self.output[2])
         self.setpoint_cmd.rcYaw = self.equilibrium_value
+        if([self.next_destination == 2 and round(self.destination[2][2], 1) == 0.3):
+            boole = 1
+
+
 
         # publishing all the values to attitude_controller and for plotting purpose
         self.roll_pub.publish(self.error[0])
         self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
         self.setpoint_pub.publish(self.setpoint_cmd)
+        self.det_pub.publish(self.error[0])
 
 
 if __name__ == '__main__':
 
     # specify rate in Hz based upon your desired PID sampling time
-    command = Command()
-    rate = rospy.Rate(1/command.sample_time)  # defining rate
+    command= Command()
+    rate= rospy.Rate(1/command.sample_time)  # defining rate
     while not rospy.is_shutdown():
         command.pid()
         command.destination_check()
