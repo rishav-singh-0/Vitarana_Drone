@@ -11,7 +11,7 @@ j = None
 def call_back(S):
     global i
     i = S.data
-    print(i)
+    # print(i)
 
 
 def client(x):
@@ -24,6 +24,7 @@ def client(x):
 def detech_msg(msg):
     global j
     j = msg.data
+    print(j)
 
 
 w = 0
@@ -35,13 +36,13 @@ def main():
     rospy.Subscriber('/edrone/gripper_check', String, call_back)
     rospy.Subscriber('op_flag', Float32, detech_msg)
     # print(i)
-    if(i == 'True'):
-        print(client(bool(1)))
-    elif(j == 1):
-        print(client(bool(0)))
-    elif(w == 0):
-        print(client(bool(0)))
-        w += 1
+    if(i == 'True' and j == 0):
+        client(bool(1))
+    elif(j == 1 and i == 'True'):
+        client(bool(0))
+    # elif(w == 0):
+    #     client(bool(0))
+    #     w += 1
 
     # x = i
     # print(client(i))

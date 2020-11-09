@@ -127,8 +127,8 @@ class Command():
         self.setpoint_cmd.rcPitch = self.check(self.output[1])
         self.setpoint_cmd.rcThrottle = self.check(self.output[2])
         self.setpoint_cmd.rcYaw = self.equilibrium_value
-        if(self.next_destination == 2 and (round(self.destination[2][2], 1) == 0.3)):
-            self.boole = 1
+        if(self.next_destination == 2 and (round(self.gps_position[2], 1) == 0.3)):
+            self.boole += 1
 
         # publishing all the values to attitude_controller and for plotting purpose
         self.roll_pub.publish(self.error[0])
