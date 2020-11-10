@@ -28,13 +28,15 @@ class Command():
                             [19.0000451704, 72.0, 3],
                             [19.0000451704, 72.0, 0.31]]
         self.next_destination = 0
+        # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
-        # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
+
         self.Kp = [1507*10000,  1507*10000,  290*1]
         self.Ki = [0*0.008, 0*0.008,  0*0.25]
         self.Kd = [655*10000*5,  655*10000*5,   284*1]
 
+        # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
@@ -49,10 +51,12 @@ class Command():
         self.setpoint_cmd = edrone_cmd()
 
         # Publishing /pitch_error, /roll_error, /throttle_error
-        self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
+        self.setpoint_pub = rospy.Publisher(
+            '/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
+        self.throttle_pub = rospy.Publisher(
+            '/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
@@ -63,10 +67,10 @@ class Command():
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
-    # def roll_set_pid(self, roll):
-    #     self.Kp[0] = roll.Kp * 1000
-    #     self.Ki[0] = roll.Ki * 0.008
-    #     self.Kd[0] = roll.Kd * 1000*5
+    def roll_set_pid(self, roll):
+        self.Kp[0] = roll.Kp * 1000
+        self.Ki[0] = roll.Ki * 0.008
+        self.Kd[0] = roll.Kd * 1000*5
 
     # def pitch_set_pid(self, pitch):
     #     self.Kp[1] = pitch.Kp * 100
@@ -84,9 +88,10 @@ class Command():
         operator = self.equilibrium_value + operator
         if operator > 2000:
             return 2000
-        if operator < 1000:
+        elif operator < 1000:
             return 1000
-        return operator
+        else:
+            return operator
 
     def destination_check(self):
         ''' function will hendle all desired positions '''
@@ -97,20 +102,23 @@ class Command():
 
         if -0.000004517 <= self.error[0] <= 0.000004517:
             if -0.0000047487 <= self.error[1] <= 0.0000047487:
+                # here we have taken more accuracy apart from Threshould box
                 if -0.2 <= self.error[2] <= 0.2:
                     self.next_destination += 1
                     print("destination reached")
-
+    # function for implimenting the pid algorithm
 
     def pid(self):
-        '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
-            self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
+            self.error[i] = self.destination[self.next_destination][i] - \
+                self.gps_position[i]
+            self.change[i] = (
+                self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-            self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+            self.output[i] = self.Kp[i] * self.error[i] + \
+                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])

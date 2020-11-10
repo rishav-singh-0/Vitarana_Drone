@@ -20,19 +20,9 @@ def client(x):
 
 
 def detech_msg(msg):
-
-
-<< << << < HEAD
-   global j
-    j = msg.data
-
-
-w = 0
-== == == =
-   global detech_req
+    global detech_req
     detech_req = msg.data
     print(detech_req)
->>>>>> > 1bd2250... further bugs are fixed
 
 
 def main():
@@ -41,20 +31,10 @@ def main():
     rospy.Subscriber('op_flag', Float32, detech_msg)
 
     # print(i)
-<< << << < HEAD
-   if(i == 'True'):
-        print(client(bool(1)))
-    elif(j == 1):
-        print(client(bool(0)))
-    elif(w == 0):
-        print(client(bool(0)))
-        w += 1
-== =====
-   if(attech_situation == 'True' and detech_req == 0):
+    if(attech_situation == 'True' and detech_req == 0):
         client(bool(1))
     elif(detech_req >= 1 and attech_situation == 'True'):
         client(bool(0))
->>>>>> > 1bd2250... further bugs are fixed
 
 
 if __name__ == "__main__":
