@@ -12,10 +12,8 @@ class image_proc():
 
     # Initialise everything
     def __init__(self):
-        rospy.init_node('barcode_scan')  # Initialise rosnode
-        # Subscribing to the camera topic
-        self.image_sub = rospy.Subscriber(
-            "/edrone/camera/image_raw", Image, self.image_callback)
+        rospy.init_node('qrcode_scan')  # Initialise rosnode
+
         # This will contain your image frame from camera
         self.img = np.empty([])
         self.bridge = CvBridge()
