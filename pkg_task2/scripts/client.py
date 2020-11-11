@@ -9,7 +9,7 @@ attech_situation, detech_req = None, None
 
 class Grip():
     def __init__(self):
-        rospy.init_node('pose')
+        rospy.init_node('gripper_client')
 
         self.attech_situation = False
         self.detech_msg = False

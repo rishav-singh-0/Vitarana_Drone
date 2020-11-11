@@ -13,7 +13,7 @@ class image_proc():
 
     # Initialise everything
     def __init__(self):
-        rospy.init_node('barcode_scan')  # Initialise rosnode
+        rospy.init_node('qrcode_scan')  # Initialise rosnode
 
         # This will contain your image frame from camera
         self.img = np.empty([])
