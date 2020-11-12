@@ -21,18 +21,15 @@ class Grip():
     def call_back(self, state):
         self.attech_situation = state.data
 
-
     def client(self, x):
         rospy.wait_for_service('/edrone/activate_gripper')
         pover = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
         reasult = pover(x)
         return reasult.result
 
-
     def detech_msg(self, msg):
         self.detech_req = msg.data
         # print(self.detech_req)
-
 
     def main(self):
         # print(i)
