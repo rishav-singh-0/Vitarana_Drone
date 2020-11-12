@@ -4,7 +4,6 @@ from vitarana_drone.msg import *
 import rospy
 from std_msgs.msg import String
 from std_msgs.msg import Float32
-attech_situation, detech_req = None, None
 
 
 class Grip():
@@ -21,28 +20,24 @@ class Grip():
     def call_back(self, state):
         self.attech_situation = state.data
 
-
-    def client(self, x):
+    def gripper_client(self, check_condition):
         rospy.wait_for_service('/edrone/activate_gripper')
-        pover = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
-        reasult = pover(x)
-        return reasult.result
-
+        carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
+        return carry(check_condition).result
 
     def detech_msg(self, msg):
         self.detech_req = msg.data
         # print(self.detech_req)
 
-
-    def main(self):
+    def grip_check(self):
         # print(i)
         if(self.attech_situation == 'True' and self.detech_req == 0):
-            self.client(bool(1))
+            self.gripper_client(True)
         elif(self.detech_req >= 1 and self.attech_situation == 'True'):
-            self.client(bool(0))
+            self.gripper_client(False)
 
 
 if __name__ == "__main__":
     grip = Grip()
     while not rospy.is_shutdown():
-        grip.main()
+        grip.grip_check()

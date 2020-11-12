@@ -52,8 +52,8 @@ class PathPlanner():
         # Main Algorithm
         ##############################################################
 
-        self.checkpoint.latitude =0
-        self.checkpoint.longitude =0
-        self.checkpoint.altitude =0
+        self.checkpoint.latitude = 0
+        self.checkpoint.longitude = 0
+        self.checkpoint.altitude = 0
 
         self.pub_checkpoint.publish(self.checkpoint)
