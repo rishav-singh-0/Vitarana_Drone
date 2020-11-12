@@ -17,7 +17,8 @@ class PathPlanner():
         self.checkpoint = NavSatFix()
 
         # Publisher
-        self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
+        self.pub_checkpoint = rospy.Publisher(
+            '/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
         rospy.Subscriber('/final_setpoint', NavSatFix, final_setpoint_callback)
@@ -35,8 +36,8 @@ class PathPlanner():
         # Main Algorithm
         ##############################################################
 
-        self.checkpoint.latitude =0
-        self.checkpoint.longitude =0
-        self.checkpoint.altitude =0
+        self.checkpoint.latitude = 0
+        self.checkpoint.longitude = 0
+        self.checkpoint.altitude = 0
 
         self.pub_checkpoint.publish(self.checkpoint)
