@@ -119,8 +119,8 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-        print(self.gps_position[2])
-        print(self.error[2])
+        # print(self.gps_position[2])
+        # print(self.error[2])
         if(round(self.gps_position[2], 1) == 0.3 and self.next_destination > 0):
             self.box_flag += 1
 
