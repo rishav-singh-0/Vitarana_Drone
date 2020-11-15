@@ -1,4 +1,3 @@
- 
 #!/usr/bin/env python
 
 # importing required libraries
@@ -8,6 +7,7 @@ from vitarana_drone.msg import *
 from pid_tune.msg import PidTune
 from std_msgs.msg import Float32
 from sensor_msgs.msg import NavSatFix
+from std_msgs.msg import String
 
 # class for position_controller.py
 
@@ -22,20 +22,21 @@ class Command():
         # initialising gps position
         # [latitude,longitude,altitude]
         self.gps_position = [0, 0, 0]
+        self.attech_situation = "False"
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [[19.0, 72.0, 3],
-                            [19.0000451704, 72.0, 3],
-                            [19.0000451704, 72.0, 0.31]]
+        self.destination = [[19.0009248718, 71.9998318945, 25.1604734039],
+                            [19.0007046575,  71.9998955286, 25.1604734039],
+                            [19.0007046575, 71.9998955286, 22.1599967919], [19.0007046575, 72.0, 25.1599967919], [19.0, 72.0, 25.1599]]
         self.next_destination = 0
         self.box_flag = 0
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1507*10000,  1507*10000,  375]
-        self.Ki = [0*0.008, 0*0.008,  3*0.25]
-        self.Kd = [720*10000*5,  655*10000*5,  354]
+        self.Kp = [1500*10000,  1500*10000,  375]
+        self.Ki = [1*0.008, 1*0.008,  3*0.25]
+        self.Kd = [1100*10000*5,  1100*10000*5,  354]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -61,6 +62,7 @@ class Command():
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
+        rospy.Subscriber('/edrone/gripper_check', String, self.call_back)
         # rospy.Subscriber('/pid_tuning_altitude',
         #                  PidTune, self.throttle_set_pid)
         # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
@@ -68,6 +70,9 @@ class Command():
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
+
+    def call_back(self, state):
+        self.attech_situation = state.data
 
     # def roll_set_pid(self, roll):
     #     self.Kp[0] = roll.Kp * 1000
@@ -99,10 +104,10 @@ class Command():
         ''' function will hendle all desired positions '''
 
         i = self.next_destination
-        if i == 2:
+        if i == 4:
             return
 
-        if -0.000004517 <= self.error[0] <= 0.000004517:
+        if -0.000001517 <= self.error[0] <= 0.000001517:
             if -0.0000047487 <= self.error[1] <= 0.0000047487:
                 if -0.2 <= self.error[2] <= 0.2:
                     self.next_destination += 1
@@ -120,10 +125,11 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + \
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-        print(self.gps_position[2])
-        print(self.error[2])
-        if(round(self.gps_position[2], 1) == 0.3 and self.next_destination > 0):
-            self.box_flag += 1
+        # print(self.gps_position[2])
+        # print(self.error[2])
+        if(round(self.gps_position[2], 1) == 22.2 and self.next_destination == 5):
+            self.box_flag = 1
+            print("hiiii")
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])

@@ -11,7 +11,6 @@ class Grip():
         rospy.init_node('gripper_client')
 
         self.attech_situation = False
-        self.detech_msg = False
         self.detech_req = False
 
         rospy.Subscriber('/edrone/gripper_check', String, self.call_back)
@@ -23,17 +22,17 @@ class Grip():
     def gripper_client(self, check_condition):
         rospy.wait_for_service('/edrone/activate_gripper')
         carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
-        return carry(check_condition).result
+        msg_container = carry(check_condition)
+        return msg_container.result
 
     def detech_msg(self, msg):
         self.detech_req = msg.data
         # print(self.detech_req)
 
     def grip_check(self):
-        # print(i)
         if(self.attech_situation == 'True' and self.detech_req == 0):
             self.gripper_client(True)
-        elif(self.detech_req >= 1 and self.attech_situation == 'True'):
+        elif(self.detech_req == 1):
             self.gripper_client(False)
 
 
