@@ -28,12 +28,10 @@ class image_proc():
         self.sample_time = 0.1
 
         # Publishing the scanned destination
-        self.final_destination = rospy.Publisher(
-            '/final_setpoint', NavSatFix, queue_size=1)
+        self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
 
         # Subscribing to the camera topic
-        self.image_sub = rospy.Subscriber(
-            "/edrone/camera/image_raw", Image, self.image_callback)
+        self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
 
     def image_callback(self, data):
         ''' Callback function of camera topic'''
@@ -56,7 +54,6 @@ class image_proc():
                 # print(data)
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
-            print(data)
 
             # giving the scanned valut to publisher container
             self.destination.latitude = data[0]
