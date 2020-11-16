@@ -24,17 +24,17 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [[19.0, 72.0, 3],
-                            [19.0000451704, 72.0, 3],
-                            [19.0000451704, 72.0, 0.31]]
+        self.destination = [[19.0009248718, 71.9998318946, 25],
+                            [19.000704601, 71.9998955357, 25],
+                            [19.000704601, 71.9998955357, 22.16]]
         self.next_destination = 0
         self.box_flag = 0
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1507*10000,  1507*10000,  375]
-        self.Ki = [0*0.008, 0*0.008,  3*0.25]
-        self.Kd = [720*10000*5,  655*10000*5,  354]
+        self.Kp = [1500*10000,  1500*10000,  375]
+        self.Ki = [1*0.008, 1*0.008,  3*0.25]
+        self.Kd = [1100*10000*5,  1100*10000*5,  354]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -50,38 +50,18 @@ class Command():
         self.setpoint_cmd = edrone_cmd()
 
         # Publishing /pitch_error, /roll_error, /throttle_error
-        self.setpoint_pub = rospy.Publisher(
-            '/drone_command', edrone_cmd, queue_size=1)
+        self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
         self.op_pub = rospy.Publisher('op_flag', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher(
-            '/throttle_error', Float32, queue_size=1)
+        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        # rospy.Subscriber('/pid_tuning_altitude',
-        #                  PidTune, self.throttle_set_pid)
-        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
-    # def roll_set_pid(self, roll):
-    #     self.Kp[0] = roll.Kp * 1000
-    #     self.Ki[0] = roll.Ki * 0.008
-    #     self.Kd[0] = roll.Kd * 1000*5
-
-    # def pitch_set_pid(self, pitch):
-    #     self.Kp[1] = pitch.Kp * 100
-    #     self.Ki[1] = pitch.Ki * 0.008
-    #     self.Kd[1] = pitch.Kd * 0.3
-
-    # def throttle_set_pid(self, throttle):
-    #     self.Kp[2] = throttle.Kp * 1
-    #     self.Ki[2] = throttle.Ki * 0.25
-    #     self.Kd[2] = throttle.Kd * 1
 
     # this function will convert all rc messages in the range of 1000 to 2000
     def check(self, operator):
@@ -111,16 +91,12 @@ class Command():
         '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            self.error[i] = self.destination[self.next_destination][i] - \
-                self.gps_position[i]
-            self.change[i] = (
-                self.error[i] - self.prev_error[i]) / self.sample_time
+            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
+            self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-            self.output[i] = self.Kp[i] * self.error[i] + \
-                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-        # print(self.gps_position[2])
-        # print(self.error[2])
+            self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+
         if(round(self.gps_position[2], 1) == 0.3 and self.next_destination > 0):
             self.box_flag += 1
 

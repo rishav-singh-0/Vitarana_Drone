@@ -21,7 +21,7 @@ class PathPlanner():
         self.obs_range_top = LaserScan()
         self.obs_range_bottom = LaserScan()
 
-        self.yaw_error = 0
+        # self.yaw_error = 0
 
 
         # Publisher
@@ -57,17 +57,31 @@ class PathPlanner():
     def scan(self):
         '''For Processing the obtained sensor data'''
         # yaw to 10 degree
-        
+        data = self.obs_range_top
+        diff_x = abs(self.lat_to_x(self.current_location[0] - self.final_setpoint[0]))
+        diff_y = abs(self.long_to_y(self.current_location[1] - self.final_setpoint[1]))
+        if(data[3] > diff_y):
+            if( data[2] > diff_x):
+                # CHANGE HERE
+                self.checkpoint.longitude = self.current_location[1]
+
         return
 
     def planner(self):
 
-        ##############################################################
-        # Main Algorithm
-        ##############################################################
-
-        self.checkpoint.latitude = 0
+        self.checkpoint.latitude = self.
         self.checkpoint.longitude = 0
         self.checkpoint.altitude = 0
+
+        while(self.destination_check):
+            
+            if(All not Clear):
+                # do something
+                # roll untill its 'inf' in the range
+
+            else:
+                self.pub_checkpoint.publish(self.final_setpoint)
+                
+
 
         self.pub_checkpoint.publish(self.checkpoint)
