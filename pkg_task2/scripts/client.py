@@ -30,6 +30,7 @@ class Grip():
         # print(self.detech_req)
 
     def grip_check(self):
+        print(self.attech_situation,self.detech_req)
         if(self.attech_situation == 'True' and self.detech_req == 0):
             self.gripper_client(True)
         elif(self.detech_req == 1):

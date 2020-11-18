@@ -39,7 +39,7 @@ class image_proc():
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
-            print(e)
+            # print(e)
             return
 
     def read_qr(self):
@@ -51,6 +51,7 @@ class image_proc():
             for code in barcode:
                 data = code.data.decode('utf-8')
                 data = list(map(float, data.split(',')))
+                print(data)
                 # print(data)
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
