@@ -26,17 +26,18 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [[19.0009248718, 71.9998318945, 25.1604734039],
-                            [19.0007046575,  71.9998955286, 25.1604734039],
-                            [19.0007046575, 71.9998955286, 22.1599967919], [19.0007046575, 72.0, 25.1599967919], [19.0, 72.0, 25.1599]]
+        self.destination = [[19.0009248718, 71.9998318945, 23.1604734039],
+                            [19.0007046575,  71.9998955286, 23.1604734039],
+                            [19.0007046575, 71.9998955286, 22.1599967919],[19.0007046575,  71.9998955286, 23.1604734039]]
         self.next_destination = 0
         self.box_flag = 0
+        self.j=0
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1500*10000,  1500*10000,  375]
-        self.Ki = [1*0.008, 1*0.008,  3*0.25]
-        self.Kd = [1100*10000*5,  1100*10000*5,  354]
+        self.Kp = [2444*10000,  2363*10000,  375]
+        self.Ki = [8.0*0.008, 3*0.008,  3*0.25]
+        self.Kd = [1809*10000*5, 1026*10000*5,  354]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -57,6 +58,7 @@ class Command():
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
         self.op_pub = rospy.Publisher('op_flag', Float32, queue_size=1)
+        self.check_point_flag = rospy.Publisher('check_point_flag', Float32, queue_size=1)#it will simply give a signal that where to take the QR code value
         self.throttle_pub = rospy.Publisher(
             '/throttle_error', Float32, queue_size=1)
 
@@ -65,8 +67,8 @@ class Command():
         rospy.Subscriber('/edrone/gripper_check', String, self.call_back)
         # rospy.Subscriber('/pid_tuning_altitude',
         #                  PidTune, self.throttle_set_pid)
-        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
+        #rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
+        #rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
@@ -74,15 +76,15 @@ class Command():
     def call_back(self, state):
         self.attech_situation = state.data
 
-    # def roll_set_pid(self, roll):
-    #     self.Kp[0] = roll.Kp * 1000
-    #     self.Ki[0] = roll.Ki * 0.008
-    #     self.Kd[0] = roll.Kd * 1000*5
+    def roll_set_pid(self, roll):
+        self.Kp[0] = roll.Kp * 10000
+        self.Ki[0] = roll.Ki * 0.008
+        self.Kd[0] = roll.Kd * 10000*5
 
-    # def pitch_set_pid(self, pitch):
-    #     self.Kp[1] = pitch.Kp * 100
-    #     self.Ki[1] = pitch.Ki * 0.008
-    #     self.Kd[1] = pitch.Kd * 0.3
+    def pitch_set_pid(self, pitch):
+        self.Kp[1] = pitch.Kp * 10000
+        self.Ki[1] = pitch.Ki * 0.008
+        self.Kd[1] = pitch.Kd * 10000*5
 
     # def throttle_set_pid(self, throttle):
     #     self.Kp[2] = throttle.Kp * 1
@@ -104,17 +106,28 @@ class Command():
         ''' function will hendle all desired positions '''
 
         i = self.next_destination
-        if i == 4:
+        if i == 3:
+            # self.j+=1
             return
 
         if -0.000001517 <= self.error[0] <= 0.000001517:
-            if -0.0000047487 <= self.error[1] <= 0.0000047487:
+            if -0.0000027487 <= self.error[1] <= 0.0000027487:
                 if -0.2 <= self.error[2] <= 0.2:
-                    self.next_destination += 1
-                    print("destination reached")
+                    if(i==2 and self.attech_situation=='True'):
+                        self.next_destination += 1
+                        print("hello")
+                    elif(i!=2):
+                        self.next_destination += 1
+                        print("destination reached")
+                    print(i)
+
+                    # self.next_destination += 1
+                    # self.j+=1
+                    # print("destination reached")
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
+            
 
         for i in range(3):
             self.error[i] = self.destination[self.next_destination][i] - \
@@ -127,9 +140,10 @@ class Command():
                 self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
         # print(self.gps_position[2])
         # print(self.error[2])
-        if(round(self.gps_position[2], 1) == 22.2 and self.next_destination == 5):
+        if(round(self.gps_position[2], 1) == 25.2 and self.j == 5):
             self.box_flag = 1
-            print("hiiii")
+            print("box will detech by itself")
+            
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
@@ -143,6 +157,14 @@ class Command():
         self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
         self.setpoint_pub.publish(self.setpoint_cmd)
+        if(i==2):
+            self.check_point_flag.publish(1)
+        else:
+            self.check_point_flag.publish(0)
+        
+
+        # print(self.j)
+        
 
 
 if __name__ == '__main__':

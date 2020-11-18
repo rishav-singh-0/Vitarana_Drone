@@ -170,7 +170,7 @@ class Edrone():
         def degree_convert(operator): return operator * 102.4
 
         for i in range(3):
-            self.setpoint_euler[i] = self.setpoint_cmd[i] * 0.02 - 30
+            self.setpoint_euler[i] = self.setpoint_cmd[i] * 0.024 - 36
 
         # Also convert the range of 1000 to 2000 to 0 to 1024 for throttle here itslef
         # Because of physical limitations prop speed will never reach its max speed
