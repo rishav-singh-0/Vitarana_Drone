@@ -3,7 +3,6 @@
 import rospy
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 
-
 class PathPlanner():
 
     def __init__(self):
@@ -20,8 +19,8 @@ class PathPlanner():
         self.checkpoint = NavSatFix()
 
         # 
-        self.obs_range_top = LaserScan()
-        self.obs_range_bottom = LaserScan()
+        self.obs_range_top = []
+        self.obs_range_bottom = []
 
         # self.yaw_error = 0
         self.diff_range = [0, 0, 0, 0]
@@ -49,7 +48,7 @@ class PathPlanner():
 
     def range_finder_bottom_callback(self, msg):
         self.obs_range_bottom = msg.ranges
-    
+
     def lat_to_x(self, input_latitude):
         return 110692.0702932625 * (input_latitude - 19)
 
@@ -66,8 +65,9 @@ class PathPlanner():
         diff_x = abs(self.lat_to_x(self.current_location[0] - self.destination[0]))
         diff_y = abs(self.long_to_y(self.current_location[1] - self.destination[1]))
 
-        for i in range(4):
-            if self.range_finder_top[i] <= 1.5:
+        for i in range(len(self.obs_range_top)-1):
+            print(self.obs_range_top)
+            if self.obs_range_top[i] <= 1.5:
                 if i % 2 == 0:
                     self.checkpoint.latitude = self.current_location[0]
                 else:
@@ -79,6 +79,6 @@ class PathPlanner():
 if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
-    while not rospy.is_shutdown:
+    while not rospy.is_shutdown():
         planner.obstacle_avoid()
         rate.sleep()
