@@ -5,4 +5,5 @@
     <node pkg="pkg_task2" type="path_planner_beta.py" name="path_planner" />
     <node pkg="pkg_task2" type="attitude_controller.py" name="attitude_controller" />
     <node pkg="pkg_task2" type="position_controller.py" name="position_controller" />
+    <!-- <node pkg="pkg_task2" type="shutdown_hook.py" name="shutdown_hook" /> -->
 </launch>
