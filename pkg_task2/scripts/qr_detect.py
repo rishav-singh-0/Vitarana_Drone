@@ -62,9 +62,9 @@ class image_proc():
             # Publishing the scanned data through /final_destination topic
             # self.final_destination.publish(self.destination)
 
-            self.destination.latitude = 19
-            self.destination.longitude = 72
-            self.destination.altitude = 25
+            self.destination.latitude = 19.0007046575 
+            self.destination.longitude = 71.9998955286
+            self.destination.altitude = 22.1599967919
             self.final_destination.publish(self.destination)
 
         except ValueError:

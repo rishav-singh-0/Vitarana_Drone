@@ -99,14 +99,14 @@ class PathPlanner():
             elif 6 <= obs_distance < 12:
                 self.movement_in_1D = 4
             else:
-                self.movement_in_1D = 2
+                self.movement_in_1D = 2.5
 
         if self.movement_in_1D >= self.distance_xy:
             self.movement_in_1D = self.distance_xy
 
         for i in range(len(data)-1):
             if data[i] <= self.obs_closest_range:
-                if i % 2 == 0:
+                if i % 2 != 0:
                     self.movement_in_plane[0] = data[i] - self.obs_closest_range
                     self.movement_in_plane[1] = self.movement_in_1D
                 else:

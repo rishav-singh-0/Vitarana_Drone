@@ -25,6 +25,7 @@ class Command():
         # initialising desired position
         # [latitude,longitude,altitude]
         self.destination = [0, 0, 0]
+        self.final_destination = [0, 0, 0]
         self.take_destination = True
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
@@ -56,6 +57,7 @@ class Command():
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
+        rospy.Subscriber('/final_destination', NavSatFix, self.final_destination_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
@@ -66,6 +68,9 @@ class Command():
         if self.take_destination and self.destination != container:
             self.destination = container
             self.take_destination = False
+
+    def final_destination_callback(self, msg):
+        self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -82,11 +87,19 @@ class Command():
     def destination_check(self):
         ''' function will hendle all desired positions '''
 
-        if -0.000004517 <= self.error[0] <= 0.000004517:
-            if -0.0000047487 <= self.error[1] <= 0.0000047487:
+        if -0.000012517 <= self.error[0] <= 0.000012517:
+            if -0.0000127487 <= self.error[1] <= 0.0000127487:
+
                 if -0.2 <= self.error[2] <= 0.2:
                     self.take_destination = True
                     print("destination reached")
+
+    def final_destination_check(self):
+        if -0.000012517 <= self.error[0] <= 0.000012517:
+            if -0.0000127487 <= self.error[1] <= 0.0000127487:
+                self.take_destination = False
+                self.destination = self.final_destination
+                print("final destination reached")
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
@@ -121,4 +134,5 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         command.pid()
         command.destination_check()
+        # command.final_destination_check()
         rate.sleep()  # frequency of 100 Hz
