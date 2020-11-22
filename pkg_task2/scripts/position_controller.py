@@ -24,7 +24,7 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [0, 0, 0]
+        self.destination = [19.0009248718, 71.9998318945, 22.1599967919]
         self.final_destination = [0, 0, 0]
         self.take_destination = True
 
@@ -57,7 +57,7 @@ class Command():
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
-        rospy.Subscriber('/final_destination', NavSatFix, self.final_destination_callback)
+        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_destination_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
@@ -66,11 +66,16 @@ class Command():
         container = [msg.latitude, msg.longitude, msg.altitude]
         rospy.loginfo(container)
         if self.take_destination and self.destination != container:
-            self.destination = container
+            if(-0.00001517<(self.final_destination[0]-self.gps_position[0]<-0.00001517)):
+                print("may be it will land on the box")
+                self.destination=self.final_destination
+            else:
+                self.destination = container
             self.take_destination = False
 
     def final_destination_callback(self, msg):
         self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
+        print(self.final_destination)
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -89,23 +94,22 @@ class Command():
 
         if -0.000012517 <= self.error[0] <= 0.000012517:
             if -0.0000127487 <= self.error[1] <= 0.0000127487:
-
                 if -0.2 <= self.error[2] <= 0.2:
                     self.take_destination = True
-                    print("destination reached")
+                    # print("destination reached")
 
-    def final_destination_check(self):
-        if -0.000012517 <= self.error[0] <= 0.000012517:
-            if -0.0000127487 <= self.error[1] <= 0.0000127487:
-                self.take_destination = False
-                self.destination = self.final_destination
-                print("final destination reached")
+    # def final_destination_check(self):
+    #     if -0.000012517 <= self.error[0] <= 0.000012517:
+    #         if -0.0000127487 <= self.error[1] <= 0.0000127487:
+    #             self.take_destination = False
+    #             self.destination = self.final_destination
+    #             print("final destination reached")
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            rospy.loginfo(self.destination)
+            # rospy.loginfo(self.destination)
             self.error[i] = self.destination[i] - self.gps_position[i]
             self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
