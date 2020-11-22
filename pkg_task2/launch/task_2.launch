@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <node pkg="pkg_task2" type="qr_detect.py" name="qrcode_scan" />
-    <node pkg="pkg_task2" type="gripper_client.py" name="gripper_clint" />
-    <node pkg="pkg_task2" type="path_planner_beta.py" name="path_planner" />
+    <!-- <node pkg="pkg_task2" type="gripper_client.py" name="gripper_clint" /> -->
     <node pkg="pkg_task2" type="attitude_controller.py" name="attitude_controller" />
+    <node pkg="pkg_task2" type="path_planner.py" name="path_planner" />
     <node pkg="pkg_task2" type="position_controller.py" name="position_controller" />
     <!-- <node pkg="pkg_task2" type="shutdown_hook.py" name="shutdown_hook" /> -->
 </launch>

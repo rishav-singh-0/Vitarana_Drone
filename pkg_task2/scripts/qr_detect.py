@@ -51,8 +51,6 @@ class image_proc():
             for code in barcode:
                 data = code.data.decode('utf-8')
                 data = list(map(float, data.split(',')))
-                print(data)
-                # print(data)
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
 
@@ -62,6 +60,11 @@ class image_proc():
             self.destination.altitude = data[2]
 
             # Publishing the scanned data through /final_destination topic
+            # self.final_destination.publish(self.destination)
+
+            self.destination.latitude = 19
+            self.destination.longitude = 72
+            self.destination.altitude = 25
             self.final_destination.publish(self.destination)
 
         except ValueError:

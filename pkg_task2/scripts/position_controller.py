@@ -24,17 +24,14 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [[19.0009248718, 71.9998318946, 25],
-                            [19.000704601, 71.9998955357, 25],
-                            [19.000704601, 71.9998955357, 22.16]]
-        self.next_destination = 0
-        self.box_flag = 0
+        self.destination = [0, 0, 0]
+        self.take_destination = True
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1500*10000,  1500*10000,  375]
-        self.Ki = [1*0.008, 1*0.008,  3*0.25]
-        self.Kd = [1100*10000*5,  1100*10000*5,  354]
+        self.Kp = [1007*10000,  1007*10000,  375]
+        self.Ki = [7*0.008, 7*0.008,  3*0.25]
+        self.Kd = [592*10000*5, 592*10000*5,  354]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -58,9 +55,17 @@ class Command():
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
+        rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
+
+    def checkpoint_callback(self, msg):
+        container = [msg.latitude, msg.longitude, msg.altitude]
+        rospy.loginfo(container)
+        if self.take_destination and self.destination != container:
+            self.destination = container
+            self.take_destination = False
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -77,28 +82,23 @@ class Command():
     def destination_check(self):
         ''' function will hendle all desired positions '''
 
-        i = self.next_destination
-        if i == 2:
-            return
-
         if -0.000004517 <= self.error[0] <= 0.000004517:
             if -0.0000047487 <= self.error[1] <= 0.0000047487:
                 if -0.2 <= self.error[2] <= 0.2:
-                    self.next_destination += 1
+                    self.take_destination = True
                     print("destination reached")
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
-            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
+            rospy.loginfo(self.destination)
+            self.error[i] = self.destination[i] - self.gps_position[i]
             self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
-        if(round(self.gps_position[2], 1) == 0.3 and self.next_destination > 0):
-            self.box_flag += 1
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
@@ -108,7 +108,6 @@ class Command():
 
         # publishing all the values to attitude_controller and for plotting purpose
         self.roll_pub.publish(self.error[0])
-        self.op_pub.publish(self.box_flag)
         self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
         self.setpoint_pub.publish(self.setpoint_cmd)
