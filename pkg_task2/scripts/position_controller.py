@@ -24,9 +24,11 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [0, 0, 0]
-        self.final_destination = [0, 0, 0]
-        self.take_destination = True
+        self.destination = [0, 0, 0]            # destination ehere drone is currrently heded
+        self.final_destination = [0, 0, 0]      # container for final destination 
+        
+        # this will be true if drone has reached its currently provided setpoint
+        self.take_destination = True            
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
@@ -62,11 +64,13 @@ class Command():
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
     def checkpoint_callback(self, msg):
+        '''Taking checkpoints from path_planner.py'''
+
         container = [msg.latitude, msg.longitude, msg.altitude]
 
-        if self.take_destination and self.destination != container:
-            # print(container)
-            if(-0.00002517 < (self.final_destination[0]-self.gps_position[0]) < 0.00002517):
+        if self.take_destination:
+            # checking if the drone is hovering over final destination
+            if(-0.00001017 < (self.final_destination[0]-self.gps_position[0]) < 0.00001017):
                 self.destination = self.final_destination
             else:
               self.destination = container
@@ -74,7 +78,6 @@ class Command():
 
     def final_destination_callback(self, msg):
         self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
-        # print(self.final_destination)
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -90,10 +93,9 @@ class Command():
 
     def destination_check(self):
         ''' function will hendle all desired positions '''
-
-        if -0.000013517 <= self.error[0] <= 0.000013517:
+        if -0.000010517 <= self.error[0] <= 0.000010517:
             if -0.0000127487 <= self.error[1] <= 0.0000127487:
-                if -0.2 <= self.error[2] <= 0.2:
+                if -0.1 <= self.error[2] <= 0.1:
                     self.take_destination = True
                     # print("destination reached")
 

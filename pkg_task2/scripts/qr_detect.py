@@ -29,7 +29,7 @@ class image_proc():
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
 
-        self.switch=True
+        self.box_switch=True
         self.attech_situation='False'
         self.data = [0, 0, 0]
 
@@ -41,9 +41,9 @@ class image_proc():
         rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
         #rospy.Subscriber('check_point_flag', Float32, self.detech_msg)
 
+    
     def gripper_check_callback(self, state):
         self.attech_situation = state.data
-
 
     def detech_msg(self, msg):
         self.detech_req = msg.data
@@ -55,7 +55,7 @@ class image_proc():
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
         except CvBridgeError as e:
-            # print(e)
+            print(e)
             return
 
     def read_qr(self):
@@ -69,14 +69,14 @@ class image_proc():
             # cv2.imshow("show",self.img)
             # cv2.waitKey(100)
 
-            if(self.switch and self.attech_situation=='True' and self.data!=[0,0,0]):
+            if(self.box_switch and self.attech_situation=='True' and self.data!=[0,0,0]):
                 self.destination.latitude = self.data[0]
                 self.destination.longitude = self.data[1]
                 self.destination.altitude = self.data[2]
                 #print(self.destination)
-                self.switch=False
+                self.box_switch=False
     
-            elif(self.switch):
+            if(self.box_switch):
                 # Publishing the coordinates of box if box is not attached or data is not scanned
                 self.destination.latitude = 19.0007046575 
                 self.destination.longitude = 71.9998955286
