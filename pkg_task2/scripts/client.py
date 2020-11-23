@@ -62,9 +62,9 @@ class Grip():
         if(self.attech_situation=='True'):
             if(self.req):
                 self.gripper_client(True)
-                self.cnt+=1
+                #self.cnt+=1
             #if(self.detech==1):
-            if( self.req==False and self.cnt==1):
+            if( self.req==False):
                 self.gripper_client(False)
 
 
