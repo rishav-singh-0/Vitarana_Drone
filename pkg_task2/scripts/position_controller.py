@@ -5,7 +5,7 @@
 import rospy
 from vitarana_drone.msg import *
 from pid_tune.msg import PidTune
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from sensor_msgs.msg import NavSatFix
 
 # class for position_controller.py
@@ -24,15 +24,15 @@ class Command():
 
         # initialising desired position
         # [latitude,longitude,altitude]
-        self.destination = [19.0009248718, 71.9998318945, 22.1599967919]
+        self.destination = [0, 0, 0]
         self.final_destination = [0, 0, 0]
         self.take_destination = True
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
-        self.Kp = [1007*10000,  1007*10000,  375]
+        self.Kp = [1007*10000,  1097*10000,  375]
         self.Ki = [7*0.008, 7*0.008,  3*0.25]
-        self.Kd = [592*10000*5, 592*10000*5,  354]
+        self.Kd = [592*50000, 590*50000,  354]
 
         # [roll, pitch, throttle]
         self.error = [0, 0, 0]
@@ -51,7 +51,6 @@ class Command():
         self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.op_pub = rospy.Publisher('op_flag', Float32, queue_size=1)
         self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
 
         # Subscribers
@@ -64,18 +63,18 @@ class Command():
 
     def checkpoint_callback(self, msg):
         container = [msg.latitude, msg.longitude, msg.altitude]
-        rospy.loginfo(container)
+
         if self.take_destination and self.destination != container:
-            if(-0.00001517<(self.final_destination[0]-self.gps_position[0]<-0.00001517)):
-                print("may be it will land on the box")
-                self.destination=self.final_destination
+            # print(container)
+            if(-0.00002517 < (self.final_destination[0]-self.gps_position[0]) < 0.00002517):
+                self.destination = self.final_destination
             else:
-                self.destination = container
+              self.destination = container
             self.take_destination = False
 
     def final_destination_callback(self, msg):
         self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
-        print(self.final_destination)
+        # print(self.final_destination)
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -92,18 +91,12 @@ class Command():
     def destination_check(self):
         ''' function will hendle all desired positions '''
 
-        if -0.000012517 <= self.error[0] <= 0.000012517:
+        if -0.000013517 <= self.error[0] <= 0.000013517:
             if -0.0000127487 <= self.error[1] <= 0.0000127487:
                 if -0.2 <= self.error[2] <= 0.2:
                     self.take_destination = True
                     # print("destination reached")
 
-    # def final_destination_check(self):
-    #     if -0.000012517 <= self.error[0] <= 0.000012517:
-    #         if -0.0000127487 <= self.error[1] <= 0.0000127487:
-    #             self.take_destination = False
-    #             self.destination = self.final_destination
-    #             print("final destination reached")
 
     def pid(self):
         '''Function for implimenting the pid algorithm'''
@@ -138,5 +131,4 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         command.pid()
         command.destination_check()
-        # command.final_destination_check()
         rate.sleep()  # frequency of 100 Hz

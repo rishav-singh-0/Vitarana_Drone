@@ -8,6 +8,7 @@ import numpy as np
 from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import String
 import rospy
+import time
 
 
 class image_proc():
@@ -25,9 +26,7 @@ class image_proc():
 
         self.switch=True
         self.attech_situation='False'
-        self.cross_co_ordinates=NavSatFix()
         self.data = [0, 0, 0]
-
 
         # Publishing the scanned destination
         self.final_destination = rospy.Publisher(
@@ -66,36 +65,23 @@ class image_proc():
             # cv2.waitKey(100)
             print(data)
 
-            if(self.data!=[0,0,0]):
-                self.cross_co_ordinates.latitude=self.data[0]
-                self.cross_co_ordinates.longitude=self.data[1]
-                self.cross_co_ordinates.altitude=self.data[2]
-
-            # self.destination.latitude = self.data[0]
-            # self.destination.longitude = self.data[1]
-            # self.destination.altitude = self.data[2]
-            
-
-            if(self.switch and self.attech_situation=='True'):
-                self.destination.latitude = self.cross_co_ordinates.latitude
-                self.destination.longitude = self.cross_co_ordinates.longitude
-                self.destination.altitude = self.cross_co_ordinates.altitude
+            if(self.switch and self.attech_situation=='True' and self.data!=[0,0,0]):
+                self.destination.latitude = self.data[0]
+                self.destination.longitude = self.data[1]
+                self.destination.altitude = self.data[2]
                 #print(self.destination)
                 self.switch=False
+    
             elif(self.switch):
+                # Publishing the coordinates of box if box is not attached or data is not scanned
                 self.destination.latitude = 19.0007046575 
                 self.destination.longitude = 71.9998955286
                 self.destination.altitude = 22.1599967919
 
-
-
-            # Publishing the scanned data through /final_destination topic
-            # self.final_destination.publish(self.destination)
-
             print(self.destination)
             self.final_destination.publish(self.destination)
 
-        except ValueError:
+        except ValueError, IndexError:
             pass
 
 
