@@ -25,9 +25,12 @@ class Grip():
     
 
     def final_destination_callback(self, msg):
+        
         self.container= [msg.latitude, msg.longitude, msg.altitude]
         if(self.final_destination!=self.container):
+            print("hello")
             self.final_destination = self.container
+            self.cnt1+=1
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
@@ -44,16 +47,19 @@ class Grip():
 
 
     def grip_check(self):
-        if(self.final_destination!=self.container):
-            if(-0.00001517<(self.final_destination[0]-self.gps_position[0])<0.00001517):
-                if(-0.15 <= (self.final_destination[2]-self.gps_position[2]) <= 0.15):
-                    print(self.final_destination)
-                    self.req=not self.req
+        
+        if(-0.00001517<(self.final_destination[0]-self.gps_position[0])<0.00001517):
+            if(-0.15 <= (self.final_destination[2]-self.gps_position[2]) <= 0.15):
+                #print(self.final_destination)
+                if(self.cnt1%2!=0):
+                    self.req=True
+                else:
+                    self.req=False
                 
 
         # print(self.attech_situation)
         # print(self.cnt)
-        if(self.attech_situation=='True' and self.cnt==0):
+        if(self.attech_situation=='True'):
             if(self.req):
                 self.gripper_client(True)
                 self.cnt+=1
