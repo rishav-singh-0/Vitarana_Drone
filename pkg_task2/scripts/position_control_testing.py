@@ -53,7 +53,6 @@ class Command():
         self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.op_pub = rospy.Publisher('op_flag', Float32, queue_size=1)
         self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
 
         # Subscribers
@@ -66,16 +65,15 @@ class Command():
 
     def checkpoint_callback(self, msg):
         container = [msg.latitude, msg.longitude, msg.altitude]
-        rospy.loginfo(container)
+        #rospy.loginfo(container)
         if self.take_destination and self.destination != container:
-            
+            print(container)
             if(-0.00001517<(self.final_destination[0]-self.gps_position[0])<0.00001517):
-                # print("may be it will land on the box")
-                self.box_flag=1
+                print("may be it will land on the box")
                 self.destination=self.final_destination
             else:
                 self.destination = container
-            print(self.destination)
+            #print(self.destination)
             self.take_destination = False
 
     def final_destination_callback(self, msg):
@@ -100,11 +98,6 @@ class Command():
         if -0.000012517 <= self.error[0] <= 0.000012517:
             if -0.0000127487 <= self.error[1] <= 0.0000127487:
                 if -0.08 <= self.error[2] <= 0.08:
-                    if(self.box_flag==1):
-                        self.attech= not self.attech
-                        self.op_pub.publish(self.attech)
-                        
-                        print(self.box_flag)
                     self.take_destination = True
                     # print("destination reached")
 
