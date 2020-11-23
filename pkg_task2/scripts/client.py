@@ -14,11 +14,15 @@ class Grip():
         self.detech_req = 1
         self.detech=1
         self.cnt=0
+        self.box_flag=0
 
-        rospy.Subscriber('/edrone/gripper_check', String, self.call_back)
+        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
+        rospy.Subscriber('op_flag',Float32 , self.box_flag_callback)
 
-        
-    def call_back(self, state):
+    def box_flag_callback(self,msg):
+        self.box_flag=msg.data
+
+    def gripper_check_callback(self, state):
         self.attech_situation = state.data
 
     def gripper_client(self, check_condition):
@@ -27,18 +31,20 @@ class Grip():
         msg_container = carry(check_condition)
         return msg_container.result
 
-    def detech_msg(self, msg):
-        self.detech_req = msg.data
-        # print(self.detech_req)
+    # def detech_msg(self, msg):
+    #     self.detech_req = msg.data
+    #     # print(self.detech_req)
 
     def grip_check(self):
-        print(self.attech_situation,self.detech_req)
+        print(self.attech_situation,self.box_flag)
+        print(self.box_flag)
+        print(self.cnt)
         if(self.attech_situation=='True' and self.cnt==0):
-            if(self.detech_req == 1):
+            if(self.box_flag == 1):
                 self.gripper_client(True)
                 self.cnt+=1
             #if(self.detech==1):
-            if(self.detech_req == 0):
+            if(self.box_flag == 0 and self.cnt==1):
                 self.gripper_client(False)
 
 
