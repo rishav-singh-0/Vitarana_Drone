@@ -17,6 +17,7 @@ class Grip():
         self.attech_situation = False
         self.cnt=0
         self.cnt1=0
+        self.cnt2=0
         self.req=False
 
         rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
@@ -60,12 +61,13 @@ class Grip():
         # print(self.attech_situation)
         # print(self.cnt)
         if(self.attech_situation=='True'):
-            if(self.req):
+            if(self.req and self.cnt==0):
                 self.gripper_client(True)
                 self.cnt+=1
             #if(self.detech==1):
-            if( self.req==False and self.cnt==1):
+            if( self.req==False and self.cnt2==0):
                 self.gripper_client(False)
+                self.cnt2+=1
 
 
 if __name__ == "__main__":
