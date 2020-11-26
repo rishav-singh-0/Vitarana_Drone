@@ -28,8 +28,8 @@ class image_proc():
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
 
-        self.box_switch=True
-        self.attech_situation='False'
+        self.box_switch = True
+        self.attech_situation = 'False'
         self.data = [0, 0, 0]
 
         # Publishing the scanned destination
@@ -37,11 +37,12 @@ class image_proc():
             '/final_setpoint', NavSatFix, queue_size=1)
 
         # Subscribing to the camera topic
-        self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
-        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
+        self.image_sub = rospy.Subscriber(
+            '/edrone/camera/image_raw', Image, self.image_callback)
+        rospy.Subscriber('/edrone/gripper_check', String,
+                         self.gripper_check_callback)
         #rospy.Subscriber('check_point_flag', Float32, self.detech_msg)
 
-    
     def gripper_check_callback(self, state):
         self.attech_situation = state.data
 
@@ -59,12 +60,31 @@ class image_proc():
             return
 
     def read_qr(self):
-        print(type(self.img), int(self.img))
-        # barcode = decode(self.img)
-        print(self.img)
-        # # (rows, cols, channels) = self.img.shape
-        # if cols > 60 and rows > 60:
-        #     cv2.circle(self.img, (50, 50), 10, 255)
+        '''Image QR-Code scanning and publishing algo'''
+        try:
+            barcode = decode(self.img)
+            # used for loop to eleminate the possibility of multiple or null qrcode check
+            for code in barcode:
+                self.data = code.data.decode('utf-8')
+                self.data = list(map(float, self.data.split(',')))
+            # cv2.imshow("show",self.img)
+            # cv2.waitKey(100)
+
+            if(self.box_switch and self.attech_situation == 'True' and self.data != [0, 0, 0]):
+                self.destination.latitude = self.data[0]
+                self.destination.longitude = self.data[1]
+                self.destination.altitude = self.data[2]
+                # print(self.destination)
+                self.box_switch = False
+
+            if(self.box_switch):
+                # Publishing the coordinates of box if box is not attached or data is not scanned
+                self.destination.latitude = 19.0007046575
+                self.destination.longitude = 71.9998955286
+                self.destination.altitude = 22.1599967919
+
+            print(self.destination)
+            self.final_destination.publish(self.destination)
 
         cv2.imshow("Image window", self.img)
         # cv2.imshow(self.img)
