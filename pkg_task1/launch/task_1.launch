@@ -1,0 +1,25 @@
+<launch>
+    <node pkg="pkg_task1" type="attitude_controller.py" name="attitude_controller" />
+    <node pkg="pkg_task1" type="position_controller.py" name="position_controller" />
+    <!-- <node pkg="pid_tune" type="pid_tune_drone.py" name="pid_tuning_altitude"> 
+       <param name="ppid_ui_enable" value="false"/>
+       <param name="rpid_ui_enable" value="true"/>
+       <param name="ypid_ui_enable" value="false"/>
+       <param name="tpid_ui_enable" value="false"/>
+    </node>
+
+    <node pkg="plotjuggler" type="PlotJuggler" name="PlotJuggler" />  -->
+
+    <arg name="record" default="false"/>
+    <arg name="duration" default="30"/>
+    <arg name="rec_name" default="Task_1_VD.bag"/>
+
+    <group if="$(arg record)">
+
+        <node name="rosbag_record_position" pkg="rosbag" type="record"
+        args="record -O $(find vitarana_drone)/bag_files/$(arg rec_name) --duration=$(arg duration) /edrone/gps /edrone/gps_velocity" output="screen"/>
+
+    </group>
+
+
+</launch>
