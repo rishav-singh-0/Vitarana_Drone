@@ -111,7 +111,6 @@ class Command():
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
             self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
-
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
         self.setpoint_cmd.rcPitch = self.check(self.output[1])

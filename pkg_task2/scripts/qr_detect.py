@@ -54,6 +54,7 @@ class image_proc():
         try:
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
+            cv2.imshow("Image window", self.img)
         except CvBridgeError as e:
             print(e)
             return
