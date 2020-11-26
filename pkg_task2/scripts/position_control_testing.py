@@ -27,8 +27,8 @@ class Command():
         self.destination = [19.0009248718, 71.9998318945, 22.1599967919]
         self.final_destination = [0, 0, 0]
         self.take_destination = True
-        self.box_flag=0
-        self.attech=0
+        self.box_flag = 0
+        self.attech = 0
 
         # necessary variables for calculation of desired position for roll,pitch and throttle
         # [roll, pitch, throttle]
@@ -50,38 +50,41 @@ class Command():
         self.setpoint_cmd = edrone_cmd()
 
         # Publishing /pitch_error, /roll_error, /throttle_error
-        self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
+        self.setpoint_pub = rospy.Publisher(
+            '/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
+        self.throttle_pub = rospy.Publisher(
+            '/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
-        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_destination_callback)
+        rospy.Subscriber('/final_setpoint', NavSatFix,
+                         self.final_destination_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
     def checkpoint_callback(self, msg):
         container = [msg.latitude, msg.longitude, msg.altitude]
-        #rospy.loginfo(container)
+        # rospy.loginfo(container)
         if self.take_destination and self.destination != container:
             print(container)
-            if(-0.00001517<(self.final_destination[0]-self.gps_position[0])<0.00001517):
+            if(-0.00001517 < (self.final_destination[0]-self.gps_position[0]) < 0.00001517):
                 print("may be it will land on the box")
-                self.destination=self.final_destination
+                self.destination = self.final_destination
             else:
                 self.destination = container
-            #print(self.destination)
+            # print(self.destination)
             self.take_destination = False
 
     def final_destination_callback(self, msg):
         self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
-        #print(self.final_destination)
-
+        # print(self.final_destination)
 
     # this function will convert all rc messages in the range of 1000 to 2000
+
     def check(self, operator):
         ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
         operator = self.equilibrium_value + operator
@@ -114,11 +117,12 @@ class Command():
         for i in range(3):
             # rospy.loginfo(self.destination)
             self.error[i] = self.destination[i] - self.gps_position[i]
-            self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
+            self.change[i] = (
+                self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-            self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
-
+            self.output[i] = self.Kp[i] * self.error[i] + \
+                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # figure out the values  for roll,pitch and throttle
         self.setpoint_cmd.rcRoll = self.check(self.output[0])
