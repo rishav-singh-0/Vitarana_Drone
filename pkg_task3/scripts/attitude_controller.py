@@ -23,6 +23,7 @@ from std_msgs.msg import Float32
 from sensor_msgs.msg import Imu
 from pid_tune.msg import PidTune
 from vitarana_drone.msg import *
+from std_srvs.srv import Empty
 
 
 class Edrone():
@@ -102,6 +103,10 @@ class Edrone():
         # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
         # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
         # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
+
+        #ShutdownHook
+        rospy.wait_for_service('/gazebo/reset_world')
+        self.reset_world = rospy.ServiceProxy('/gazebo/reset_world',Empty)
 
         # ------------------------------------------------------------------------------------------------------------
 
@@ -215,6 +220,14 @@ class Edrone():
         self.pwm_pub.publish(self.pwm_cmd)
         # ------------------------------------------------------------------------------------------------------------------------
 
+    def shutdown_hook(self):
+        print("shutdown time!")
+        self.pwm_cmd.prop1 = self.pwm_cmd.prop2 = self.pwm_cmd.prop3 = self.pwm_cmd.prop4 = 0
+        self.pwm_pub.publish(self.pwm_cmd)
+        self.reset_world()
+        rospy.signal_shutdown('Terminating Signal provided')
+
+
 
 if __name__ == '__main__':
 
@@ -223,4 +236,5 @@ if __name__ == '__main__':
     r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
         e_drone.pid()
+        rospy.on_shutdown(e_drone.shutdown_hook)
         r.sleep()
