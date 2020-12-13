@@ -112,7 +112,6 @@ if __name__ == '__main__':
     r = rospy.Rate(1/image_proc_obj.sample_time)
     while not rospy.is_shutdown():
         image_proc_obj.read_qr()
-        image_proc_obj.detect_marker()
         r.sleep()
     # cv2.destroyAllWindows()
     rospy.spin()
