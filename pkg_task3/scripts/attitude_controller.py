@@ -182,28 +182,21 @@ class Edrone():
         self.throttle_cmd = (self.rcThrottle - 1000) * 1.024
 
         for i in range(3):
-            self.error[i] = self.setpoint_euler[i] - \
-                degrees(self.drone_orientation_euler[i])
-            self.change[i] = (
-                self.error[i] - self.prev_error[i]) / self.sample_time
+            self.error[i] = self.setpoint_euler[i] - degrees(self.drone_orientation_euler[i])
+            self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
-            self.output[i] = self.Kp[i] * self.error[i] + \
-                self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
+            self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # Converting range 1000 to 2000 to degrees
         self.roll_cmd = degree_convert(self.output[0])
         self.pitch_cmd = degree_convert(self.output[1])
         self.yaw_cmd = degree_convert(self.output[2])
 
-        self.pwm_cmd.prop1 = self.throttle_cmd - \
-            self.roll_cmd + self.pitch_cmd - self.yaw_cmd
-        self.pwm_cmd.prop2 = self.throttle_cmd - \
-            self.roll_cmd - self.pitch_cmd + self.yaw_cmd
-        self.pwm_cmd.prop3 = self.throttle_cmd + \
-            self.roll_cmd - self.pitch_cmd - self.yaw_cmd
-        self.pwm_cmd.prop4 = self.throttle_cmd + \
-            self.roll_cmd + self.pitch_cmd + self.yaw_cmd
+        self.pwm_cmd.prop1 = self.throttle_cmd - self.roll_cmd + self.pitch_cmd - self.yaw_cmd
+        self.pwm_cmd.prop2 = self.throttle_cmd - self.roll_cmd - self.pitch_cmd + self.yaw_cmd
+        self.pwm_cmd.prop3 = self.throttle_cmd + self.roll_cmd - self.pitch_cmd - self.yaw_cmd
+        self.pwm_cmd.prop4 = self.throttle_cmd + self.roll_cmd + self.pitch_cmd + self.yaw_cmd
 
         # Vreifying if prop speed is within range if not making it
         self.check(self.pwm_cmd.prop1)

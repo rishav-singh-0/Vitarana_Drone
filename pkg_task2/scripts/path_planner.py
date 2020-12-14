@@ -12,15 +12,8 @@ class PathPlanner():
 
         # Destination to be reached
         # [latitude, longitude, altitude]
-        # self.destination = [0, 0, 0]
-        #co-ordinates for reaching at marker
-        self.destination=[18.9990965928,72.0000664814,10.75]
-        #counter for data filtretion
-        self.cnt=0
-        #drone co-ordinates
-        self.drone_co_ordinates=[0,0,0]
-        #threshould for altitude
-        self.offset=1.5        # Converting latitude and longitude in meters for calculation
+        self.destination = [0, 0, 0]
+        # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
         # Present Location of the DroneNote
@@ -53,23 +46,18 @@ class PathPlanner():
             '/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
-        # rospy.Subscriber('/final_setpoint', NavSatFix,
-        #                  self.final_setpoint_callback)
+        rospy.Subscriber('/final_setpoint', NavSatFix,
+                         self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan,
                          self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
-    # def final_setpoint_callback(self, msg):
-    #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
+    def final_setpoint_callback(self, msg):
+        self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
-        if(msg.latitude!=0 and msg.longitude!=0):
-            if(self.cnt==0):
-                self.drone_co_ordinates=[msg.latitude, msg.longitude, msg.altitude]
-                self.current_location = [msg.latitude, msg.longitude, msg.altitude]
-                self.cnt+=1
-            self.current_location = [msg.latitude, msg.longitude, msg.altitude]
+        self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
         self.obs_range_top = msg.ranges
@@ -158,11 +146,10 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        self.checkpoint.altitude = self.drone_co_ordinates[2]+self.offset
+        self.checkpoint.altitude = 24
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
-        print(self.checkpoint)
 
 
 if __name__ == "__main__":
