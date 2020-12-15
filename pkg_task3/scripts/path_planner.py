@@ -113,19 +113,6 @@ class PathPlanner():
                     self.take_destination = True
                     # print("destination reached")
 
-    def pre_destination(self):
-        '''it will work for reaching at the desired altitude after reaching 1m above co-ordiantes'''
-        if(not self.hover_complete):
-             print("hello")
-             self.checkpoint.latitude = self.current_location[0]
-             self.checkpoint.longitude = self.current_location[1]
-             self.checkpoint.altitude = self.destination[2]+1
-             self.hover_complete=not self.hover_complete
-        else:
-             self.checkpoint.latitude = self.current_location[0]
-             self.checkpoint.longitude = self.current_location[1]
-             self.checkpoint.altitude = self.destination[2]+4
-
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
         checkpoint for avoiding obstacles'''
@@ -221,7 +208,7 @@ class PathPlanner():
             edge_reached = True
 
         # see if marker is detected
-        
+                
 
 
         return

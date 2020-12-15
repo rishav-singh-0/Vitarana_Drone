@@ -2,6 +2,7 @@
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
+import os
 import numpy as np
 from matplotlib import pyplot as plt
 import rospy
@@ -38,7 +39,8 @@ class marker_detection():
         '''Image QR-Code scanning and publishing algo'''
         if(self.img.size>1):
             try:
-                logo_cascade = cv2.CascadeClassifier('/home/kashyap/catkin_ws/src/pkg_task3/data/cascade.xml')
+                logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../data/cascade.xml'))
+
             #print(self.img.size)
             #print(type(self.img[1][1][1)
 
