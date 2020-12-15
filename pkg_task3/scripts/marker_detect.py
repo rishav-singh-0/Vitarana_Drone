@@ -38,19 +38,19 @@ class image_proc():
         self.logo_cascade = cv2.CascadeClassifier('../data/cascade.xml')
 
         # Publishing the scanned destination
-        self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
+        # self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
 
         # Subscribing to the camera topic
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
-        rospy.Subscriber('/edrone/gripper_check', String,self.gripper_check_callback)
+        # rospy.Subscriber('/edrone/gripper_check', String,self.gripper_check_callback)
         #rospy.Subscriber('check_point_flag', Float32, self.detech_msg)
 
-    def gripper_check_callback(self, state):
-        self.attech_situation = state.data
+    # def gripper_check_callback(self, state):
+    #     self.attech_situation = state.data
 
-    def detech_msg(self, msg):
-        self.detech_req = msg.data
-        # print(self.detech_req)
+    # def detech_msg(self, msg):
+    #     self.detech_req = msg.data
+    #     # print(self.detech_req)
 
     def image_callback(self, data):
         ''' Callback function of camera topic'''
@@ -64,16 +64,17 @@ class image_proc():
 
     def detect_marker(self):
         try:
-            gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+            if(self.img.size > 1):
+                gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
-            # image, reject levels level weights.
-            logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
+                # image, reject levels level weights.
+                logo = self.logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
 
-            for (x, y, w, h) in logo:
-                cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-            plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
-            plt.show()
-        except :
+                for (x, y, w, h) in logo:
+                    cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
+                plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
+                plt.show()
+        except ValueError, IndexError:
             pass
 
 
