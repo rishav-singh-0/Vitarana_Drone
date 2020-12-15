@@ -12,8 +12,18 @@ class PathPlanner():
 
         # Destination to be reached
         # [latitude, longitude, altitude]
-        self.destination = [0, 0, 0]
-        # Converting latitude and longitude in meters for calculation
+        # self.destination = [0, 0, 0]
+        #co-ordinates for reaching at marker
+        self.destination=[18.9990965928,72.0000664814,10.75]
+        self.take_destination=False
+        #checking if its hovering over pre_co-ordinates
+        self.hover_complete=False
+        #counter for data filtretion
+        self.cnt=0
+        #drone co-ordinates
+        self.drone_co_ordinates=[0,0,0]
+        #threshould for altitude
+        self.offset=1        # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
         # Present Location of the DroneNote
@@ -57,11 +67,16 @@ class PathPlanner():
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
-    def final_setpoint_callback(self, msg):
-        self.destination = [msg.latitude, msg.longitude, msg.altitude]
+    # def final_setpoint_callback(self, msg):
+    #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
-        self.current_location = [msg.latitude, msg.longitude, msg.altitude]
+        if(msg.latitude!=0 and msg.longitude!=0):
+            if(self.cnt==0):
+                self.drone_co_ordinates=[msg.latitude, msg.longitude, msg.altitude]
+                self.current_location = [msg.latitude, msg.longitude, msg.altitude]
+                self.cnt+=1
+            self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
         self.obs_range_top = msg.ranges
@@ -89,6 +104,26 @@ class PathPlanner():
         specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
         specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
+
+    def destination_check(self):
+        ''' function will hendle all desired positions '''
+        if -0.000010517 <= self.current_location[0]-self.destination[0] <= 0.000010517:
+            if -0.0000127487 <= self.current_location[1]-self.destination[1] <= 0.0000127487:
+                    self.take_destination = True
+                    # print("destination reached")
+
+    def pre_destination(self):
+        '''it will work for reaching at the desired altitude after reaching 1m above co-ordiantes'''
+        if(not self.hover_complete):
+             print("hello")
+             self.checkpoint.latitude = self.current_location[0]
+             self.checkpoint.longitude = self.current_location[1]
+             self.checkpoint.altitude = self.destination[2]+1
+             self.hover_complete=not self.hover_complete
+        else:
+             self.checkpoint.latitude = self.current_location[0]
+             self.checkpoint.longitude = self.current_location[1]
+             self.checkpoint.altitude = self.destination[2]+4
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
@@ -150,6 +185,7 @@ class PathPlanner():
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
+        # print(self.checkpoint.altitude)
 
     def marker_find(self):
         '''this is the algorithm to find landing marker'''
@@ -190,4 +226,5 @@ if __name__ == "__main__":
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
         planner.obstacle_avoid()
+        planner.destination_check()
         rate.sleep()
