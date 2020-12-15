@@ -41,6 +41,11 @@ class PathPlanner():
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 8
 
+        # a definite height from bottom while scanning for marker
+        self.definite_bottom_height = 4
+        #  will assume that if drone's bottom range finder has more than this change then its edge of building
+        self.edge_detection_height = 2      # in meters
+
         self.sample_time = 0.01
 
         # Publisher
@@ -160,7 +165,22 @@ class PathPlanner():
         5. repeat from step 2 untill marker is found
         ''' 
 
+        # declaring local variables
+        bottom_height_error = self.obs_range_bottom - self.definite_bottom_height
+        edge_reached = False
+
+        # Maintaining particular height from bottom and building edge detection 
+        if bottom_height_error < self.edge_detection_height:
+            if bottom_height_error >= 0:
+                self.checkpoint.altitude = self.current_location[2] - bottom_height_error
+            else:
+                self.checkpoint.altitude = self.current_location[2] - bottom_height_error
+        else:
+            edge_reached = True
+
+        # see if marker is detected
         
+
 
         return
 
