@@ -14,18 +14,19 @@ class PathPlanner():
         # [latitude, longitude, altitude]
         # self.destination = [0, 0, 0]
         #co-ordinates for reaching at marker
-        self.destination=[18.9990965928,72.0000664814,10.75]
-        self.take_destination=False
+        self.destination = [18.9990965928, 72.0000664814, 10.75]
+        self.take_destination = False
         #checking if its hovering over pre_co-ordinates
-        self.hover_complete=False
+        self.hover_complete = False
         #counter for data filtretion
-        self.cnt=0
+        self.cnt = 0
         #drone co-ordinates
-        self.drone_co_ordinates=[0,0,0]
+        self.drone_co_ordinates = [0, 0, 0]
         #threshould for altitude
-        self.offset=1        # Converting latitude and longitude in meters for calculation
+        self.offset = 1        # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-        self.img_data[0,0,0] #data comes from image_prosessing.py which is difference b/w positions required.
+        # data comes from image_prosessing.py which is difference b/w positions required.
+        self.img_data = [0, 0, 0]
         # Present Location of the DroneNote
         self.current_location = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
@@ -56,13 +57,16 @@ class PathPlanner():
         #  will assume that if drone's bottom range finder has more than this change then its edge of building
         self.edge_detection_height = 2      # in meters
 
+        self.corner_points = [0, 0, 0, 0]
+        self.corner_counter = 0
+
         self.sample_time = 0.01
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
-        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
+        # rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
@@ -71,16 +75,15 @@ class PathPlanner():
     # def final_setpoint_callback(self, msg):
     #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
-    def marker_error_callback(selg,msg):
-        self.img_data=[msg.latitude,msg.longitude,self.current_location[2]]
-
+    def marker_error_callback(self, msg):
+        self.img_data = [msg.latitude, msg.longitude]
 
     def gps_callback(self, msg):
-        if(msg.latitude!=0 and msg.longitude!=0):
-            if(self.cnt==0):
-                self.drone_co_ordinates=[msg.latitude, msg.longitude, msg.altitude]
+        if(msg.latitude != 0 and msg.longitude != 0):
+            if(self.cnt == 0):
+                self.drone_co_ordinates = [msg.latitude, msg.longitude, msg.altitude]
                 self.current_location = [msg.latitude, msg.longitude, msg.altitude]
-                self.cnt+=1
+                self.cnt += 1
             self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
@@ -179,6 +182,17 @@ class PathPlanner():
         self.pub_checkpoint.publish(self.checkpoint)
         # print(self.checkpoint.altitude)
 
+    def calculate_corners(self):
+        corner_length = math.tan(1.3962634/2) * self.obs_range_bottom[0]
+        corner_length_x = self.x_to_lat_diff(corner_length)
+        corner_length_y = self.y_to_long_diff(corner_length)
+        corner1 = [corner_length_x + self.current_location[0], corner_length_y + self.current_location[1]]
+        corner2 = [corner_length_x + self.current_location[0], corner_length_y - self.current_location[1]]
+        corner3 = [corner_length_x - self.current_location[0], corner_length_y + self.current_location[1]]
+        corner4 = [corner_length_x - self.current_location[0], corner_length_y - self.current_location[1]]
+
+        return [corner1, corner2, corner3, corner4]
+
     def marker_find(self):
         '''this is the algorithm to find landing marker'''
 
@@ -194,7 +208,7 @@ class PathPlanner():
         ''' 
 
         # declaring local variables
-        bottom_height_error = self.obs_range_bottom - self.definite_bottom_height
+        bottom_height_error = self.obs_range_bottom[0] - self.definite_bottom_height
         edge_reached = False
 
         # Maintaining particular height from bottom and building edge detection 
@@ -207,8 +221,22 @@ class PathPlanner():
             edge_reached = True
 
         # see if marker is detected
-                
+        if self.img_data != [0, 0]:
+            self.checkpoint.latitude += self.x_to_lat_diff(self.img_data[0])
+            self.checkpoint.longitude += self.y_to_long_diff(self.img_data[1])
 
+            # Publish
+            self.pub_checkpoint.publish(self.checkpoint)
+            return
+            
+        # calculating corners of image
+        if self.corner_counter == 0:
+            self.corner_points = self.calculate_corners()
+
+        self.checkpoint.latitude = self.corner_points[self.corner_counter][0]
+        self.checkpoint.longitude = self.corner_points[self.corner_counter][1]
+        
+        self.pub_checkpoint.publish(self.checkpoint)
 
         return
 
