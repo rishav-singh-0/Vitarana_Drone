@@ -25,7 +25,7 @@ class PathPlanner():
         #threshould for altitude
         self.offset=1        # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-
+        self.img_data[0,0,0] #data comes from image_prosessing.py which is difference b/w positions required.
         # Present Location of the DroneNote
         self.current_location = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
@@ -38,7 +38,7 @@ class PathPlanner():
 
         # Initializing to store data from Lazer Sensors
         self.obs_range_top = []
-        # self.obs_range_bottom = []
+        self.obs_range_bottom = []
 
         # Defining variables which are needed for calculation
         # diffrence of current and final position
@@ -66,10 +66,15 @@ class PathPlanner():
         #                  self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
-        # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+        rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
+        rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     # def final_setpoint_callback(self, msg):
     #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
+
+    def marker_error_callback(selg,msg):
+        self.img_data=[msg.latitude,msg.longitude,self.current_location[2]]
+
 
     def gps_callback(self, msg):
         if(msg.latitude!=0 and msg.longitude!=0):
@@ -82,8 +87,8 @@ class PathPlanner():
     def range_finder_top_callback(self, msg):
         self.obs_range_top = msg.ranges
 
-    # def range_finder_bottom_callback(self, msg):
-    #     self.obs_range_bottom = msg.ranges
+    def range_finder_bottom_callback(self, msg):
+        self.obs_range_bottom = msg.ranges
 
     # Functions for data conversion between GPS and meter with respect to origin
     def lat_to_x(self, input_latitude): 
