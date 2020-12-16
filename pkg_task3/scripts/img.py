@@ -19,12 +19,12 @@ class marker_detection():
         self.img = np.empty([])
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
-        self.img_width=400
-        self.hfov_rad=1.3962634
-        self.obs_range_bottom=[]
-        self.focal_lenght=(self.img_width/2)/math.tan(self.hfov_rad/2)
-        self.error=NavSatFix()
-        self.logo_data=[0,0,0,0]
+        self.img_width = 400
+        self.hfov_rad = 1.3962634
+        self.obs_range_bottom = []
+        self.focal_lenght = (self.img_width/2)/math.tan(self.hfov_rad/2)
+        self.error = NavSatFix()
+        self.logo_data = [0, 0, 0, 0]
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
@@ -68,6 +68,7 @@ class marker_detection():
                 logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
                 if(len(logo)!=0):
+                    print("detected")
                     for i in range(len(logo)):
                         if(logo[i]>200):
                             self.logo_data[i]=logo[i]
@@ -86,7 +87,7 @@ class marker_detection():
                 # plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
                 # plt.show()
                 cv2.imshow("show",self.img)
-                cv2.waitKey(5)
+                cv2.waitKey(1)
             except ValueError, IndexError:
                 pass
 

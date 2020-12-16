@@ -80,6 +80,7 @@ class Command():
                 self.destination = self.final_destination
             else:
                 self.destination = container
+            print(self.destination)
             self.take_destination = False
 
     def final_destination_callback(self, msg):
