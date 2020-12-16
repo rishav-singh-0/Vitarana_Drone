@@ -24,6 +24,7 @@ class marker_detection():
         self.obs_range_bottom=[]
         self.focal_lenght=(self.img_width/2)/math.tan(self.hfov_rad/2)
         self.error=NavSatFix()
+        self.logo_data=[0,0,0,0]
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
@@ -67,8 +68,13 @@ class marker_detection():
                 logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
                 if(len(logo)!=0):
-                    x=(((logo[0]+logo[2])/2)*self.obs_range_bottom)/self.focal_lemgth
-                    y=(((logo[1]+logo[3])/2)*self.obs_range_bottom)/self.focal_lemgth
+                    for i in range(len(logo)):
+                        if(logo[i]>200):
+                            self.logo_data[i]=logo[i]
+                        else:
+                            self.logo_data[i]=logo[i]
+                    x=(((self.logo_data[0]+self.logo_data[2])/2)*self.obs_range_bottom)/self.focal_length
+                    y=(((self.logo_data[1]+self.logo_data[3])/2)*self.obs_range_bottom)/self.focal_length
                     self.error.latitude=x
                     self.error.longitude=y
                     self.marker_error.publish(self.error)
