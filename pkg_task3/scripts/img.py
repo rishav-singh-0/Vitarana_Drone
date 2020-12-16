@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
+import math
 import cv2
 import os
 import numpy as np
 from matplotlib import pyplot as plt
+from sensor_msgs.msg import NavSatFix, LaserScan
 import rospy
 import time
 
@@ -17,11 +19,24 @@ class marker_detection():
         self.img = np.empty([])
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
+        self.img_width=400
+        self.hfov_rad=1.3962634
+        self.obs_range_bottom=[]
+        self.focal_lenght=(self.img_width/2)/math.tan(self.hfov_rad/2)
+        self.error=NavSatFix()
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
+        #publisher
+        self.marker_error = rospy.Publisher('/marker_error', NavSatFix, queue_size=1)
 
+
+        #subscriber
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
+        rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+
+    def range_finder_bottom_callback(self, msg):
+        self.obs_range_bottom = msg.ranges
 
     def image_callback(self, data):
         ''' Callback function of camera topic'''
@@ -51,6 +66,14 @@ class marker_detection():
             # image, reject levels level weights.
                 logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
+                if(len(logo)!=0):
+                    x=(((logo[0]+logo[2])/2)*self.obs_range_bottom)/self.focal_lemgth
+                    y=(((logo[1]+logo[3])/2)*self.obs_range_bottom)/self.focal_lemgth
+                    self.error.latitude=x
+                    self.error.longitude=y
+                    self.marker_error.publish(self.error)
+                    
+
 
                 for (x, y, w, h) in logo:
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
