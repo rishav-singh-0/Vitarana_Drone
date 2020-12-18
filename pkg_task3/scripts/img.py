@@ -68,6 +68,7 @@ class marker_detection():
                 logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
                 if(len(logo)!=0):
+                    print("detected")
                     for i in range(len(logo)):
                         if(logo[i]>200):
                             self.logo_data[i]=logo[i]
@@ -86,7 +87,7 @@ class marker_detection():
                 # plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
                 # plt.show()
                 cv2.imshow("show",self.img)
-                cv2.waitKey(5)
+                cv2.waitKey(1)
             except ValueError, IndexError:
                 pass
 

@@ -39,7 +39,7 @@ class PathPlanner():
 
         # Initializing to store data from Lazer Sensors
         self.obs_range_top = []
-        self.obs_range_bottom = []
+        self.obs_range_bottom = [0]
 
         # Defining variables which are needed for calculation
         # diffrence of current and final position
@@ -90,7 +90,9 @@ class PathPlanner():
         self.obs_range_top = msg.ranges
 
     def range_finder_bottom_callback(self, msg):
-        self.obs_range_bottom = msg.ranges
+        if(len(msg.ranges)>0):
+
+            self.obs_range_bottom= msg.ranges
 
     # Functions for data conversion between GPS and meter with respect to origin
     def lat_to_x(self, input_latitude): 
@@ -118,7 +120,7 @@ class PathPlanner():
         if -0.000010517 <= self.current_location[0]-self.destination[0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[1] <= 0.0000127487:
                     self.take_destination = True
-                    # print("destination reached")
+                    #print("destination reached")
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
@@ -176,10 +178,15 @@ class PathPlanner():
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        self.checkpoint.altitude = 24
+        if(self.destination[2]>self.drone_co_ordinates[2]):
+            self.checkpoint.altitude = self.destination[2]+3
+        else:
+            self.checkpoint.altitude=self.drone_co_ordinates[2]+1
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
+        print(self.obs_range_bottom[0])
+        # print(self.checkpoint.latitude,self.checkpoint.longitude)
         # print(self.checkpoint.altitude)
 
     def calculate_corners(self):
