@@ -19,12 +19,12 @@ class marker_detection():
         self.img = np.empty([])
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
-        self.img_width = 400
-        self.hfov_rad = 1.3962634
-        self.obs_range_bottom = []
-        self.focal_lenght = (self.img_width/2)/math.tan(self.hfov_rad/2)
-        self.error = NavSatFix()
-        self.logo_data = [0, 0, 0, 0]
+        self.img_width=400
+        self.hfov_rad=1.3962634
+        self.obs_range_bottom=[]
+        self.focal_lenght=(self.img_width/2)/math.tan(self.hfov_rad/2)
+        self.error=NavSatFix()
+        self.logo_data=[0,0,0,0]
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
