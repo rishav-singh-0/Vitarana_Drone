@@ -183,6 +183,7 @@ class PathPlanner():
         else:
             self.checkpoint.altitude=self.drone_co_ordinates[2]+1
 
+
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
         print(self.obs_range_bottom[0])

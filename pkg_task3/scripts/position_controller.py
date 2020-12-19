@@ -73,7 +73,7 @@ class Command():
 
         container = [msg.latitude, msg.longitude, msg.altitude]
 
-        if self.take_destination:
+        if (self.take_destination and container[0]!=0):
             # checking if the drone is hovering over final destination
             # print(container)
             if(-0.00001017 < (self.final_destination[0]-self.gps_position[0]) < 0.00001017):
