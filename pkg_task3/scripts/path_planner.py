@@ -85,6 +85,7 @@ class PathPlanner():
                 self.current_location = [msg.latitude, msg.longitude, msg.altitude]
                 self.cnt += 1
             self.current_location = [msg.latitude, msg.longitude, msg.altitude]
+            print(self.drone_co_ordinates)
 
     def range_finder_top_callback(self, msg):
         self.obs_range_top = msg.ranges
@@ -189,7 +190,12 @@ class PathPlanner():
         if(self.destination[2]>self.drone_co_ordinates[2]):
             self.checkpoint.altitude = self.destination[2]+3
         else:
-            self.checkpoint.altitude=self.drone_co_ordinates[2]+1
+            if(self.obs_range_bottom[0]<1.23):
+                self.checkpoint.altitude=self.drone_co_ordinates[2]+1
+            else:
+                self.checkpoint.altitude=self.destination[2]+3
+
+            # self.checkpoint.altitude=self.drone_co_ordinates[2]+1
 
 
         # Publishing
@@ -199,13 +205,15 @@ class PathPlanner():
         # print(self.checkpoint.altitude)
 
     def calculate_corners(self):
+        print("corner counter is on")
         corner_length = math.tan(1.3962634/2) * self.obs_range_bottom[0]
         corner_length_x = self.x_to_lat_diff(corner_length)
         corner_length_y = self.y_to_long_diff(corner_length)
-        corner1 = [corner_length_x + self.current_location[0], corner_length_y + self.current_location[1]]
-        corner2 = [corner_length_x + self.current_location[0], corner_length_y - self.current_location[1]]
-        corner3 = [corner_length_x - self.current_location[0], corner_length_y + self.current_location[1]]
-        corner4 = [corner_length_x - self.current_location[0], corner_length_y - self.current_location[1]]
+        corner1 = [self.current_location[0]+corner_length_x,self.current_location[1]+ corner_length_y]
+        corner2 = [self.current_location[0]-corner_length_x,self.current_location[1]- corner_length_y]
+        corner3 = [cself.current_location[0]+corner_length_x,self.current_location[1]- corner_length_y]
+        corner4 = [self.current_location[0]-corner_length_x,self.current_location[1]+ corner_length_y]
+        print(corner1)
 
         return [corner1, corner2, corner3, corner4]
 
@@ -236,7 +244,7 @@ class PathPlanner():
                 self.checkpoint.altitude = self.current_location[2] - bottom_height_error
         else:
             edge_reached = True
-
+        # print("return")
         # see if marker is detected
         if self.img_data[0] != 0:
             self.checkpoint.latitude += self.x_to_lat_diff(self.img_data[0])
@@ -249,9 +257,12 @@ class PathPlanner():
         # calculating corners of image
         if self.corner_counter == 0:
             self.corner_points = self.calculate_corners()
+            self.corner_counter+=1
 
-        self.checkpoint.latitude = self.corner_points[self.corner_counter][0]
-        self.checkpoint.longitude = self.corner_points[self.corner_counter][1]
+        self.checkpoint.latitude = self.corner_points[self.corner_counter-1][0]
+        self.checkpoint.longitude = self.corner_points[self.corner_counter-1][1]
+        # print(self.checkpoint)
+        # print("test 1 is no")
         
         self.pub_checkpoint.publish(self.checkpoint)
 
