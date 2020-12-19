@@ -4,7 +4,6 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from matplotlib import pyplot as plt
 import cv2
-import os
 from pyzbar.pyzbar import decode  # For decoding qrcode
 import numpy as np
 from sensor_msgs.msg import NavSatFix
@@ -36,7 +35,7 @@ class image_proc():
         self.data = [0, 0, 0]
 
 
-        self.logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../data/cascade.xml'))
+        self.logo_cascade = cv2.CascadeClassifier('../data/cascade.xml')
 
         # Publishing the scanned destination
         # self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
@@ -73,10 +72,8 @@ class image_proc():
 
                 for (x, y, w, h) in logo:
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-                # plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
-                # plt.show()
-                # cv2.imshow("show",self.img)
-                cv2.waitKey(100)
+                plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
+                plt.show()
         except ValueError, IndexError:
             pass
 
@@ -87,5 +84,5 @@ if __name__ == '__main__':
     while not rospy.is_shutdown():
         image_proc_obj.detect_marker()
         r.sleep()
-    cv2.destroyAllWindows()
+    # cv2.destroyAllWindows()
     rospy.spin()

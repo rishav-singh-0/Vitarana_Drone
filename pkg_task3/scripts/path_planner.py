@@ -120,6 +120,7 @@ class PathPlanner():
         if -0.000010517 <= self.current_location[0]-self.destination[0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[1] <= 0.0000127487:
                     self.take_destination = True
+                    print(self.take_destination)
                     #print("destination reached")
 
     def obstacle_avoid(self):
@@ -183,6 +184,7 @@ class PathPlanner():
         else:
             self.checkpoint.altitude=self.drone_co_ordinates[2]+1
 
+
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
         print(self.obs_range_bottom[0])
@@ -214,6 +216,7 @@ class PathPlanner():
         5. repeat from step 2 untill marker is found
         ''' 
 
+        print("in the marker find")
         # declaring local variables
         bottom_height_error = self.obs_range_bottom[0] - self.definite_bottom_height
         edge_reached = False
@@ -252,6 +255,10 @@ if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
-        planner.obstacle_avoid()
+        if(not planner.take_destination):
+
+            planner.obstacle_avoid()
+        else:
+            planner.marker_find()
         planner.destination_check()
         rate.sleep()
