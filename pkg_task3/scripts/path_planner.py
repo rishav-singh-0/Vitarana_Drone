@@ -15,7 +15,7 @@ class PathPlanner():
         # self.destination = [0, 0, 0]
         #co-ordinates for reaching at marker
         self.destination = [18.9990965928, 72.0000664814, 10.75]
-        self.take_destination = True
+        self.take_destination = False
         #checking if its hovering over pre_co-ordinates
         self.hover_complete = False
         #counter for data filtretion
@@ -120,15 +120,8 @@ class PathPlanner():
         if -0.000010517 <= self.current_location[0]-self.destination[0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[1] <= 0.0000127487:
                     self.take_destination = True
-                    # print("destination reached")
-
-    def path_publish(self):
-        condition = (-0.000010517 <= self.error[0] <= 0.000010517) and \
-                    (-0.0000127487 <= self.error[1] <= 0.0000127487) and \
-                    (-0.2 <= self.error[2] <= 0.2)
-        if (condition):
-            self.take_destination = True
-            # print("destination reached")
+                    print(self.take_destination)
+                    #print("destination reached")
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
@@ -223,7 +216,7 @@ class PathPlanner():
         5. repeat from step 2 untill marker is found
         ''' 
 
-        # print("in the marker find")
+        print("in the marker find")
         # declaring local variables
         bottom_height_error = self.obs_range_bottom[0] - self.definite_bottom_height
         edge_reached = False
@@ -238,14 +231,14 @@ class PathPlanner():
             edge_reached = True
 
         # see if marker is detected
-        if self.img_data[0] != 0:
+        if self.img_data != [0, 0]:
             self.checkpoint.latitude += self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude += self.y_to_long_diff(self.img_data[1])
 
             # Publish
             self.pub_checkpoint.publish(self.checkpoint)
             return
-
+            
         # calculating corners of image
         if self.corner_counter == 0:
             self.corner_points = self.calculate_corners()
@@ -254,6 +247,8 @@ class PathPlanner():
         self.checkpoint.longitude = self.corner_points[self.corner_counter][1]
         
         self.pub_checkpoint.publish(self.checkpoint)
+
+        return
 
 
 if __name__ == "__main__":
