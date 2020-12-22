@@ -22,7 +22,7 @@ class marker_detection():
         self.img_width=400
         self.hfov_rad=1.3962634
         self.obs_range_bottom=[]
-        self.focal_lenght=(self.img_width/2)/math.tan(self.hfov_rad/2)
+        self.focal_length=(self.img_width/2)/math.tan(self.hfov_rad/2)
         self.error=NavSatFix()
         self.logo_data=[0,0,0,0]
 
@@ -48,7 +48,7 @@ class marker_detection():
             cv2.imshow("show",self.img)
             #cv2.waitKey(100)
         except CvBridgeError as e:
-            # print(e)
+            print(e)
             return
 
     def detect_marker(self):
@@ -83,7 +83,7 @@ class marker_detection():
                 # plt.show()
                 cv2.imshow("show",self.img)
                 cv2.waitKey(1)
-            except ValueError, IndexError:
+            except :
                 pass
 
 
