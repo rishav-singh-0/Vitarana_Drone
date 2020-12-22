@@ -138,6 +138,7 @@ if __name__ == '__main__':
     command = Command()
     rate = rospy.Rate(1/command.sample_time)  # defining rate
     while not rospy.is_shutdown():
-        command.pid()
-        command.destination_check()
+        if(command.destination[0]!=0):
+            command.pid()
+            command.destination_check()
         rate.sleep()  # frequency of 100 Hz
