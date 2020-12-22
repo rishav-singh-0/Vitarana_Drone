@@ -51,7 +51,7 @@ class marker_detection():
             cv2.imshow("show",self.img)
             #cv2.waitKey(100)
         except CvBridgeError as e:
-            # print(e)
+            print(e)
             return
 
     def detect_marker(self):
@@ -92,9 +92,9 @@ class marker_detection():
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 # plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
                 # plt.show()
-                cv2.imshow("show",self.img)
-                cv2.waitKey(100)
-            except ValueError, IndexError:
+                # cv2.imshow("show",self.img)
+                # cv2.waitKey(100)
+            except :
                 pass
 
 
