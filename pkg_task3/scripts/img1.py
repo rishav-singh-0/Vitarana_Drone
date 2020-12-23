@@ -3,7 +3,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+import os
 from sensor_msgs.msg import NavSatFix, LaserScan
 import rospy
 import time
@@ -19,22 +19,25 @@ class marker_detection():
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
 
-        self.img_width = 400
-        self.hfov_rad = 1.3962634
-        self.focal_length = (self.img_width/2)/math.tan(self.hfov_rad/2)
-        self.error=NavSatFix()
+        self.img_width = 400                                                #image size is 400x400 pixel
+        self.hfov_rad = 1.3962634                                           #camera's aperture
+        self.focal_length = (self.img_width/2)/math.tan(self.hfov_rad/2)    #focal lengath of camera lens
+        self.error = NavSatFix()                                            #initializetion for for detection error 
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
-        self.logo_data=[0,0,0,0]
-        self.obs_range_bottom=[0]
+        self.logo_data=[0,0,0,0]                                            #catech tje data from detectection
+        self.obs_range_bottom=[0]                                           #data of bottom range 
         self.logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../data/cascade.xml'))
 
+        #subscribe
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
 
+        #publish
         self.marker_error = rospy.Publisher('/marker_error', NavSatFix, queue_size=1)
+
 
     def range_finder_bottom_callback(self, msg):
         self.obs_range_bottom = msg.ranges
@@ -54,13 +57,14 @@ class marker_detection():
         '''Image QR-Code scanning and publishing algo'''
         if(self.img.size>1):
             try:
-                
                 gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-
             # image, reject levels level weights.
                 logo = self.logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
                 if(len(logo)!=0):
+                    '''-->providing error to the path_planner
+                       -->calculating necessary distance in meter'''
+                       
                     if(logo[0][1]>200):
                         row_y=row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
                     else:
