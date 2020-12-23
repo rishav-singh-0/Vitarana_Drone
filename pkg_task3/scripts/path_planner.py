@@ -12,7 +12,8 @@ class PathPlanner():
 
         # Destination to be reached
         # [latitude, longitude, altitude]
-        self.destination = [18.9990965928, 72.0000664814, 10.75]
+        self.destination = [[18.9990965928, 72.0000664814, 10.75],
+                            [18.9990965925, 71.9999050292, 22.2]]
 
         self.take_destination = False
         self.cnt=0
@@ -20,6 +21,7 @@ class PathPlanner():
         self.img_data=[0,0]
         self.cnt1=0
         self.check_marker=True
+        self.change_building=0
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
@@ -47,7 +49,7 @@ class PathPlanner():
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 10
 
-        self.sample_time = 0.01
+        self.sample_time = 1
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher(
@@ -112,8 +114,8 @@ class PathPlanner():
 
     def destination_check(self):
         ''' function will hendle all desired positions '''
-        if -0.000010517 <= self.current_location[0]-self.destination[0] <= 0.000010517:
-            if -0.0000127487 <= self.current_location[1]-self.destination[1] <= 0.0000127487:
+        if -0.000010517 <= self.current_location[0]-self.destination[self.change_building][0] <= 0.000010517:
+            if -0.0000127487 <= self.current_location[1]-self.destination[self.change_building][1] <= 0.0000127487:
                     self.take_destination = True
                     # print(self.take_destination)
                     #print("destination reached")
@@ -123,6 +125,10 @@ class PathPlanner():
             if -0.0000127487 <= self.current_location[1]-self.checkpoint.longitude <= 0.0000127487:
                 if -0.2<=self.current_location[2]-self.checkpoint.altitude<=0.2 :
                     self.check_marker=True
+                    if(self.cnt1==3):
+                        self.change_building+=1
+                        self.take_destination=not self.take_destination
+                        self.cnt1=0
 
 
     def obstacle_avoid(self):
@@ -136,8 +142,8 @@ class PathPlanner():
         self.movement_in_plane = [0, 0]
 
         # destination in x and y form
-        self.current_location_xy = [self.lat_to_x(self.destination[0]),
-                                    self.long_to_y(self.destination[1])]
+        self.current_location_xy = [self.lat_to_x(self.destination[self.change_building][0]),
+                                    self.long_to_y(self.destination[self.change_building][1])]
 
         self.destination_xy = [self.lat_to_x(self.current_location[0]),
                                self.long_to_y(self.current_location[1])]
@@ -184,21 +190,21 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        if(self.destination[2]>self.drone_co_ordinates[2]):
-            if(2.6<self.obs_range_bottom[0]<3.6):
-                self.checkpoint.altitude=self.destination[2]+3
+        if(self.destination[self.change_building][2]>self.drone_co_ordinates[2]):
+            if(self.obs_range_bottom[0]<3.6):
+                self.checkpoint.altitude=self.destination[self.change_building][2]+3
                 self.checkpoint.longitude=self.current_location[0]
                 self.checkpoint.longitude=self.current_location[1]
             else:
-                self.checkpoint.altitude=self.destination[2]+3
+                self.checkpoint.altitude=self.destination[self.change_building][2]+3
             
         else:
             if(self.obs_range_bottom[0]<0.8):
                 self.checkpoint.altitude=self.current_location[2]+1
             elif(self.obs_range_bottom>2):
-                self.checkpoint.altitude=self.destination[2]+1
+                self.checkpoint.altitude=self.destination[self.change_building][2]+1
             else:
-                self.checkpoint.altitude=self.destination[2]+1
+                self.checkpoint.altitude=self.destination[self.change_building][2]+1
         # self.checkpoint.altitude =19
 
         # Publishing
@@ -207,9 +213,9 @@ class PathPlanner():
 
     def marker_find(self):
         if(self.cnt1==0):
-            self.checkpoint.altitude=self.destination[2]+12
-            self.checkpoint.latitude=self.destination[0]
-            self.checkpoint.longitude=self.destination[1]
+            self.checkpoint.altitude=self.destination[self.change_building][2]+16.5
+            self.checkpoint.latitude=self.destination[self.change_building][0]
+            self.checkpoint.longitude=self.destination[self.change_building][1]
             self.cnt1+=1
             self.check_marker=not self.check_marker
 
@@ -222,7 +228,8 @@ class PathPlanner():
             self.check_marker=not self.check_marker
         
         if(self.cnt1==2 and self.check_marker):
-            self.checkpoint.altitude=self.destination[2]+3
+            self.checkpoint.altitude=self.destination[self.change_building][2]+3
+            self.cnt1+=1
            
         
         self.pub_checkpoint.publish(self.checkpoint)

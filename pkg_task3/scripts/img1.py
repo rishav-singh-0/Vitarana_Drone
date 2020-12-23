@@ -49,10 +49,10 @@ class marker_detection():
             # Converting the image to OpenCV standard image
             #print(type(data))
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
-            cv2.imshow("show",self.img)
+            # cv2.imshow("show",self.img)
             #cv2.waitKey(100)
         except CvBridgeError as e:
-            print(e)
+            # print(e)
             return
 
     def detect_marker(self):
@@ -74,7 +74,21 @@ class marker_detection():
                     # print("detected")
                     print(logo)
                     # for i in range(4):
-                    row_y=row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
+                    if(logo[0][1]>200):
+
+                        row_y=row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
+                    else:
+                        if(logo[0][0]<200):
+                            row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
+                            row_y=(200-(2*logo[0][1]+logo[0][3])/2)
+                        else:
+                            row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
+                            row_y=200-(2*logo[0][1]+logo[0][3])/2
+
+
+                        
+
+
                     # row_y=(200-(2*logo[0][1]+logo[0][3])/2)
 
                         
@@ -90,12 +104,13 @@ class marker_detection():
                     self.marker_error.publish(self.error)
 
                 for (x, y, w, h) in logo:
+
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 # plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
                 # plt.show()
-                # cv2.imshow("show",self.img)
-                # cv2.waitKey(100)
-            except :
+                cv2.imshow("show",self.img)
+                cv2.waitKey(100)
+            except ValueError, IndexError:
                 pass
 
 
