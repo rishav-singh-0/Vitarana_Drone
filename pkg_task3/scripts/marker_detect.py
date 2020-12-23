@@ -19,23 +19,23 @@ class marker_detection():
         # For conversion of rosmsg to cv2 image
         self.bridge = CvBridge()
 
-        self.img_width = 400                                                #image size is 400x400 pixel
-        self.hfov_rad = 1.3962634                                           #camera's aperture
-        self.focal_length = (self.img_width/2)/math.tan(self.hfov_rad/2)    #focal lengath of camera lens
-        self.error = NavSatFix()                                            #initializetion for for detection error 
+        self.img_width = 400                                                # image size is 400x400 pixel
+        self.hfov_rad = 1.3962634                                           # camera's aperture
+        self.focal_length = (self.img_width/2)/math.tan(self.hfov_rad/2)    # focal lengath of camera lens
+        self.error = NavSatFix()                                            # initializetion for for detection error 
 
         # sample time used for defining certain frequency of data input
         self.sample_time = 0.1
-        self.logo_data=[0,0,0,0]                                            #catech tje data from detectection
-        self.obs_range_bottom=[0]                                           #data of bottom range 
+        self.logo_data=[0,0,0,0]                                            # catech tje data from detectection
+        self.obs_range_bottom=[0]                                           # data of bottom range 
         self.logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)),'../data/cascade.xml'))
 
-        #subscribe
+        # Subscribe
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
 
-        #publish
+        # Publish
         self.marker_error = rospy.Publisher('/marker_error', NavSatFix, queue_size=1)
 
 
@@ -48,7 +48,7 @@ class marker_detection():
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
             # cv2.imshow("show",self.img)
-            #cv2.waitKey(100)
+            # cv2.waitKey(100)
         except CvBridgeError as e:
             print(e)
             return
@@ -62,8 +62,10 @@ class marker_detection():
                 logo = self.logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 # print(logo[0])
                 if(len(logo)!=0):
-                    '''-->providing error to the path_planner
-                       -->calculating necessary distance in meter'''
+                    '''
+                    - Providing error to the path_planner
+                    - calculating necessary distance in meter
+                    '''
                        
                     if(logo[0][1]>200):
                         row_y=row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
@@ -86,6 +88,7 @@ class marker_detection():
                 #     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 # cv2.imshow("show",self.img)
                 # cv2.waitKey(100)
+            
             except ValueError, IndexError:
                 pass
 
