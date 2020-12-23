@@ -71,8 +71,6 @@ class PathPlanner():
 
     def marker_error_callback(self, msg):
         self.img_data = [msg.latitude, msg.longitude]
-        print("data received")
-        print(self.img_data)
 
     def gps_callback(self, msg):
         if(msg.latitude != 0 and msg.longitude != 0):
@@ -81,7 +79,6 @@ class PathPlanner():
                 self.current_location = [msg.latitude, msg.longitude, msg.altitude]
                 self.cnt += 1
             self.current_location = [msg.latitude, msg.longitude, msg.altitude]
-            # print(self.drone_co_ordinates)
         
 
     def range_finder_top_callback(self, msg):
@@ -89,7 +86,6 @@ class PathPlanner():
 
     def range_finder_bottom_callback(self, msg):
          self.obs_range_bottom = msg.ranges
-        #  print(self.obs_range_bottom[0])
 
     # Functions for data conversion between GPS and meter with respect to origin
     def lat_to_x(self, input_latitude): return 110692.0702932625 * (input_latitude - 19)
@@ -124,8 +120,6 @@ class PathPlanner():
         if -0.000010517 <= self.current_location[0]-self.destination[self.building_id][0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[self.building_id][1] <= 0.0000127487:
                     self.take_destination = True
-                    # print(self.take_destination)
-                    #print("destination reached")
 
     def marker_box(self):
         if -0.000010517 <= self.current_location[0]-self.checkpoint.latitude <= 0.000010517:
@@ -208,7 +202,6 @@ class PathPlanner():
                 self.checkpoint.altitude=self.destination[self.building_id][2] + 1
         
         # Publishing
-        # print(self.checkpoint.altitude)
         self.pub_checkpoint.publish(self.checkpoint)
 
     def marker_find(self):
@@ -226,10 +219,8 @@ class PathPlanner():
             self.check_marker=not self.check_marker
 
         if(self.img_data[0]!=0.0 and self.cnt1==2 and self.check_marker):
-            print(self.img_data)
             self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-            print(self.checkpoint.latitude)
             self.cnt1+=1
             self.check_marker=not self.check_marker
         
