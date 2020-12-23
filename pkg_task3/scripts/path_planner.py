@@ -19,6 +19,7 @@ class PathPlanner():
         self.drone_co_ordinates=[0,0,0]
         self.img_data=[0,0]
         self.cnt1=0
+        self.check_marker=True
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
@@ -44,7 +45,7 @@ class PathPlanner():
         # [x, y] -> movement distribution in x and y
         self.movement_in_plane = [0, 0]
         # closest distance of obstacle (in meters)
-        self.obs_closest_range = 8
+        self.obs_closest_range = 10
 
         self.sample_time = 0.01
 
@@ -117,6 +118,13 @@ class PathPlanner():
                     # print(self.take_destination)
                     #print("destination reached")
 
+    def marker_box(self):
+        if -0.000010517 <= self.current_location[0]-self.checkpoint.latitude <= 0.000010517:
+            if -0.0000127487 <= self.current_location[1]-self.checkpoint.longitude <= 0.0000127487:
+                if -0.2<=self.current_location[2]-self.checkpoint.altitude<=0.2 :
+                    self.check_marker=True
+
+
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
         checkpoint for avoiding obstacles'''
@@ -185,8 +193,10 @@ class PathPlanner():
                 self.checkpoint.altitude=self.destination[2]+3
             
         else:
-            if(self.obs_range_bottom[0]<0.5):
+            if(self.obs_range_bottom[0]<0.8):
                 self.checkpoint.altitude=self.current_location[2]+1
+            elif(self.obs_range_bottom>2):
+                self.checkpoint.altitude=self.destination[2]+1
             else:
                 self.checkpoint.altitude=self.destination[2]+1
         # self.checkpoint.altitude =19
@@ -201,20 +211,21 @@ class PathPlanner():
             self.checkpoint.latitude=self.destination[0]
             self.checkpoint.longitude=self.destination[1]
             self.cnt1+=1
+            self.check_marker=not self.check_marker
 
-        if(self.img_data[0]!=0.0000000000 and self.cnt1==1):
+        if(self.img_data[0]!=0.0 and self.cnt1==1 and self.check_marker):
             print(self.img_data)
             self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
             print(self.checkpoint.latitude)
             self.cnt1+=1
+            self.check_marker=not self.check_marker
+        
+        if(self.cnt1==2 and self.check_marker):
+            self.checkpoint.altitude=self.destination[2]+3
            
         
         self.pub_checkpoint.publish(self.checkpoint)
-        
-    
-
-
         return
 
 
@@ -227,5 +238,6 @@ if __name__ == "__main__":
             planner.obstacle_avoid()
         else:
             planner.marker_find()
+            planner.marker_box()
 
         rate.sleep()
