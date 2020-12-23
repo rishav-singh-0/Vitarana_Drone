@@ -2,6 +2,7 @@
 
 import rospy
 import math
+from std_msgs.msg import Float64, Int8
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 
 
@@ -54,6 +55,9 @@ class PathPlanner():
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
+        self.pub_error_X=rospy.Publisher('/edrone/err_x_m',Float64,queue_size=1)
+        self.pub_error_Y=rospy.Publisher('/edrone/err_y_m',Float64,queue_size=1)
+        self.pub_building_no=rospy.Publisher('/edrone/curr_marker_id',Int8,queue_size=1)
 
         # Subscriber
         # rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
@@ -107,6 +111,13 @@ class PathPlanner():
             total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
 
+    def marker_error_publish(self):
+        self.x_error=self.img_data[0]
+        self.y_error=self.img_data[1]
+        # self.x_error, self.y_error = 0, 0
+        self.pub_error_X.publish(self.x_error)
+        self.pub_error_Y.publish(self.y_error)
+        self.pub_building_no.publish(self.building_id + 1)
 
     def destination_check(self):
         ''' function will hendle all desired positions '''
@@ -236,6 +247,7 @@ if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
+        planner.marker_error_publish()
         if(not planner.take_destination):
             planner.destination_check()
             planner.obstacle_avoid()
