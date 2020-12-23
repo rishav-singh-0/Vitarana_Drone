@@ -74,7 +74,7 @@ class image_proc():
                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
                 plt.show()
-        except ValueError, IndexError:
+        except :
             pass
 
 
