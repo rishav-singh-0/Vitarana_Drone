@@ -17,19 +17,23 @@ class PathPlanner():
                             [18.9990965925, 71.9999050292, 22.2],
                             [18.9993675932, 72.0000569892, 10.7]]
 
-        self.take_destination = False                   #destination checking for obstacle avoid
-        self.cnt = 0                                    #formal counter for getting drone coordinates
-        self.drone_co_ordinates = [0, 0, 0]             #inital coordinates
-        self.img_data = [0, 0]                          #for getting the x & y valuses from img1.py
-        self.cnt1 = 0                                   #for switching in markr_find condition
-        self.check_marker = True                        #for switching in markr_find coordinates
-        self.building_id = 0                            #marking building IDs
-        self.altitude_margin_up = 0.6                   #margin for upper coordinates
-        self.altitude_margin_down = 0.8                 #margin for lower coordinates
-        self.altitude_up = 3                            #altitude addition upper coordinates
-        self.altitude_down = 1                          #altitude addition lower coordinates
-        self.altitude_marker_find = 16.5                #altitude for detecting marker
-        self.driving_altitude = 5                       #altitude for driving the drone
+        self.take_destination = False                   # Destination checking for obstacle avoid
+        self.cnt = 0                                    # Formal counter for getting drone coordinates
+
+        self.drone_co_ordinates = [0, 0, 0]             # Inital coordinates
+        self.img_data = [0, 0]                          # For getting the x & y valuses from /marker_error
+        self.pose_cnt = 0                               # For switching in markr_find condition
+        self.check_marker = True                        # For switching in markr_find coordinates
+        
+        self.building_id = 0                            # Marking building IDs
+        
+        self.altitude_margin_up = 0.6                   # Margin for upper coordinates
+        self.altitude_margin_down = 0.8                 # Margin for lower coordinates
+        self.altitude_up = 3                            # Altitude addition upper coordinates
+        self.altitude_down = 1                          # Altitude addition lower coordinates
+        self.altitude_marker_find = 16.5                # Altitude for detecting marker
+        self.driving_altitude = 5                       # Altitude for driving the drone
+        
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
@@ -132,10 +136,10 @@ class PathPlanner():
             if -0.0000127487 <= self.current_location[1]-self.checkpoint.longitude <= 0.0000127487:
                 if -0.2<=self.current_location[2]-self.checkpoint.altitude<=0.2 :
                     self.check_marker=True
-                    if(self.cnt1==4):
+                    if(self.pose_cnt==4):
                         self.building_id+=1
                         self.take_destination=not self.take_destination
-                        self.cnt1=0
+                        self.pose_cnt=0
 
 
     def obstacle_avoid(self):
@@ -213,27 +217,27 @@ class PathPlanner():
     def marker_find(self):
         '''algorithm for marker detecting'''
 
-        if(self.cnt1==0):
+        if(self.pose_cnt==0):
             self.checkpoint.altitude = self.destination[self.building_id][2] + self.altitude_down
-            self.cnt1 += 1
+            self.pose_cnt += 1
             self.check_marker=not self.check_marker
 
-        if(self.cnt1==1 and self.check_marker):
+        if(self.pose_cnt==1 and self.check_marker):
             self.checkpoint.altitude=self.destination[self.building_id][2] + self.altitude_marker_find
             self.checkpoint.latitude=self.destination[self.building_id][0]
             self.checkpoint.longitude=self.destination[self.building_id][1]
-            self.cnt1+=1
+            self.pose_cnt+=1
             self.check_marker=not self.check_marker
 
-        if(self.img_data[0]!=0.0 and self.cnt1==2 and self.check_marker):
+        if(self.img_data[0]!=0.0 and self.pose_cnt==2 and self.check_marker):
             self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-            self.cnt1+=1
+            self.pose_cnt+=1
             self.check_marker=not self.check_marker
         
-        if(self.cnt1==3 and self.check_marker):
+        if(self.pose_cnt==3 and self.check_marker):
             self.checkpoint.altitude=self.destination[self.building_id][2] + self.driving_altitude
-            self.cnt1+=1
+            self.pose_cnt+=1
             if(self.building_id==2):
                 self.checkpoint.altitude=self.destination[self.building_id][2]
         
