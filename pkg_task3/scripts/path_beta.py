@@ -34,6 +34,8 @@ class PathPlanner():
 
         # The checkpoint node to be reached for reaching final destination
         self.checkpoint = NavSatFix()
+        self.previous_setpoint = NavSatFix()
+        self.previous_setpoint.latitude = 0
 
         # Initializing to store data from Lazer Sensors
         self.obs_range_top = []
@@ -99,17 +101,17 @@ class PathPlanner():
 
 
     def destination_check(self):
-        ''' function will hendle all desired positions '''
+        ''' function will handle all desired positions '''
         if -0.000010517 <= self.current_location[0]-self.destination[self.building_id][0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[self.building_id][1] <= 0.0000127487:
                     self.take_destination = True
-                    self.checkpoint.altitude = self.destination[self.building_id][2] + 1
+                    self.checkpoint.altitude = self.destination[self.building_id][2] - 5
                     print("destination reached")
 
     def threshold_box(self, pose_check):
         if -0.000010517 <= self.current_location[0] - pose_check[0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-pose_check[1] <= 0.0000127487:
-                if -0.2<=self.current_location[2]- pose_check[2] <=0.2 :
+                if -0.2 <= self.current_location[2]- pose_check[2] <= 0.2 :
                     print("Threshold reached")
                     return True
         return False
@@ -173,8 +175,14 @@ class PathPlanner():
         
         self.destination_check()
 
-
+        if(self.previous_setpoint.latitude==0):
+            self.previous_setpoint = self.checkpoint
         # Publishing
+        if self.threshold_box([self.checkpoint.latitude, self.checkpoint.longitude, self.checkpoint.altitude]):
+            self.pub_checkpoint.publish(self.checkpoint)
+        else:
+            self.checkpoint = self.previous_setpoint
+        
         self.pub_checkpoint.publish(self.checkpoint)
 
     def marker_find(self):
