@@ -229,7 +229,11 @@ class PathPlanner():
         
         if(self.cnt1==2 and self.check_marker):
             self.checkpoint.altitude=self.destination[self.building_id][2]+3
-            # self.building_id +=1
+            self.building_id +=1
+            self.take_destination=not self.take_destination
+            self.cnt1=0
+        
+
            
         
         self.pub_checkpoint.publish(self.checkpoint)
