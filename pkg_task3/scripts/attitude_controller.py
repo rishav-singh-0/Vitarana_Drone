@@ -214,11 +214,11 @@ class Edrone():
         # ------------------------------------------------------------------------------------------------------------------------
 
     def shutdown_hook(self):
-        print("shutdown time!")
+        # print("shutdown time!")
         self.pwm_cmd.prop1 = self.pwm_cmd.prop2 = self.pwm_cmd.prop3 = self.pwm_cmd.prop4 = 0
         self.pwm_pub.publish(self.pwm_cmd)
         self.reset_world()
-        rospy.signal_shutdown('Terminating Signal provided')
+        # rospy.signal_shutdown('Terminating Signal provided')
 
 
 
