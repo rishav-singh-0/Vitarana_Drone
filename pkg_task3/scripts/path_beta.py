@@ -21,11 +21,9 @@ class PathPlanner():
         self.building_id = 1
 
         self.take_destination = False
-        self.cnt=0
-        self.drone_co_ordinates=[0,0,0]
-        self.img_data=[0,0]
-        self.cnt1=0
-        self.check_marker=True
+        self.pose_cnt = 0
+        self.img_data = [0, 0]
+        self.check_marker = True
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
 
@@ -56,48 +54,34 @@ class PathPlanner():
         self.sample_time = 0.01
 
         # Publisher
-        self.pub_checkpoint = rospy.Publisher(
-            '/checkpoint', NavSatFix, queue_size=1)
+        self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
-        # rospy.Subscriber('/final_setpoint', NavSatFix,
-        #                  self.final_setpoint_callback)
+        # rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        rospy.Subscriber('/edrone/range_finder_top', LaserScan,
-                         self.range_finder_top_callback)
+        rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
+    
     # def final_setpoint_callback(self, msg):
     #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
-
     def marker_error_callback(self, msg):
         self.img_data = [msg.latitude, msg.longitude]
-        print("data received")
-        print(self.img_data)
 
     def gps_callback(self, msg):
         if(msg.latitude != 0 and msg.longitude != 0):
-            if(self.cnt == 0):
-                self.drone_co_ordinates = [msg.latitude, msg.longitude, msg.altitude]
-                self.current_location = [msg.latitude, msg.longitude, msg.altitude]
-                self.cnt += 1
-            self.current_location = [msg.latitude, msg.longitude, msg.altitude]
-            # print(self.drone_co_ordinates)
-        
+            self.current_location = [msg.latitude, msg.longitude, msg.altitude]        
 
     def range_finder_top_callback(self, msg):
         self.obs_range_top = msg.ranges
 
     def range_finder_bottom_callback(self, msg):
          self.obs_range_bottom = msg.ranges
-        #  print(self.obs_range_bottom[0])
 
     # Functions for data conversion between GPS and meter with respect to origin
-    def lat_to_x(self, input_latitude): return 110692.0702932625 * \
-        (input_latitude - 19)
-    def long_to_y(self, input_longitude): return - \
-        105292.0089353767 * (input_longitude - 72)
+    def lat_to_x(self, input_latitude): return 110692.0702932625 * (input_latitude - 19)
+    def long_to_y(self, input_longitude): return - 105292.0089353767 * (input_longitude - 72)
 
     def x_to_lat_diff(self, input_x): return (input_x / 110692.0702932625)
     def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
@@ -109,10 +93,8 @@ class PathPlanner():
         specific_movement = [0, 0]
 
         # Applying symmetric triangle method
-        specific_movement[0] = (
-            total_movement * self.diff_xy[0]) / self.distance_xy
-        specific_movement[1] = (
-            total_movement * self.diff_xy[1]) / self.distance_xy
+        specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
+        specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
 
 
@@ -121,14 +103,16 @@ class PathPlanner():
         if -0.000010517 <= self.current_location[0]-self.destination[self.building_id][0] <= 0.000010517:
             if -0.0000127487 <= self.current_location[1]-self.destination[self.building_id][1] <= 0.0000127487:
                     self.take_destination = True
-                    # print(self.take_destination)
-                    #print("destination reached")
+                    self.checkpoint.altitude = self.destination[self.building_id][2] + 1
+                    print("destination reached")
 
-    def marker_box(self):
-        if -0.000010517 <= self.current_location[0]-self.checkpoint.latitude <= 0.000010517:
-            if -0.0000127487 <= self.current_location[1]-self.checkpoint.longitude <= 0.0000127487:
-                if -0.2<=self.current_location[2]-self.checkpoint.altitude<=0.2 :
-                    self.check_marker=True
+    def threshold_box(self, pose_check):
+        if -0.000010517 <= self.current_location[0] - pose_check[0] <= 0.000010517:
+            if -0.0000127487 <= self.current_location[1]-pose_check[1] <= 0.0000127487:
+                if -0.2<=self.current_location[2]- pose_check[2] <=0.2 :
+                    print("Threshold reached")
+                    return True
+        return False
 
 
     def obstacle_avoid(self):
@@ -171,70 +155,60 @@ class PathPlanner():
         for i in range(len(data)-1):
             if data[i] <= self.obs_closest_range:
                 if i % 2 != 0:
-                    self.movement_in_plane[0] = data[i] - \
-                        self.obs_closest_range
+                    self.movement_in_plane[0] = data[i] - self.obs_closest_range
                     self.movement_in_plane[1] = self.movement_in_1D
                 else:
                     self.movement_in_plane[0] = self.movement_in_1D
-                    self.movement_in_plane[1] = data[i] - \
-                        self.obs_closest_range
+                    self.movement_in_plane[1] = data[i] - self.obs_closest_range
             else:
-                self.movement_in_plane = self.calculate_movement_in_plane(
-                    self.movement_in_1D)
+                self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - \
-            self.x_to_lat_diff(self.movement_in_plane[0])
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
-            self.movement_in_plane[1])
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        if(self.destination[self.building_id][2]>self.drone_co_ordinates[2]):
-            if(2.6<self.obs_range_bottom[0]<3.6):
-                self.checkpoint.altitude=self.destination[self.building_id][2]+3
-                self.checkpoint.longitude=self.current_location[0]
-                self.checkpoint.longitude=self.current_location[1]
-            else:
-                self.checkpoint.altitude=self.destination[self.building_id][2]+3
-            
-        else:
-            if(self.obs_range_bottom[0]<0.8):
-                self.checkpoint.altitude=self.current_location[2]+1
-            elif(self.obs_range_bottom>2):
-                self.checkpoint.altitude=self.destination[self.building_id][2]+1
-            else:
-                self.checkpoint.altitude=self.destination[self.building_id][2]+1
-        # self.checkpoint.altitude =19
+        self.checkpoint.altitude = 30
+        
+        self.destination_check()
+
 
         # Publishing
-        # print(self.checkpoint.altitude)
         self.pub_checkpoint.publish(self.checkpoint)
 
     def marker_find(self):
-        if(self.cnt1==0):
-            self.checkpoint.altitude=self.destination[self.building_id][2]+12
-            self.checkpoint.latitude=self.destination[self.building_id][0]
-            self.checkpoint.longitude=self.destination[self.building_id][1]
-            self.cnt1+=1
+
+        self.checkpoint.latitude=self.destination[self.building_id][0]
+        self.checkpoint.longitude=self.destination[self.building_id][1]
+
+        if(self.pose_cnt==0):
+            self.checkpoint.altitude = self.destination[self.building_id][2] + 1
+            if self.threshold_box(self.destination[self.building_id]):
+                self.pose_cnt += 1
+
+
+        if(self.pose_cnt==0):
+            self.checkpoint.altitude=self.destination[self.building_id][2]+22
+            self.pose_cnt+=1
             self.check_marker=not self.check_marker
 
-        if(self.img_data[0]!=0.0 and self.cnt1==1 and self.check_marker):
-            print(self.img_data)
+        if(self.img_data[0] != 0.0 and self.pose_cnt == 1 and self.check_marker):
+            # print(self.img_data)
             self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-            print(self.checkpoint.latitude)
-            self.cnt1+=1
-            self.check_marker=not self.check_marker
+            # print(self.checkpoint.latitude)
+            self.pose_cnt += 1
+            self.check_marker = not self.check_marker
         
-        if(self.cnt1==2 and self.check_marker):
-            self.checkpoint.altitude=self.destination[self.building_id][2]+3
-            self.building_id +=1
-            self.take_destination=not self.take_destination
-            self.cnt1=0
+        if(self.pose_cnt == 2 and self.check_marker):
+            self.checkpoint.altitude = self.destination[self.building_id][2]+3
+            self.building_id += 1
+            self.take_destination = not self.take_destination
+            self.pose_cnt = 0
         
-
-           
+        if self.threshold_box([self.checkpoint.latitude, self.checkpoint.longitude, self.checkpoint.altitude]):
+            self.check_marker = True
         
         self.pub_checkpoint.publish(self.checkpoint)
         return
@@ -245,10 +219,9 @@ if __name__ == "__main__":
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
         if(not planner.take_destination):
-            planner.destination_check()
             planner.obstacle_avoid()
         else:
             planner.marker_find()
-            planner.marker_box()
+
 
         rate.sleep()
