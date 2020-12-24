@@ -4,6 +4,7 @@ import rospy
 import math
 from std_msgs.msg import Float64, Int8
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
+from vitarana_drone.msg import MarkerData
 
 
 class PathPlanner():
@@ -61,13 +62,17 @@ class PathPlanner():
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 10
 
+        # container for publishing marker_data
+        self.cmd_marker_data = MarkerData()
+
         self.sample_time = 1
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
-        self.pub_error_X=rospy.Publisher('/edrone/err_x_m',Float64,queue_size=1)
-        self.pub_error_Y=rospy.Publisher('/edrone/err_y_m',Float64,queue_size=1)
-        self.pub_building_no=rospy.Publisher('/edrone/curr_marker_id',Int8,queue_size=1)
+        self.pub_error_X=rospy.Publisher('/edrone/err_x_m', Float64, queue_size=1)
+        self.pub_error_Y=rospy.Publisher('/edrone/err_y_m', Float64, queue_size=1)
+        self.pub_building_no=rospy.Publisher('/edrone/curr_marker_id', Int8, queue_size=1)
+        self.pub_marker_data = rospy.Publisher('/edrone/marker_data', MarkerData, queue_size=1)
 
         # Subscriber
         # rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
@@ -118,12 +123,15 @@ class PathPlanner():
         return specific_movement
 
     def marker_error_publish(self):
-        self.x_error=self.img_data[0]
-        self.y_error=self.img_data[1]
-        # self.x_error, self.y_error = 0, 0
-        self.pub_error_X.publish(self.x_error)
-        self.pub_error_Y.publish(self.y_error)
+        '''Publishing Marker Data'''
+        self.pub_error_X.publish(self.img_data[0])
+        self.pub_error_Y.publish(self.img_data[1])
         self.pub_building_no.publish(self.building_id + 1)
+
+        self.cmd_marker_data.err_x_m = self.img_data[0]
+        self.cmd_marker_data.err_y_m = self.img_data[1]
+        self.cmd_marker_data.marker_id = self.building_id + 1
+        self.pub_marker_data.publish(self.cmd_marker_data)
 
     def destination_check(self):
         ''' function will hendle all desired positions '''
