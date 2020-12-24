@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <!-- <node pkg="pkg_task3" type="qr_detect.py" name="qrcode_scan" /> -->
-    <node pkg="pkg_task3" type="marker_detect.py" name="img" />
-    <node pkg="pkg_task3" type="gripper_client.py" name="gripper_clint" />
+    <node pkg="pkg_task3" type="marker_detect.py" name="marker_detect" />
+    <!-- <node pkg="pkg_task3" type="gripper_client.py" name="gripper_clint" /> -->
     <node pkg="pkg_task3" type="attitude_controller.py" name="attitude_controller" />
     <node pkg="pkg_task3" type="path_planner.py" name="path_planner" />
     <node pkg="pkg_task3" type="position_controller.py" name="position_controller" />
@@ -12,9 +12,10 @@
     <arg name="rec_name" default="Task_3_VD_0983.bag"/>
 
     <group if="$(arg record)">
-        <node name="throttler_gps" type="throttle" pkg="topic_tools" args="messages /edrone/gps 10"/>
-    
+        <node name="throttler_model_states" type="throttle" pkg="topic_tools" args="messages /gazebo/model_states 10"/>
+
         <node name="rosbag_record_position" pkg="rosbag" type="record"
-            args="record -O $(find vitarana_drone)/bag_files/$(arg rec_name) --duration=$(arg duration) /edrone/gps_throttle /gazebo/model_states_throttle" output="screen"/>
+           args="record -O $(find vitarana_drone)/bag_files/$(arg rec_name) --duration=$(arg duration) /gazebo/model_states_throttle /edrone/marker_data" output="screen"/>
     </group>
+
 </launch>
