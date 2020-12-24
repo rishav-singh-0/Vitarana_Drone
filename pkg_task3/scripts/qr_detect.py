@@ -34,15 +34,17 @@ class image_proc():
         self.attech_situation = 'False'
         self.data = [0, 0, 0]
 
-
         self.logo_cascade = cv2.CascadeClassifier('../data/cascade.xml')
 
         # Publishing the scanned destination
-        self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
+        self.final_destination = rospy.Publisher(
+            '/final_setpoint', NavSatFix, queue_size=1)
 
         # Subscribing to the camera topic
-        self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
-        rospy.Subscriber('/edrone/gripper_check', String,self.gripper_check_callback)
+        self.image_sub = rospy.Subscriber(
+            '/edrone/camera/image_raw', Image, self.image_callback)
+        rospy.Subscriber('/edrone/gripper_check', String,
+                         self.gripper_check_callback)
         #rospy.Subscriber('check_point_flag', Float32, self.detech_msg)
 
     def gripper_check_callback(self, state):
@@ -100,10 +102,11 @@ class image_proc():
             logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
 
             for (x, y, w, h) in logo:
-                cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
+                cv2.rectangle(self.img, (x, y),
+                              (x + w, y + h), (255, 255, 0), 2)
             plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
             plt.show()
-        except :
+        except:
             pass
 
 

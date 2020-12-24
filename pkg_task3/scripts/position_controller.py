@@ -53,10 +53,12 @@ class Command():
         self.setpoint_cmd = edrone_cmd()
 
         # Publishing /pitch_error, /roll_error, /throttle_error
-        self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
+        self.setpoint_pub = rospy.Publisher(
+            '/drone_command', edrone_cmd, queue_size=1)
         self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
         self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
+        self.throttle_pub = rospy.Publisher(
+            '/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
@@ -71,7 +73,7 @@ class Command():
 
         container = [msg.latitude, msg.longitude, msg.altitude]
 
-        if (self.take_destination and container[0]!=0):
+        if (self.take_destination and container[0] != 0):
             # checking if the drone is hovering over final destination
             if(-0.00001017 < (self.final_destination[0]-self.gps_position[0]) < 0.00001017):
                 self.destination = self.final_destination
@@ -82,7 +84,6 @@ class Command():
 
     # def final_destination_callback(self, msg):
     #     self.final_destination = [msg.latitude, msg.longitude, msg.altitude]
-
 
     def check(self, operator):
         ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     command = Command()
     rate = rospy.Rate(1/command.sample_time)  # defining rate
     while not rospy.is_shutdown():
-        if(command.destination[0]!=0):
+        if(command.destination[0] != 0):
             command.pid()
             command.destination_check()
         rate.sleep()  # frequency of 100 Hz
