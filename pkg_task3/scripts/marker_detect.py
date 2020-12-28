@@ -66,16 +66,10 @@ class marker_detection():
                     - Providing error to the path_planner
                     - calculating necessary distance in meter
                     '''
+                    row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
+                    row_y=(200-(2*logo[0][1]+logo[0][3])/2)
+                    
                        
-                    if(logo[0][1]>200):
-                        row_y=row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
-                    else:
-                        if(logo[0][0]<200):
-                            row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
-                            row_y=(200-(2*logo[0][1]+logo[0][3])/2)
-                        else:
-                            row_x=-(200-(2*logo[0][0]+logo[0][2])/2)
-                            row_y=200-(2*logo[0][1]+logo[0][3])/2
                     
                     x=(row_x*self.obs_range_bottom[0])/self.focal_length
                     y=(row_y*self.obs_range_bottom[0])/self.focal_length
@@ -85,7 +79,8 @@ class marker_detection():
                     self.marker_error.publish(self.error)
 
                 # for (x, y, w, h) in logo:
-                #     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
+
+                #      cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
                 # cv2.imshow("show",self.img)
                 # cv2.waitKey(100)
             
