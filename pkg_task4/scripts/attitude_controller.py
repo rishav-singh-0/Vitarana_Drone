@@ -4,14 +4,11 @@
 This python file runs a ROS-node of name attitude_control which controls the roll pitch and yaw angles of the eDrone.
 This node publishes and subsribes the following topics:
         PUBLICATIONS            SUBSCRIPTIONS
-        /roll_error             /pid_tuning_altitude
-        /pitch_error            /pid_tuning_pitch
-        /yaw_error              /pid_tuning_roll
-        /edrone/pwm             /edrone/imu/data
-                                /edrone/drone_command
-
-Rather than using different variables, use list. eg : self.setpoint = [1,2,3], where index corresponds to x,y,z ...rather than defining self.x_setpoint = 1, self.y_setpoint = 2
-CODE MODULARITY AND TECHNIQUES MENTIONED LIKE THIS WILL HELP YOU GAINING MORE MARKS WHILE CODE EVALUATION.
+        /roll_error             /edrone/drone_command
+        /pitch_error            /edrone/imu/data
+        /yaw_error              
+        /edrone/pwm             
+                                
 '''
 
 # Importing the required libraries
@@ -90,19 +87,14 @@ class Edrone():
 
         # Publishing /edrone/pwm, /roll_error, /pitch_error, /yaw_error
         self.pwm_pub = rospy.Publisher('/edrone/pwm', prop_speed, queue_size=1)
-        self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
-        self.yaw_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
+        # self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
+        # self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
+        # self.yaw_pub = rospy.Publisher('/yaw_error', Float32, queue_size=1)
 
         # -----------------------------------------------------------------------------------------------------------
 
-        # Subscribing to /drone_command, imu/data, /pid_tuning_roll, /pid_tuning_pitch, /pid_tuning_yaw
-        rospy.Subscriber('/drone_command', edrone_cmd,
-                         self.drone_command_callback)
+        rospy.Subscriber('/drone_command', edrone_cmd, self.drone_command_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        # rospy.Subscriber('/pid_tuning_roll', PidTune, self.roll_set_pid)
-        # rospy.Subscriber('/pid_tuning_pitch', PidTune, self.pitch_set_pid)
-        # rospy.Subscriber('/pid_tuning_yaw', PidTune, self.yaw_set_pid)
 
         #ShutdownHook
         rospy.wait_for_service('/gazebo/reset_world')
@@ -129,30 +121,9 @@ class Edrone():
         self.setpoint_cmd[2] = msg.rcYaw
         self.rcThrottle = msg.rcThrottle
 
-        # ---------------------------------------------------------------------------------------------------------------
-
-    # This function gets executed each time when /tune_pid publishes /pid_tuning_roll
-    def roll_set_pid(self, roll):
-        self.Kp[0] = roll.Kp * 0.01
-        self.Ki[0] = roll.Ki * 0.008
-        self.Kd[0] = roll.Kd * 0.02
-
-    # This function gets executed each time when /tune_pid publishes /pid_tuning_pitch
-    def pitch_set_pid(self, pitch):
-        self.Kp[0] = pitch.Kp * 0.01
-        self.Ki[0] = pitch.Ki * 0.008
-        self.Kd[0] = pitch.Kd * 0.02
-
-    # This function gets executed each time when /tune_pid publishes /pid_tuning_yaw
-    def yaw_set_pid(self, yaw):
-        self.Kp[2] = yaw.Kp * 0.03
-        self.Ki[2] = yaw.Ki * 0.008
-        self.Kd[2] = yaw.Kd * 0.1
-
     # ----------------------------------------------------------------------------------------------------------------------
 
     def pid(self):
-        # -----------------------------Write the PID algorithm here--------------------------------------------------------------
 
         # Steps:
         # - 1. Convert the quaternion format of orientation to euler angles
@@ -205,9 +176,9 @@ class Edrone():
         self.check(self.pwm_cmd.prop4)
 
         # Publishing error messages
-        self.roll_pub.publish(self.error[0])
-        self.pitch_pub.publish(self.error[1])
-        self.yaw_pub.publish(self.error[2])
+        # self.roll_pub.publish(self.error[0])
+        # self.pitch_pub.publish(self.error[1])
+        # self.yaw_pub.publish(self.error[2])
 
         # Publishing Prop Speeds
         self.pwm_pub.publish(self.pwm_cmd)
