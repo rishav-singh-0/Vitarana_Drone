@@ -22,7 +22,6 @@ class Command():
         # initialising desired position
         # [latitude,longitude,altitude]
         self.destination = [0, 0, 0]
-        self.next_destination = 0
         # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
@@ -47,15 +46,21 @@ class Command():
 
         # Publishing /pitch_error, /roll_error, /throttle_error
         self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
-        self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
-        self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
+        # self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
+        # self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
         self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
+        rospy.Subscriber('/destination', NavSatFix, self.destination_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
+
+    def destination_callback(self, msg):
+        self.destination[0] = msg.latitude
+        self.destination[1] = msg.longitude
+        self.destination[2] = msg.altitude
 
 
     # this function will convert all rc messages in the range of 1000 to 2000
@@ -72,7 +77,7 @@ class Command():
     def pid(self):
 
         for i in range(3):
-            self.error[i] = self.destination[self.next_destination][i] - self.gps_position[i]
+            self.error[i] = self.destination[i] - self.gps_position[i]
             self.change[i] = (self.error[i] - self.prev_error[i]) / self.sample_time
             self.prev_error[i] = self.error[i]
             self.sum[i] = self.sum[i] + self.error[i] * self.sample_time
@@ -85,8 +90,8 @@ class Command():
         self.setpoint_cmd.rcYaw = self.equilibrium_value
 
         # publishing all the values to attitude_controller and for plotting purpose
-        self.roll_pub.publish(self.error[0])
-        self.pitch_pub.publish(self.error[1])
+        # self.roll_pub.publish(self.error[0])
+        # self.pitch_pub.publish(self.error[1])
         self.throttle_pub.publish(self.error[2])
         self.setpoint_pub.publish(self.setpoint_cmd)
 

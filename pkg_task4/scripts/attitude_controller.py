@@ -19,7 +19,7 @@ from math import degrees
 from std_msgs.msg import Float32
 from sensor_msgs.msg import Imu
 from pid_tune.msg import PidTune
-from vitarana_drone.msg import *
+from vitarana_drone.msg import prop_speed, edrone_cmd
 from std_srvs.srv import Empty
 
 
