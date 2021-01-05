@@ -42,15 +42,12 @@ class PathPlanner():
         self.sample_time = 0.01
 
         # Publisher
-        self.pub_checkpoint = rospy.Publisher(
-            '/checkpoint', NavSatFix, queue_size=1)
+        self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
-        rospy.Subscriber('/final_setpoint', NavSatFix,
-                         self.final_setpoint_callback)
+        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        rospy.Subscriber('/edrone/range_finder_top', LaserScan,
-                         self.range_finder_top_callback)
+        rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     def final_setpoint_callback(self, msg):
@@ -66,10 +63,8 @@ class PathPlanner():
     #     self.obs_range_bottom = msg.ranges
 
     # Functions for data conversion between GPS and meter with respect to origin
-    def lat_to_x(self, input_latitude): return 110692.0702932625 * \
-        (input_latitude - 19)
-    def long_to_y(self, input_longitude): return - \
-        105292.0089353767 * (input_longitude - 72)
+    def lat_to_x(self, input_latitude): return 110692.0702932625 * (input_latitude - 19)
+    def long_to_y(self, input_longitude): return - 105292.0089353767 * (input_longitude - 72)
 
     def x_to_lat_diff(self, input_x): return (input_x / 110692.0702932625)
     def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
@@ -81,11 +76,12 @@ class PathPlanner():
         specific_movement = [0, 0]
 
         # Applying symmetric triangle method
-        specific_movement[0] = (
-            total_movement * self.diff_xy[0]) / self.distance_xy
-        specific_movement[1] = (
-            total_movement * self.diff_xy[1]) / self.distance_xy
+        specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
+        specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
+
+    def altitude_control(self):
+        pass        
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
@@ -127,24 +123,19 @@ class PathPlanner():
         for i in range(len(data)-1):
             if data[i] <= self.obs_closest_range:
                 if i % 2 != 0:
-                    self.movement_in_plane[0] = data[i] - \
-                        self.obs_closest_range
+                    self.movement_in_plane[0] = data[i] - self.obs_closest_range
                     self.movement_in_plane[1] = self.movement_in_1D
                 else:
                     self.movement_in_plane[0] = self.movement_in_1D
-                    self.movement_in_plane[1] = data[i] - \
-                        self.obs_closest_range
+                    self.movement_in_plane[1] = data[i] - self.obs_closest_range
             else:
-                self.movement_in_plane = self.calculate_movement_in_plane(
-                    self.movement_in_1D)
+                self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - \
-            self.x_to_lat_diff(self.movement_in_plane[0])
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
-            self.movement_in_plane[1])
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
         self.checkpoint.altitude = 24
 
