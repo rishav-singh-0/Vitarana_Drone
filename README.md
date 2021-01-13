@@ -1,7 +1,7 @@
 # Vitarana Drone
 
 
-# Introduction: 
+## Introduction: 
 At present we all were in the Generation where each and every door delivery is given by a Man. So to make a step ahead for Future towards the Technology, I would like to introduce our Project “Vitarana Drone– Make a Step ahead for Future”. In this project, I would like to make a drone which works flies according to the QR-Code's Data and deliver the product at customer prescribed address. In this project, we will embed a software which navigates the Drone to Customer’s address with the scanned QR-Code on the box.
 
 
