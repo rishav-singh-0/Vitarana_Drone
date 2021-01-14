@@ -81,7 +81,10 @@ class PathPlanner():
         return specific_movement
 
     def altitude_control(self):
-        pass        
+        dist_z = self.current_location[2] - self.destination[2] + 3
+        slope = dist_z / (self.distance_xy - 3)
+        self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
+
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required 
