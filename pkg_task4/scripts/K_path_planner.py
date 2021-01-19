@@ -3,6 +3,8 @@
 import rospy
 import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
+from vitarana_drone.srv import *
+from std_msgs.msg import String
 import csv
 
 class PathPlanner():
@@ -17,7 +19,10 @@ class PathPlanner():
         self.destination=[0,0,0]#for reaching at evry destination
         self.box_list=[]#will contain all the coordinates of the box
         self.drone_coordinates=[0,0,0]#initial coordinates
-        self.destination_switch=False
+        self.destination_switch=False#will switch the between box_list and drone_coordinates
+        self.box_reach_flag=False
+
+        self.attech_situation = False
         self.counter_for_initial_pos=0#for taking the drone coordinates from the gps
         self.destination_init()
         # Converting latitude and longitude in meters for calculation
@@ -59,6 +64,8 @@ class PathPlanner():
         # Publisher
         self.pub_checkpoint = rospy.Publisher(
             '/checkpoint', NavSatFix, queue_size=1)
+        self.grip_flag=rospy.Publisher('/gripp_flag',String,queue_size=1)
+        
 
         # Subscriber
         # rospy.Subscriber('/final_setpoint', NavSatFix,
@@ -66,6 +73,8 @@ class PathPlanner():
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan,
                          self.range_finder_top_callback)
+        rospy.Subscriber('/edrone/gripper_check', String,
+                         self.gripper_check_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     # def final_setpoint_callback(self, msg):
@@ -73,6 +82,9 @@ class PathPlanner():
 
 
     #edit for opt
+    def gripper_check_callback(self, state):
+        self.attech_situation = state.data
+
     def destination_init(self):
         box_list_notations=[]#it will store the grid symbols in the list
         first_grid_lat=18.9999864489
@@ -93,6 +105,8 @@ class PathPlanner():
             for j in range(len(self.destination_list)):
                 self.destination_list[i][j]=float(self.destination_list[i][j])
         # print(self.destination_list)
+        # while(self.drone_coordinates[2]==0):
+        #     continue
         for i in range(len(box_list_notations)):
             x=0
             y=0
@@ -119,7 +133,8 @@ class PathPlanner():
         if(msg.latitude!=0):
             if(self.counter_for_initial_pos==0):
                 self.drone_coordinates=[msg.latitude, msg.longitude, msg.altitude]
-                self.counter_for_initial_pos+=self.counter_for_initial_pos
+                print(self.counter_for_initial_pos)
+                self.counter_for_initial_pos=self.counter_for_initial_pos+1
             self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
@@ -148,15 +163,30 @@ class PathPlanner():
             total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
 
+
+
+
+    #edit for opt
     def coordinate_switch(self):
         '''it will be very helpful to differentiat boxs and destinations'''
         if(not self.destination_switch):
             self.destination=self.box_list[0]
+        else:
+            self.destination=self.destination_list[0]
     #edit for opt
     def destination_check(self):
+        if(-0.000010417 <= (self.box_list[0][0]-self.current_location[0]) <= 0.000010417):
+            if (-0.0000037487 <= (self.box_list[0][1]-self.current_location[1])<= 0.0000037487):
+                self.box_reach_flag=True
+                if(-0.12 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.12 and self.attech_situation=='True'):
+                    self.grip_flag.publish('True')
+                    print("box_grip_flag_is_published/publishing")
+                    self.box_reach_flag=False
+                    self.destination_switch=True
+
         ''' function will hendle all desired positions '''
-        if -0.000010517 <= (self.given_destination.latitude-self.current_location[0]) <= 0.000010517:
-            if -0.0000127487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000127487:
+        if -0.000010217 <= (self.given_destination.latitude-self.current_location[0]) <= 0.000010217:
+            if -0.0000037487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000037487:
                 if -0.2 <= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
                     self.take_destination = True
                     print(self.take_destination)
@@ -234,12 +264,16 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        self.checkpoint.altitude = 12#self.drone_coordinates[2]
+        if(self.box_reach_flag and self.destination_switch==False):
+            self.checkpoint.altitude=self.drone_coordinates[2]
+        else:
+            self.checkpoint.altitude = self.destination_list[0][2]+3#self.drone_coordinates[2]
+            print("hello ji")
 
         # Publishing
         #edit for opt
         if(self.take_destination and self.checkpoint.latitude!=0):
-            print(self.take_destination)
+            # print(self.take_destination)
             self.points=[self.checkpoint.latitude,self.checkpoint.longitude,self.checkpoint.altitude]
             self.take_destination=not self.take_destination
         # print(self.given_destination.latitude)
@@ -247,7 +281,10 @@ class PathPlanner():
         [self.given_destination.latitude,self.given_destination.longitude,self.given_destination.altitude]=self.points
 
         self.pub_checkpoint.publish(self.given_destination)
-        print(self.given_destination.altitude)
+        #edit for opt
+
+        
+        
 
 if __name__ == "__main__":
     planner = PathPlanner()
