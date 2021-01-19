@@ -71,18 +71,18 @@ class marker_detection():
                     
                        
                     
-                    x=(row_x*self.obs_range_bottom[0])/self.focal_length
-                    y=(row_y*self.obs_range_bottom[0])/self.focal_length
+                    x=(row_x*(self.obs_range_bottom[0]))/self.focal_length
+                    y=(row_y*(self.obs_range_bottom[0]))/self.focal_length
                     
-                    self.error.latitude=x
-                    self.error.longitude=y
+                    self.error.latitude=x+0.13
+                    self.error.longitude=y+0.11
                     self.marker_error.publish(self.error)
 
-                # for (x, y, w, h) in logo:
+                for (x, y, w, h) in logo:
 
-                #      cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-                # cv2.imshow("show",self.img)
-                # cv2.waitKey(100)
+                     cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
+                cv2.imshow("show",self.img)
+                cv2.waitKey(100)
             
             except ValueError, IndexError:
                 pass
