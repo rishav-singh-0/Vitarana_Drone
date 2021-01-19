@@ -234,7 +234,7 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
-        self.checkpoint.altitude = self.drone_coordinates[2]
+        self.checkpoint.altitude = 12#self.drone_coordinates[2]
 
         # Publishing
         #edit for opt
