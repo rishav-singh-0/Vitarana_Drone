@@ -178,7 +178,7 @@ class PathPlanner():
         if(-0.000010417 <= (self.box_list[0][0]-self.current_location[0]) <= 0.000010417):
             if (-0.0000037487 <= (self.box_list[0][1]-self.current_location[1])<= 0.0000037487):
                 self.box_reach_flag=True
-                if(-0.12 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.12 and self.attech_situation=='True'):
+                if(-0.08 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.08 and self.attech_situation=='True'):
                     self.grip_flag.publish('True')
                     print("box_grip_flag_is_published/publishing")
                     self.box_reach_flag=False
@@ -187,7 +187,7 @@ class PathPlanner():
         ''' function will hendle all desired positions '''
         if -0.000010217 <= (self.given_destination.latitude-self.current_location[0]) <= 0.000010217:
             if -0.0000037487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000037487:
-                if -0.2 <= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
+                if -0.08 <= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
                     self.take_destination = True
                     print(self.take_destination)
 
