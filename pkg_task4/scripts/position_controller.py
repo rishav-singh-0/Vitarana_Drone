@@ -11,6 +11,7 @@ from sensor_msgs.msg import NavSatFix
 
 class Command():
     '''Navigating the Drone through commands'''
+    # constructor
 
     def __init__(self):
         rospy.init_node('position_controller')
@@ -52,20 +53,17 @@ class Command():
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        rospy.Subscriber('/destination', NavSatFix, self.destination_callback)
+        rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
-    def destination_callback(self, msg):
-        self.destination[0] = msg.latitude
-        self.destination[1] = msg.longitude
-        self.destination[2] = msg.altitude
+    def checkpoint_callback(self, msg):
+        '''Taking checkpoints from path_planner.py'''
+        self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
-
-    # this function will convert all rc messages in the range of 1000 to 2000
     def check(self, operator):
-        ''' Vreifying if the value is within range if not making it and transforming it for desired range'''
+        ''' Verifying if the value is within range if not making it and transforming it for desired range'''
         operator = self.equilibrium_value + operator
         if operator > 2000:
             return 2000
@@ -75,6 +73,7 @@ class Command():
             return operator
 
     def pid(self):
+        '''Function for implimenting the pid algorithm'''
 
         for i in range(3):
             self.error[i] = self.destination[i] - self.gps_position[i]
@@ -84,9 +83,9 @@ class Command():
             self.output[i] = self.Kp[i] * self.error[i] + self.Kd[i]*self.change[i] + self.Ki[i]*self.sum[i]
 
         # figure out the values  for roll,pitch and throttle
-        self.setpoint_cmd.rcRoll = self.check(self.equilibrium_value + self.output[0])
-        self.setpoint_cmd.rcPitch = self.check(self.equilibrium_value + self.output[1])
-        self.setpoint_cmd.rcThrottle = self.check(self.equilibrium_value + self.output[2])
+        self.setpoint_cmd.rcRoll = self.check(self.output[0])
+        self.setpoint_cmd.rcPitch = self.check(self.output[1])
+        self.setpoint_cmd.rcThrottle = self.check(self.output[2])
         self.setpoint_cmd.rcYaw = self.equilibrium_value
 
         # publishing all the values to attitude_controller and for plotting purpose
