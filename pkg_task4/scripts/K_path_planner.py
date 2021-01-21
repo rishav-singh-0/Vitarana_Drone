@@ -180,9 +180,8 @@ class PathPlanner():
 
     #edit for opt
     def reset_and_reform(self):
-        print("...............................................................................\n.......................................................")
-        # if(self.next_delevery<=2):
-        self.next_delevery+=1
+        if(self.next_delevery<=3):
+            self.next_delevery+=1
         print(self.next_delevery)
         self.function_switch=True
         self.pose_mark_cnt=0
@@ -197,7 +196,9 @@ class PathPlanner():
     def coordinate_switch(self):
         print(self.next_delevery)
         '''it will be very helpful to differentiat boxs and destinations'''
-        if(not self.destination_switch):
+        if(self.next_delevery==3):
+            self.destination=self.drone_coordinates
+        elif(not self.destination_switch):
             self.destination=self.box_list[self.next_delevery]
         else:
             self.destination=self.destination_list[self.next_delevery]
@@ -223,7 +224,7 @@ class PathPlanner():
         #threshould for checking every single checkpoint
         if -0.000010217 <= (self.given_destination.latitude-self.current_location[0]) <= 0.000010217:
             if -0.0000037487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000037487:
-                if -0.2<= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
+                if (-0.2<= (self.given_destination.altitude-self.current_location[2]) <= 0.2) or self.attech_situation=='True':
                     self.take_destination = True
                     # print(self.take_destination)
 
@@ -301,7 +302,7 @@ class PathPlanner():
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
         if(self.box_reach_flag and self.destination_switch==False):
-            self.checkpoint.altitude=self.drone_coordinates[2]-0.11
+            self.checkpoint.altitude=self.drone_coordinates[2]-0.5
         else:
             self.checkpoint.altitude = self.destination_list[self.next_delevery][2]+3#self.drone_coordinates[2]
             # print("hello ji")
@@ -325,38 +326,40 @@ class PathPlanner():
 
 
     def marker_find(self):
-        if(self.pose_mark_cnt==0):
-            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+10
-            self.pose_mark_cnt+=1
-            self.pose_marker_flag=False
-            print("haji to peli condition che")
-        if(self.img_data[0]!=0.0 and self.pose_mark_cnt==1 and self.pose_marker_flag==True):
-            self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
-            self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+4
-            self.pose_mark_cnt+=1
-            self.pose_marker_flag=False
-            print("e biji condition maa ramu chu")
-        if(self.pose_mark_cnt == 2 and self.pose_marker_flag==True):
-            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]
-            self.pose_mark_cnt+=1
-            self.pose_marker_flag=False
+        if(self.next_delevery<3):
+            if(self.pose_mark_cnt==0):
+                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+10
+                self.pose_mark_cnt+=1
+                self.pose_marker_flag=False
+                print("haji to peli condition che")
+            if(self.img_data[0]!=0.0 and self.pose_mark_cnt==1 and self.pose_marker_flag==True):
+                self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
+                self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
+                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+4
+                self.pose_mark_cnt+=1
+                self.pose_marker_flag=False
+                print("e biji condition maa ramu chu")
+            if(self.pose_mark_cnt == 2 and self.pose_marker_flag==True):
+                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]
+                self.pose_mark_cnt+=1
+                self.pose_marker_flag=False
 
-        self.pub_checkpoint.publish(self.checkpoint)
-        self.destination_data.publish(self.desti_data)
+            self.pub_checkpoint.publish(self.checkpoint)
+            self.destination_data.publish(self.desti_data)
 
 
         
     def marker_box(self):
+        if(self.next_delevery<3):
 
-        if -0.000010217 <= (self.checkpoint.latitude-self.current_location[0]) <= 0.000010217:
-            if -0.0000037487 <= (self.checkpoint.longitude-self.current_location[1])<= 0.0000037487:
-                if -0.2 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
-                    self.pose_marker_flag = True
-                    if(self.pose_mark_cnt==3 and self.pose_marker_flag==True):
-                        print("in the marker box")
-                        self.grip_flag.publish('False')
-                        self.reset_and_reform()
+            if -0.000010217 <= (self.checkpoint.latitude-self.current_location[0]) <= 0.000010217:
+                if -0.0000037487 <= (self.checkpoint.longitude-self.current_location[1])<= 0.0000037487:
+                    if -0.2 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
+                        self.pose_marker_flag = True
+                        if(self.pose_mark_cnt==3 and self.pose_marker_flag==True):
+                            print("in the marker box")
+                            self.grip_flag.publish('False')
+                            self.reset_and_reform()
 
 
 
