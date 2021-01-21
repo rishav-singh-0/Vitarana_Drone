@@ -181,7 +181,7 @@ class PathPlanner():
 
     #edit for opt
     def reset_and_reform(self):
-        if(self.next_delevery<=3):
+        if(self.next_delevery<3):
             self.next_delevery+=1
         print(self.next_delevery)
         self.function_switch=True
