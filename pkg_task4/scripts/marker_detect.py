@@ -76,7 +76,7 @@ class marker_detection():
                 gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
                 # image, reject levels level weights.
                 logo = self.logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
-                if(len(logo) != 0):
+                if(len(logo) != 0 and logo[0][2]<80):
                     '''
                     - Providing error to the path_planner
                     - calculating necessary distance in meter
