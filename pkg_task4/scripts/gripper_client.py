@@ -13,20 +13,20 @@ class Grip():
         self.gps_position = [0, 0, 0]
         self.final_destination = [0, 0, 0]
         self.container = [0, 0, 0]
-        self.attech_situation = False       # check if box is attechable
+        self.attech_situation = -1       # check if box is attechable
         self.attech_constraint = 0          # limits the service for atteching request
         # limits the process reletive to the number boxes
         self.detech_constraint = 0          # limits the service for deteching request
         # determines when to attech box and when to detech the box
 
-        rospy.Subscriber('/gripp_flag', String,
-                         self.gripper_check_callback)
+        rospy.Subscriber('/gripp_flag', String, self.gripper_check_callback)
 
     def gps_callback(self, msg):
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
     def gripper_check_callback(self, state):
-        self.attech_situation = bool(state.data)
+        # print(state.data, bool(state.data))
+        self.attech_situation = state.data
 
     def gripper_client(self, check_condition):
         '''this function will call and wait for the gripper service'''
@@ -39,15 +39,15 @@ class Grip():
     def grip_check(self):
         '''this function will handle attech and detech service'''
 
-        if(self.attech_situation and self.attech_constraint == 0):
+        if(self.attech_situation=='True' and self.attech_constraint == 0):
             self.gripper_client(True)
             self.attech_constraint += 1
-        elif(self.detech_constraint == 0):
+        elif(self.attech_situation=='False' and self.detech_constraint == 0):
             self.gripper_client(False)
             self.detech_constraint += 1
 
-        if(self.attech_constraint==1 and self.detech_constraint==1):
-            self.detech_constraint=self.attech_constraint=1
+        if(self.attech_constraint and self.detech_constraint==1):
+            self.detech_constraint=1
 
 if __name__ == "__main__":
     grip = Grip()

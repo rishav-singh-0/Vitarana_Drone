@@ -38,6 +38,7 @@ class PathPlanner():
         self.movement_in_plane = [0, 0]
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 8
+        self.lock = False
 
         self.sample_time = 0.01
 
@@ -87,7 +88,7 @@ class PathPlanner():
 
 
     def obstacle_avoid(self):
-        '''For Processing the obtained sensor data and publishing required 
+        '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
 
         if self.destination == [0, 0, 0]:
@@ -108,39 +109,38 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
-        # calculating maximum distance to be covered at once
-        # it can be done more efficiently using another pid
+        # Calculating Maximum Possible movement possible in a particular direction
+        i = 0; movement = [0, 0, 0, 0, 0]
         for obs_distance in data:
-            if 16 <= obs_distance:
-                self.movement_in_1D = 15
-            elif 9 <= obs_distance:
-                self.movement_in_1D = 4
-            else:
-                self.movement_in_1D = 2.5
+            movement[i] = obs_distance * 0.75
+            # if obs_distance < self.obs_closest_range:
+            #     movement[i] = obs_distance - self.obs_closest_range
+                # This would be negative cause we wanna pull back our drone if it gets too close
+            if obs_distance > 25:
+                movement[i] = 25
+            i+=1
 
-        # checking if destination is nearer than maximum distance to be travelled
-        if self.movement_in_1D >= self.distance_xy:
-            self.movement_in_1D = self.distance_xy
+        self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
 
-        # doge the obstacle if its closer than certain distance
-        for i in range(len(data)-1):
-            if data[i] <= self.obs_closest_range:
-                if i % 2 != 0:
-                    self.movement_in_plane[0] = data[i] - self.obs_closest_range
-                    self.movement_in_plane[1] = self.movement_in_1D
-                else:
-                    self.movement_in_plane[0] = self.movement_in_1D
-                    self.movement_in_plane[1] = data[i] - self.obs_closest_range
-            else:
-                self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
+        for i in range(2):
+            if (-0.5 <= self.destination_xy[i] - self.current_location_xy[i] <= 0.5
+                    and not self.lock and self.movement_in_plane[(i+1)%2] < abs(self.diff_xy[(i+1)%2])):
+                self.lock = True
 
-        # print(self.movement_in_plane,self.movement_in_1D)
+            # if self.lock:
+            #     # if direction is locked then take jump of 3 meters and check if way is clear
+            #     self.destination[i] += 3
+
+
+
+
+        print(self.movement_in_plane, movement)
 
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
-        # giving fixed altitude for now will work on it in future
         self.checkpoint.altitude = 24
+        # self.altitude_control()
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)

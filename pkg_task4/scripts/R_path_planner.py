@@ -5,8 +5,9 @@ import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 from vitarana_drone.srv import *
 from std_msgs.msg import String
-import csv
 import os
+import numpy
+import csv
 
 class PathPlanner():
 
@@ -24,7 +25,6 @@ class PathPlanner():
         self.pose_mark_cnt=0#for switching the destination in market find
         self.pose_marker_flag=True#for making sure that previouse movement is done
         self.img_data=[0,0]#receving marker coordinates from the marker_detect.py
-        self.next_delevery=0#counter for delevering parcel on different buildings
         self.destination_switch=False#will switch the between box_list and drone_coordinates
         self.box_reach_flag=False
 
@@ -33,7 +33,7 @@ class PathPlanner():
         self.destination_init()
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-        
+
         #edit for opt
         self.take_destination = True                    #shifted thrshould box flag
         self.given_destination=NavSatFix()              #giving destination from the points
@@ -70,22 +70,17 @@ class PathPlanner():
         self.sample_time = 0.01
 
         # Publisher
-        self.pub_checkpoint = rospy.Publisher(
-            '/checkpoint', NavSatFix, queue_size=1)
+        self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
         self.grip_flag=rospy.Publisher('/gripp_flag',String,queue_size=1)
         self.destination_data=rospy.Publisher('/destination_data' , NavSatFix,queue_size=1)
-        
+
 
         # Subscriber
-        # rospy.Subscriber('/final_setpoint', NavSatFix,
-        #                  self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        rospy.Subscriber('/edrone/range_finder_top', LaserScan,
-                         self.range_finder_top_callback)
-        rospy.Subscriber('/edrone/gripper_check', String,
-                         self.gripper_check_callback)
-        rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
+        rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
+        rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
 
     # def final_setpoint_callback(self, msg):
     #     self.destination = [msg.latitude, msg.longitude, msg.altitude]
@@ -100,48 +95,44 @@ class PathPlanner():
 
     def destination_init(self):
         box_list_notations=[]#it will store the grid symbols in the list
-        first_grid_lat=18.9999864489
-        first_grid_long=71.9999430161
-        diff_lat=0.000013552
-        diff_long=0.000014245
+        first_grid = [18.9999864489, 71.9999430161]
+        diff_grid = [0.000013552, 0.000014245]
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),'manifest.csv'),'r') as x:
-            content = csv.reader(x)
-            #print(content)
-            self.iter=0
-            for i in content:
-                self.destination_list.append(i)
-                box_note=self.destination_list[self.iter].pop(0)
-                box_note=list(box_note);box_note[1]=int(box_note[1])
-                box_list_notations.append(box_note)
-                self.iter+=1
-        for i in range(len(self.destination_list)):
-            for j in range(len(self.destination_list)):
-                self.destination_list[i][j]=float(self.destination_list[i][j])
-        # print(self.destination_list)
-        # while(self.drone_coordinates[2]==0):
-        #     continue
-        for i in range(len(box_list_notations)):
-            x=0
-            y=0
-            for j in range(len(box_list_notations[i])):
-                if(j==0):
-                    if(box_list_notations[i][j]=='A'):
-                        x=first_grid_lat+0
-                    elif(box_list_notations[i][j]=='B'):
-                        x=first_grid_lat+diff_lat
-                    elif(box_list_notations[i][j]=='C'):
-                        x=first_grid_lat+2*diff_lat
+            content = numpy.array(list(csv.reader(x)))
+            self.box_list_notations = content[:,0]
+            d_list = content[:,1:]
+            for i in d_list:
+                x = []
+                for j in i:
+                    x.append(float(j))
+                self.destination_list.append(x)
+
+        for i in content:
+            
+
+
+
+            for j in box_list_notations:
+                if(j == 0):
+                    if(j[j] == 'A'):
+                        x = first_grid[j]+0
+                    elif(j[j] == 'B'):
+                        x = first_grid[j]+diff_grid[0]
+                    elif(j[j] == 'C'):
+                        x = first_grid[j]+2*diff_grid[0]
                 else:
-                    if(box_list_notations[i][j]==1):
-                        y=first_grid_long+0
-                    elif(box_list_notations[i][j]==2):
-                        y=first_grid_long+diff_long
-                    elif(box_list_notations[i][j]==3):
-                        y=first_grid_long+2*diff_lat
+                    if(j[j] == 1):
+                        y = first_grid[j]+0
+                    elif(j[j] == 2):
+                        y = first_grid[j]+diff_grid[1]
+                    elif(j[j] == 3):
+                        y = first_grid[j]+2*diff_grid[0]
+            
+
             self.box_list.append([x,y,self.drone_coordinates[2]])
 
 
-    
+
     def gps_callback(self, msg):
         if(msg.latitude!=0):
             if(self.counter_for_initial_pos==0):
@@ -180,58 +171,41 @@ class PathPlanner():
 
 
     #edit for opt
-    def reset_and_reform(self):
-        if(self.next_delevery<=3):
-            self.next_delevery+=1
-        print(self.next_delevery)
-        self.function_switch=True
-        self.pose_mark_cnt=0
-        self.pose_marker_flag=True
-        self.img_data=[0,0]
-        self.destination_switch=False
-        self.box_reach_flag=False
-        
-
-
-
     def coordinate_switch(self):
-        print(self.next_delevery)
         '''it will be very helpful to differentiat boxs and destinations'''
-        if(self.next_delevery==3):
-            self.destination=self.drone_coordinates
-        elif(not self.destination_switch):
-            self.destination=self.box_list[self.next_delevery]
+        if(not self.destination_switch):
+            self.destination=self.box_list[0]
         else:
-            self.destination=self.destination_list[self.next_delevery]
+            self.destination=self.destination_list[0]
     #edit for opt
     def destination_check(self):
         ''' function will hendle all desired positions '''
         #threshould for gripplig the box
-        if(-0.000010417 <= (self.box_list[self.next_delevery][0]-self.current_location[0]) <= 0.000010417):
-            if (-0.0000037487 <= (self.box_list[self.next_delevery][1]-self.current_location[1])<= 0.0000037487):
+        if(-0.000010417 <= (self.box_list[0][0]-self.current_location[0]) <= 0.000010417):
+            if (-0.0000037487 <= (self.box_list[0][1]-self.current_location[1])<= 0.0000037487):
                 self.box_reach_flag=True
                 if(-0.1 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.2 and self.attech_situation=='True'):
                     self.grip_flag.publish('True')
-                    # print("box_grip_flag_is_published/publishing")
+                    print("box_grip_flag_is_published/publishing")
                     self.box_reach_flag=False
                     self.destination_switch=True
 
         #threshould for finding that drone has reached givrn coordinats from csv file
-        if -0.000010217 <= (self.destination_list[self.next_delevery][0]-self.current_location[0]) <= 0.000010217:
-            if -0.0000037487 <= (self.destination_list[self.next_delevery][1]-self.current_location[1])<= 0.0000037487:
-                
+        if -0.000010217 <= (self.destination_list[0][0]-self.current_location[0]) <= 0.000010217:
+            if -0.0000037487 <= (self.destination_list[0][1]-self.current_location[1])<= 0.0000037487:
+
                 self.function_switch=False
 
         #threshould for checking every single checkpoint
         if -0.000010217 <= (self.given_destination.latitude-self.current_location[0]) <= 0.000010217:
             if -0.0000037487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000037487:
-                if (-0.2<= (self.given_destination.altitude-self.current_location[2]) <= 0.2) or self.attech_situation=='True':
+                if -0.2<= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
                     self.take_destination = True
-                    # print(self.take_destination)
+                    print(self.take_destination)
 
 
     def obstacle_avoid(self):
-        '''For Processing the obtained sensor data and publishing required 
+        '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
 
         if self.destination == [0, 0, 0]:
@@ -272,14 +246,14 @@ class PathPlanner():
                 if i % 2 != 0:
                     self.movement_in_plane[0] = data[i] - \
                         self.obs_closest_range
-                    
+
                     if(-0.0000107487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000107487):
                         print("ostacle is in the way")
-                        
+
                         self.movement_in_plane[1]=12
-                        
+
                     else:
-                        
+
                         self.movement_in_plane[1] = self.movement_in_1D
                     break
                 # else:
@@ -289,11 +263,11 @@ class PathPlanner():
                 #     self.movement_in_plane[1] = 4#data[i] - \
                 #         #self.obs_closest_range
                 #     break
-                    
+
             else:
                 self.movement_in_plane = self.calculate_movement_in_plane(
                     self.movement_in_1D)
-    
+
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
@@ -303,10 +277,10 @@ class PathPlanner():
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
         if(self.box_reach_flag and self.destination_switch==False):
-            self.checkpoint.altitude=self.drone_coordinates[2]-0.5
+            self.checkpoint.altitude=self.drone_coordinates[2]-0.11
         else:
-            self.checkpoint.altitude = self.destination_list[self.next_delevery][2]+3#self.drone_coordinates[2]
-            # print("hello ji")
+            self.checkpoint.altitude = self.destination_list[0][2]+3#self.drone_coordinates[2]
+            print("hello ji")
 
         # Publishing
         #edit for opt
@@ -319,49 +293,44 @@ class PathPlanner():
         [self.given_destination.latitude,self.given_destination.longitude,self.given_destination.altitude]=self.points
 
         self.pub_checkpoint.publish(self.given_destination)
-        self.desti_data.latitude=self.destination_list[self.next_delevery][0]
-        self.desti_data.longitude=self.destination_list[self.next_delevery][1]
-        self.desti_data.altitude=self.destination_list[self.next_delevery][2]
+        self.desti_data.latitude=self.destination_list[0][0]
+        self.desti_data.longitude=self.destination_list[0][1]
+        self.desti_data.altitude=self.destination_list[0][2]
 
         #edit for opt
 
 
     def marker_find(self):
-        if(self.next_delevery<3):
-            if(self.pose_mark_cnt==0):
-                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+10
-                self.pose_mark_cnt+=1
-                self.pose_marker_flag=False
-                print("haji to peli condition che")
-            if(self.img_data[0]!=0.0 and self.pose_mark_cnt==1 and self.pose_marker_flag==True):
-                self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
-                self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+4
-                self.pose_mark_cnt+=1
-                self.pose_marker_flag=False
-                print("e biji condition maa ramu chu")
-            if(self.pose_mark_cnt == 2 and self.pose_marker_flag==True):
-                self.checkpoint.altitude=self.destination_list[self.next_delevery][2]
-                self.pose_mark_cnt+=1
-                self.pose_marker_flag=False
+        if(self.pose_mark_cnt==0):
+            self.checkpoint.altitude=self.destination_list[0][2]+10
+            self.pose_mark_cnt+=1
+            self.pose_marker_flag=False
+            print("haji to peli condition che")
+        if(self.img_data[0]!=0.0 and self.pose_mark_cnt==1 and self.pose_marker_flag==True):
+            self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
+            self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
+            self.checkpoint.altitude=self.destination_list[0][2]+4
+            self.pose_mark_cnt+=1
+            self.pose_marker_flag=False
+            print("e biji condition maa ramu chu")
+        if(self.pose_mark_cnt == 2 and self.pose_marker_flag==True):
+            self.checkpoint.altitude=self.destination_list[0][2]
+            self.pose_mark_cnt+=1
+            self.pose_marker_flag=False
 
-            self.pub_checkpoint.publish(self.checkpoint)
-            self.destination_data.publish(self.desti_data)
+        self.pub_checkpoint.publish(self.checkpoint)
+        self.destination_data.publish(self.desti_data)
 
 
-        
+
     def marker_box(self):
-        if(self.next_delevery<3):
 
-            if -0.000010217 <= (self.checkpoint.latitude-self.current_location[0]) <= 0.000010217:
-                if -0.0000037487 <= (self.checkpoint.longitude-self.current_location[1])<= 0.0000037487:
-                    if -0.2 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
-                        self.pose_marker_flag = True
-                        if(self.pose_mark_cnt==3 and self.pose_marker_flag==True):
-                            print("in the marker box")
-                            self.grip_flag.publish('False')
-                            self.reset_and_reform()
-
+        if -0.000010217 <= (self.checkpoint.latitude-self.current_location[0]) <= 0.000010217:
+            if -0.0000037487 <= (self.checkpoint.longitude-self.current_location[1])<= 0.0000037487:
+                if -0.08 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
+                    self.pose_marker_flag = True
+                    if(self.pose_mark_cnt==2 and self.pose_marker_flag==True):
+                        self.grip_flag.publish('False')
 
 
 
