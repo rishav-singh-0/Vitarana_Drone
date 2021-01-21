@@ -303,7 +303,7 @@ class PathPlanner():
             self.movement_in_plane[1])
         # giving fixed altitude for now will work on it in future
         if(self.box_reach_flag and self.destination_switch==False):
-            self.checkpoint.altitude=self.drone_coordinates[2]-0.5
+            self.checkpoint.altitude=self.drone_coordinates[2]-0.2
         else:
             self.checkpoint.altitude = self.destination_list[self.next_delevery][2]+3#self.drone_coordinates[2]
             # print("hello ji")

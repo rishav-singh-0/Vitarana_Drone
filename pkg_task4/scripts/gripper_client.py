@@ -47,7 +47,7 @@ class Grip():
             self.detech_constraint += 1
 
         if(self.attech_constraint and self.detech_constraint==1):
-            self.detech_constraint=1
+            self.detech_constraint=self.attech_constraint=0
 
 if __name__ == "__main__":
     grip = Grip()
