@@ -179,18 +179,34 @@ class PathPlanner():
 
 
     #edit for opt
+    def reset_and_reform(self):
+        print("...............................................................................\n.......................................................")
+        if(self.next_delevery<=2):
+            self.next_delevery+=1
+        self.function_switch=True
+        self.pose_mark_cnt=0
+        self.pose_marker_flag=True
+        self.img_data=[0,0]
+        self.next_delevery=0
+        self.destination_switch=False
+        self.box_reach_flag=False
+        
+
+
+
     def coordinate_switch(self):
+        print(self.next_delevery)
         '''it will be very helpful to differentiat boxs and destinations'''
         if(not self.destination_switch):
-            self.destination=self.box_list[0]
+            self.destination=self.box_list[self.next_delevery]
         else:
             self.destination=self.destination_list[self.next_delevery]
     #edit for opt
     def destination_check(self):
         ''' function will hendle all desired positions '''
         #threshould for gripplig the box
-        if(-0.000010417 <= (self.box_list[0][0]-self.current_location[0]) <= 0.000010417):
-            if (-0.0000037487 <= (self.box_list[0][1]-self.current_location[1])<= 0.0000037487):
+        if(-0.000010417 <= (self.box_list[self.next_delevery][0]-self.current_location[0]) <= 0.000010417):
+            if (-0.0000037487 <= (self.box_list[self.next_delevery][1]-self.current_location[1])<= 0.0000037487):
                 self.box_reach_flag=True
                 if(-0.1 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.2 and self.attech_situation=='True'):
                     self.grip_flag.publish('True')
@@ -340,6 +356,8 @@ class PathPlanner():
                     if(self.pose_mark_cnt==3 and self.pose_marker_flag==True):
                         print("in the marker box")
                         self.grip_flag.publish('False')
+                        self.reset_and_reform()
+
 
 
 
