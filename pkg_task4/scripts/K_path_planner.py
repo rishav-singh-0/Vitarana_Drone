@@ -23,6 +23,7 @@ class PathPlanner():
         self.pose_mark_cnt=0#for switching the destination in market find
         self.pose_marker_flag=True#for making sure that previouse movement is done
         self.img_data=[0,0]#receving marker coordinates from the marker_detect.py
+        self.next_delevery=0#counter for delevering parcel on different buildings
         self.destination_switch=False#will switch the between box_list and drone_coordinates
         self.box_reach_flag=False
 
@@ -183,7 +184,7 @@ class PathPlanner():
         if(not self.destination_switch):
             self.destination=self.box_list[0]
         else:
-            self.destination=self.destination_list[0]
+            self.destination=self.destination_list[self.next_delevery]
     #edit for opt
     def destination_check(self):
         ''' function will hendle all desired positions '''
@@ -198,8 +199,8 @@ class PathPlanner():
                     self.destination_switch=True
 
         #threshould for finding that drone has reached givrn coordinats from csv file
-        if -0.000010217 <= (self.destination_list[0][0]-self.current_location[0]) <= 0.000010217:
-            if -0.0000037487 <= (self.destination_list[0][1]-self.current_location[1])<= 0.0000037487:
+        if -0.000010217 <= (self.destination_list[self.next_delevery][0]-self.current_location[0]) <= 0.000010217:
+            if -0.0000037487 <= (self.destination_list[self.next_delevery][1]-self.current_location[1])<= 0.0000037487:
                 
                 self.function_switch=False
 
@@ -286,7 +287,7 @@ class PathPlanner():
         if(self.box_reach_flag and self.destination_switch==False):
             self.checkpoint.altitude=self.drone_coordinates[2]-0.11
         else:
-            self.checkpoint.altitude = self.destination_list[0][2]+3#self.drone_coordinates[2]
+            self.checkpoint.altitude = self.destination_list[self.next_delevery][2]+3#self.drone_coordinates[2]
             print("hello ji")
 
         # Publishing
@@ -300,28 +301,28 @@ class PathPlanner():
         [self.given_destination.latitude,self.given_destination.longitude,self.given_destination.altitude]=self.points
 
         self.pub_checkpoint.publish(self.given_destination)
-        self.desti_data.latitude=self.destination_list[0][0]
-        self.desti_data.longitude=self.destination_list[0][1]
-        self.desti_data.altitude=self.destination_list[0][2]
+        self.desti_data.latitude=self.destination_list[self.next_delevery][0]
+        self.desti_data.longitude=self.destination_list[self.next_delevery][1]
+        self.desti_data.altitude=self.destination_list[self.next_delevery][2]
 
         #edit for opt
 
 
     def marker_find(self):
         if(self.pose_mark_cnt==0):
-            self.checkpoint.altitude=self.destination_list[0][2]+10
+            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+10
             self.pose_mark_cnt+=1
             self.pose_marker_flag=False
             print("haji to peli condition che")
         if(self.img_data[0]!=0.0 and self.pose_mark_cnt==1 and self.pose_marker_flag==True):
             self.checkpoint.latitude=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.checkpoint.longitude=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
-            self.checkpoint.altitude=self.destination_list[0][2]+4
+            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]+4
             self.pose_mark_cnt+=1
             self.pose_marker_flag=False
             print("e biji condition maa ramu chu")
         if(self.pose_mark_cnt == 2 and self.pose_marker_flag==True):
-            self.checkpoint.altitude=self.destination_list[0][2]
+            self.checkpoint.altitude=self.destination_list[self.next_delevery][2]
             self.pose_mark_cnt+=1
             self.pose_marker_flag=False
 
@@ -334,9 +335,10 @@ class PathPlanner():
 
         if -0.000010217 <= (self.checkpoint.latitude-self.current_location[0]) <= 0.000010217:
             if -0.0000037487 <= (self.checkpoint.longitude-self.current_location[1])<= 0.0000037487:
-                if -0.08 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
+                if -0.2 <= (self.checkpoint.altitude-self.current_location[2]) <= 0.2:
                     self.pose_marker_flag = True
-                    if(self.pose_mark_cnt==2 and self.pose_marker_flag==True):
+                    if(self.pose_mark_cnt==3 and self.pose_marker_flag==True):
+                        print("in the marker box")
                         self.grip_flag.publish('False')
 
 
