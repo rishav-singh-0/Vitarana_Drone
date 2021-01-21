@@ -181,13 +181,13 @@ class PathPlanner():
     #edit for opt
     def reset_and_reform(self):
         print("...............................................................................\n.......................................................")
-        if(self.next_delevery<=2):
-            self.next_delevery+=1
+        # if(self.next_delevery<=2):
+        self.next_delevery+=1
+        print(self.next_delevery)
         self.function_switch=True
         self.pose_mark_cnt=0
         self.pose_marker_flag=True
         self.img_data=[0,0]
-        self.next_delevery=0
         self.destination_switch=False
         self.box_reach_flag=False
         
@@ -210,7 +210,7 @@ class PathPlanner():
                 self.box_reach_flag=True
                 if(-0.1 <= (self.drone_coordinates[2]-self.current_location[2])<= 0.2 and self.attech_situation=='True'):
                     self.grip_flag.publish('True')
-                    print("box_grip_flag_is_published/publishing")
+                    # print("box_grip_flag_is_published/publishing")
                     self.box_reach_flag=False
                     self.destination_switch=True
 
@@ -225,7 +225,7 @@ class PathPlanner():
             if -0.0000037487 <= (self.given_destination.longitude-self.current_location[1])<= 0.0000037487:
                 if -0.2<= (self.given_destination.altitude-self.current_location[2]) <= 0.2:
                     self.take_destination = True
-                    print(self.take_destination)
+                    # print(self.take_destination)
 
 
     def obstacle_avoid(self):
@@ -304,7 +304,7 @@ class PathPlanner():
             self.checkpoint.altitude=self.drone_coordinates[2]-0.11
         else:
             self.checkpoint.altitude = self.destination_list[self.next_delevery][2]+3#self.drone_coordinates[2]
-            print("hello ji")
+            # print("hello ji")
 
         # Publishing
         #edit for opt

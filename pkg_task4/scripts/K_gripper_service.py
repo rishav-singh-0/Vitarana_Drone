@@ -48,6 +48,8 @@ class Grip():
             self.gripper_client(False)
             self.detech_constraint += 1
 
+        if(self.attech_constraint==1 and self.detech_constraint==1):
+            self.detech_constraint=self.attech_constraint=1
 
 if __name__ == "__main__":
     grip = Grip()
