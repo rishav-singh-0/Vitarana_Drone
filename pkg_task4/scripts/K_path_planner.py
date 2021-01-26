@@ -253,7 +253,19 @@ class PathPlanner():
             else:
                 self.movement_in_1D = 2.5
 
+        i = 0; movement = [0, 0, 0, 0, 0]
+        for obs_distance in data:
+            movement[i] = obs_distance * 0.75
+            # if obs_distance < self.obs_closest_range:
+            #     movement[i] = obs_distance - self.obs_closest_range
+                # This would be negative cause we wanna pull back our drone if it gets too close
+            if obs_distance > 25:
+                movement[i] = 25
+            i+=1
+
+        self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
         # checking if destination is nearer than maximum distance to be travelled
+
         if self.movement_in_1D >= self.distance_xy:
             self.movement_in_1D = self.distance_xy
 
@@ -333,11 +345,14 @@ if __name__ == "__main__":
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
         # if(planner.destination[0]!=0):
-        if(planner.function_switch):
-            planner.coordinate_switch()
-            planner.obstacle_avoid()
-            planner.destination_check()
-        else:
-            planner.marker_find()
-            planner.marker_box()
+        try:
+            if(planner.function_switch):
+                planner.coordinate_switch()
+                planner.obstacle_avoid()
+                planner.destination_check()
+            else:
+                planner.marker_find()
+                planner.marker_box()
+        except:
+            pass
         rate.sleep()
