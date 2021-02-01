@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 '''
-This python file runs a ROS-node 'path_planner' which takes care of the bath to be followed
+This python file runs a ROS-node 'path_planner' which takes care of the path to be followed
 This node publishes and subsribes the following topics:
         PUBLICATIONS            SUBSCRIPTIONS
         /checkpoint             /marker_data
