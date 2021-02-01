@@ -1,32 +1,37 @@
+ 
 #!/usr/bin/env python
-
-'''
-This python file runs a ROS-node 'path_planner' which takes care of the bath to be followed
-This node publishes and subsribes the following topics:
-        PUBLICATIONS            SUBSCRIPTIONS
-        /checkpoint             /marker_data
-                                /edrone/gps
-                                /edrone/range_finder_top
-                                /edrone/range_finder_bottom
-
-'''
 
 import rospy
 import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
+from std_msgs.msg import String
 
 
 class PathPlanner():
 
     def __init__(self):
-        rospy.init_node('path_planner')
+        rospy.init_node('path_planner_beta')
 
         # Destination to be reached
         # [latitude, longitude, altitude]
         self.destination = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-
+        
+        #*******************************************opt********************************#
+        self.function_switch=False#switching the function between obstacle_avoid and marker_find
+        #may be upper one is optional for integrating
+        self.sudo_destination_reach=False#checking if its reached at the destination which is for delevery in csv file
+        self.desired_destination=[0,0,0]#giving it to the threshould box if it has found marker
+        self.img_data=[0,0]#data which will come from the maeker_detect.py script
+        self.pause_process=False#it will helpful to stop taking the data form the marker_detect and focus on destination reach
+        self.purpose=True#its for invoking that its for delevery or return
+        self.reach_flag=False#for reaching at every position which is require threshould box
+        self.pick=True#for deciding wather to pick or drop a box
+        self.take_destination=False
+        
+        #*******************************************opt********************************#
+        
         # Present Location of the DroneNote
         self.current_location = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
@@ -55,11 +60,16 @@ class PathPlanner():
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
+        self.grip_flag=rospy.Publisher('/gripp_flag',String,queue_size=1)
 
         # Subscriber
+        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+
+    def final_setpoint_callback(self, msg):
+        self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
@@ -92,6 +102,19 @@ class PathPlanner():
         dist_z = self.current_location[2] - self.destination[2] + 3
         slope = dist_z / (self.distance_xy - 3)
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
+
+    def threshould_box(self):
+
+        if -0.000010217 <= (self.destination[0]-self.current_location[0]) <= 0.000010217:
+            if -0.0000037487 <= (self.self.destination[0]-self.current_location[1])<= 0.0000037487:
+                if(self.pick):
+                    self.take_destination = True
+                if (-0.1<= (self.destination[2]-self.current_location[2]) <= 0.1):
+                    self.reach_flag=True
+
+
+
+
 
 
     def obstacle_avoid(self):
@@ -146,12 +169,40 @@ class PathPlanner():
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
-        self.checkpoint.altitude = 24
+        if(math.hypot((self.destination[0]-self.current_location[0]),(self.destination[1]-self.current_location[1]))<=6 and self.pick):
+            self.checkpoint.altitude=self.destination[2]+2
+        else:
+            self.checkpoint.altitude = 24
         # self.altitude_control()
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
 
+    def marker_find(self):
+        if(self.purpose):
+            if(not self.sudo_destination_reach):
+                if(self.img_data!=[0,0] and (not self.pause_process)):
+                    self.desired_destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
+                    self.pause_process=True
+            elif(self.sudo_destination_reach):
+                if(self.img_data==[0,0] and (not self.pause_process)):
+                    self.checkpoint.altitude=self.current_location[2]+4
+                elif(self.img_data!=[0,0] and (not self.pause_process)):
+                    self.desired_destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
+                    self.pause_process=True
+
+    def pick_n_drop(self):
+        self.checkpoint.altitude=self.destination[2]
+        self.pub_checkpoint.publish(self.checkpoint)
+        if(self.reach_flag):
+            if(self.pick):
+                self.grip_flag.publish('True')
+            else:
+                self.grip_flag.publish('False')
+            self.reach_flag=not self.reach_flag
+            
+
+        pass
 
 if __name__ == "__main__":
     planner = PathPlanner()
