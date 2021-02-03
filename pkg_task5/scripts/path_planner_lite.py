@@ -1,4 +1,3 @@
- 
 #!/usr/bin/env python
 
 import rospy
@@ -19,17 +18,19 @@ class PathPlanner():
         self.destination_xy = [0, 0]
         
         #*******************************************opt********************************#
-        self.function_switch=False#switching the function between obstacle_avoid and marker_find
-        #may be upper one is optional for integrating
         self.sudo_destination_reach=False#checking if its reached at the destination which is for delevery in csv file
         self.desired_destination=[0,0,0]#giving it to the threshould box if it has found marker
+        #above 2 will being erased:::::)
         self.img_data=[0,0]#data which will come from the maeker_detect.py script
         self.pause_process=False#it will helpful to stop taking the data form the marker_detect and focus on destination reach
-        self.purpose=True#its for invoking that its for delevery or return
         self.reach_flag=False#for reaching at every position which is require threshould box
         self.pick=True#for deciding wather to pick or drop a box
-        self.take_destination=False
-        
+        self.status="D"#it will be either "delevery" or "returns"
+        self.pick_drop_box=False
+        self.msg_from_marker_find=False
+        self.cnt=0
+        self.destination_list=[[18.9999864489,71.9999430161,8.44099749139],
+                               [18.9993676146,71.9999999999,10.854960]]
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -39,6 +40,7 @@ class PathPlanner():
 
         # The checkpoint node to be reached for reaching final destination
         self.checkpoint = NavSatFix()
+        self.desti_data=NavSatFix()
 
         # Initializing to store data from Lazer Sensors
         self.obs_range_top = []
@@ -61,6 +63,7 @@ class PathPlanner():
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
         self.grip_flag=rospy.Publisher('/gripp_flag',String,queue_size=1)
+        self.destination_data=rospy.Publisher('/destination_data' , NavSatFix,queue_size=1)
 
         # Subscriber
         rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
@@ -106,21 +109,22 @@ class PathPlanner():
     def threshould_box(self):
 
         if -0.000010217 <= (self.destination[0]-self.current_location[0]) <= 0.000010217:
-            if -0.0000037487 <= (self.self.destination[0]-self.current_location[1])<= 0.0000037487:
-                if(self.pick):
-                    self.take_destination = True
+            if -0.0000037487 <= (self.destination[0]-self.current_location[1])<= 0.0000037487:
+                self.pick_drop_box=True
+                if(self.pause_process):
+                    self.msg_from_marker_find=True
                 if (-0.1<= (self.destination[2]-self.current_location[2]) <= 0.1):
                     self.reach_flag=True
-
-
-
+                    if(self.cnt<2):
+                        self.cnt+=1
+                    
 
 
 
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
-
+        self.destination=self.destination_list[self.cnt]
         if self.destination == [0, 0, 0]:
             return
 
@@ -139,57 +143,71 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
-        # Calculating Maximum Possible movement possible in a particular direction
-        i = 0; movement = [0, 0, 0, 0, 0]
+        # calculating maximum distance to be covered at once
+        # it can be done more efficiently using another pid
         for obs_distance in data:
-            movement[i] = obs_distance * 0.75
-            # if obs_distance < self.obs_closest_range:
-            #     movement[i] = obs_distance - self.obs_closest_range
-                # This would be negative cause we wanna pull back our drone if it gets too close
-            if obs_distance > 25:
-                movement[i] = 25
-            i+=1
+            if 16 <= obs_distance:
+                self.movement_in_1D = 15
+            elif 9 <= obs_distance:
+                self.movement_in_1D = 4
+            else:
+                self.movement_in_1D = 2.5
 
-        self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
+        # checking if destination is nearer than maximum distance to be travelled
+        if self.movement_in_1D >= self.distance_xy:
+            self.movement_in_1D = self.distance_xy
 
-        for i in range(2):
-            if (-0.5 <= self.destination_xy[i] - self.current_location_xy[i] <= 0.5
-                    and not self.lock and self.movement_in_plane[(i+1)%2] < abs(self.diff_xy[(i+1)%2])):
-                self.lock = True
+        # doge the obstacle if its closer than certain distance
+        for i in range(len(data)-1):
+            if data[i] <= self.obs_closest_range:
+                if i % 2 != 0:
+                    self.movement_in_plane[0] = data[i] - \
+                        self.obs_closest_range
+                    self.movement_in_plane[1] = self.movement_in_1D
+                else:
+                    self.movement_in_plane[0] = self.movement_in_1D
+                    self.movement_in_plane[1] = data[i] - \
+                        self.obs_closest_range
+            else:
+                self.movement_in_plane = self.calculate_movement_in_plane(
+                    self.movement_in_1D)
 
-            # if self.lock:
-            #     # if direction is locked then take jump of 3 meters and check if way is clear
-            #     self.destination[i] += 3
-
-
-
-
-        print(self.movement_in_plane, movement)
+        # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
+        self.checkpoint.latitude = self.current_location[0] - \
+            self.x_to_lat_diff(self.movement_in_plane[0])
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
+            self.movement_in_plane[1])
+
+
+
         if(math.hypot((self.destination[0]-self.current_location[0]),(self.destination[1]-self.current_location[1]))<=6 and self.pick):
             self.checkpoint.altitude=self.destination[2]+2
         else:
             self.checkpoint.altitude = 24
         # self.altitude_control()
+        self.desti_data.latitude=self.destination[0]
+        self.desti_data.longitude=self.destination[1]
+        self.desti_data.altitude=self.destination[2]
+
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
+        self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
-        if(self.purpose):
-            if(not self.sudo_destination_reach):
-                if(self.img_data!=[0,0] and (not self.pause_process)):
-                    self.desired_destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
-                    self.pause_process=True
-            elif(self.sudo_destination_reach):
-                if(self.img_data==[0,0] and (not self.pause_process)):
-                    self.checkpoint.altitude=self.current_location[2]+4
-                elif(self.img_data!=[0,0] and (not self.pause_process)):
-                    self.desired_destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
-                    self.pause_process=True
+
+        # if(not self.sudo_destination_reach):
+        #     if(self.img_data!=[0,0] and (not self.pause_process)):
+        #         self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
+        #         self.pause_process=True
+        # elif(self.sudo_destination_reach):
+        if(self.img_data==[0,0] and (not self.pause_process)):
+            self.checkpoint.altitude=self.current_location[2]+4
+        elif(self.img_data!=[0,0] and (not self.pause_process)):
+            self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
+            self.pause_process=True
 
     def pick_n_drop(self):
         self.checkpoint.altitude=self.destination[2]
@@ -197,9 +215,12 @@ class PathPlanner():
         if(self.reach_flag):
             if(self.pick):
                 self.grip_flag.publish('True')
+                self.pick=False
             else:
                 self.grip_flag.publish('False')
-            self.reach_flag=not self.reach_flag
+                self.pick=True
+            self.reach_flag=False#not self.reach_flag
+            self.pick_drop_box=False
             
 
         pass
@@ -208,5 +229,19 @@ if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
+        if(planner.status=="D"):
+            if(not planner.pick_drop_box):
+                planner.obstacle_avoid()
+            elif(planner.pick_drop_box):
+                if(planner.pick or planner.msg_from_marker_find):
+                    planner.pick_n_drop()
+                elif(not planner.pick or not planner.msg_from_marker_find):
+                    planner.marker_find()
+        elif(planner.status=="R"):
+            if(planner.pick_drop_box):
+                planner.obstacle_avoid()
+            elif(not planner.pick_drop_box):
+                planner.pick_n_drop()
+
         planner.obstacle_avoid()
         rate.sleep()
