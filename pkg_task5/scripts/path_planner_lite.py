@@ -181,6 +181,8 @@ class PathPlanner():
             self.movement_in_plane[1])
 
 
+        print("almost done")
+
 
         if(math.hypot((self.destination[0]-self.current_location[0]),(self.destination[1]-self.current_location[1]))<=6 and self.pick):
             self.checkpoint.altitude=self.destination[2]+2
