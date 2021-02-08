@@ -26,6 +26,7 @@ class Grip():
 
     def gripper_check_callback(self, state):
         # print(state.data, bool(state.data))
+        print(state.data)
         self.attech_situation = state.data
 
     def gripper_client(self, check_condition):
@@ -40,7 +41,8 @@ class Grip():
         '''this function will handle attech and detech service'''
 
         if(self.attech_situation=='True' and self.attech_constraint == 0):
-            self.gripper_client(True)
+            while(not self.gripper_client(True)):
+                self.gripper_client(True)
             self.attech_constraint += 1
         elif(self.attech_situation=='False' and self.detech_constraint == 0):
             self.gripper_client(False)

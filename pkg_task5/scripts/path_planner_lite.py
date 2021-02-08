@@ -25,12 +25,14 @@ class PathPlanner():
         self.pause_process=False#it will helpful to stop taking the data form the marker_detect and focus on destination reach
         self.reach_flag=False#for reaching at every position which is require threshould box
         self.pick=True#for deciding wather to pick or drop a box
-        self.status="D"#it will be either "delevery" or "returns"
+        self.status="R"#it will be either "delevery" or "returns"
         self.pick_drop_box=False
         self.msg_from_marker_find=False
         self.cnt=0
+        self.attech_situation = False
         self.destination_list=[[18.9999864489,71.9999430161,8.44099749139],
-                               [18.9993676146,71.9999999999,10.854960]]
+                               [19.0000769558,71.9999597885,8.44100360],
+                               [18.9999864489,71.9999430161,8.44099749139]]
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -58,7 +60,7 @@ class PathPlanner():
         self.obs_closest_range = 8
         self.lock = False
 
-        self.sample_time = 0.01
+        self.sample_time = 0.08
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
@@ -69,7 +71,18 @@ class PathPlanner():
         rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
+        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
+        rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
+        
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+
+    def marker_error_callback(self, msg):
+        self.img_data = [msg.latitude, msg.longitude]
+
+
+    def gripper_check_callback(self, state):
+        self.attech_situation = state.data
+
 
     def final_setpoint_callback(self, msg):
         self.destination = [msg.latitude, msg.longitude, msg.altitude]
@@ -107,16 +120,26 @@ class PathPlanner():
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
 
     def threshould_box(self):
-
+        #print(self.pick_drop_box)
+        # print(self.pause_process)
+        # print(self.destination)
+        # print("yoo",self.current_location)
         if -0.000010217 <= (self.destination[0]-self.current_location[0]) <= 0.000010217:
-            if -0.0000037487 <= (self.destination[0]-self.current_location[1])<= 0.0000037487:
+           
+            if -0.0000033487 <= (self.destination[1]-self.current_location[1])<= 0.0000033487:
                 self.pick_drop_box=True
+               
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if (-0.1<= (self.destination[2]-self.current_location[2]) <= 0.1):
-                    self.reach_flag=True
-                    if(self.cnt<2):
+                if (-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05):
+                    if(self.cnt<2 and self.attech_situation):
+                        self.reach_flag=True
+                        #print(self.pick_drop_box)
+                        #if(not self.pick_drop_box):
+                        print(self.cnt)
                         self.cnt+=1
+                        
+                        #self.pick_drop_box=False
                     
 
 
@@ -124,7 +147,7 @@ class PathPlanner():
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
-        self.destination=self.destination_list[self.cnt]
+        # self.destination=self.destination_list[self.cnt]
         if self.destination == [0, 0, 0]:
             return
 
@@ -181,13 +204,16 @@ class PathPlanner():
             self.movement_in_plane[1])
 
 
-        print("almost done")
+        
 
 
         if(math.hypot((self.destination[0]-self.current_location[0]),(self.destination[1]-self.current_location[1]))<=6 and self.pick):
-            self.checkpoint.altitude=self.destination[2]+2
+            self.checkpoint.altitude=self.destination[2]+0.8
+            self.checkpoint.longitude=self.destination[1]
+            self.checkpoint.latitude=self.destination[0]
+            
         else:
-            self.checkpoint.altitude = 24
+            self.checkpoint.altitude = 10
         # self.altitude_control()
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
@@ -195,7 +221,9 @@ class PathPlanner():
 
 
         # Publishing
+        # if(not self.pick_drop_box):
         self.pub_checkpoint.publish(self.checkpoint)
+        
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
@@ -205,45 +233,64 @@ class PathPlanner():
         #         self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
         #         self.pause_process=True
         # elif(self.sudo_destination_reach):
+        # print(self.pause_process)
         if(self.img_data==[0,0] and (not self.pause_process)):
             self.checkpoint.altitude=self.current_location[2]+4
+            self.pub_checkpoint.publish(self.checkpoint)
         elif(self.img_data!=[0,0] and (not self.pause_process)):
-            self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
+            self.destination[0]=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
+            self.destination[1]=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
             self.pause_process=True
 
     def pick_n_drop(self):
-        self.checkpoint.altitude=self.destination[2]
+        
+        self.checkpoint.altitude=self.destination[2]-0.08
         self.pub_checkpoint.publish(self.checkpoint)
         if(self.reach_flag):
-            if(self.pick):
+            #print("yoo")
+            if(self.pick and self.attech_situation):
                 self.grip_flag.publish('True')
                 self.pick=False
+                
             else:
                 self.grip_flag.publish('False')
                 self.pick=True
             self.reach_flag=False#not self.reach_flag
             self.pick_drop_box=False
+        #print(self.pick)
             
-
-        pass
+    def function_call(self):
+        self.destination=self.destination_list[self.cnt]
+        if(self.status=="D"):
+            if(not self.pick_drop_box):
+                print("obstacle avoid")
+                self.obstacle_avoid()
+                self.threshould_box()
+            elif(self.pick_drop_box):
+                if(self.pick or self.msg_from_marker_find):
+                    print("pick n drop")
+                    self.pick_n_drop()
+                    self.threshould_box()
+                    #print("niche jao")
+                elif(not self.pick or not self.msg_from_marker_find):
+                    print("marker_find")
+                    self.marker_find()
+                    self.threshould_box()
+        elif(self.status=="R"):
+            if(not self.pick_drop_box):
+                self.obstacle_avoid()
+                self.threshould_box()
+                print("obstacle_avoid")
+                #self.threshould_box()
+            elif(self.pick_drop_box):
+                self.pick_n_drop()
+                self.threshould_box()
+                print("pick_n_drop")
+        
 
 if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
-        if(planner.status=="D"):
-            if(not planner.pick_drop_box):
-                planner.obstacle_avoid()
-            elif(planner.pick_drop_box):
-                if(planner.pick or planner.msg_from_marker_find):
-                    planner.pick_n_drop()
-                elif(not planner.pick or not planner.msg_from_marker_find):
-                    planner.marker_find()
-        elif(planner.status=="R"):
-            if(planner.pick_drop_box):
-                planner.obstacle_avoid()
-            elif(not planner.pick_drop_box):
-                planner.pick_n_drop()
-
-        planner.obstacle_avoid()
+        planner.function_call()
         rate.sleep()
