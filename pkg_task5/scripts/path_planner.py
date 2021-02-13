@@ -35,6 +35,9 @@ class PathPlanner():
         # The checkpoint node to be reached for reaching final destination
         self.checkpoint = NavSatFix()
 
+        # Initializing delivery/return coordinates 
+        self.box_pose = [0, 0, 0]
+
         # Initializing to store data from Lazer Sensors
         self.obs_range_top = []
         # self.obs_range_bottom = []
@@ -49,6 +52,9 @@ class PathPlanner():
         self.movement_in_plane = [0, 0]
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 8
+        
+        self.direction_xy = [0, 0]          # direction to go in
+
         self.lock = False
 
         self.sample_time = 0.01
@@ -59,6 +65,7 @@ class PathPlanner():
         # Subscriber
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
+        rospy.Subscriber('/box_checkpoint', NavSatFix, self.box_checkpoint_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     def gps_callback(self, msg):
@@ -69,6 +76,9 @@ class PathPlanner():
 
     # def range_finder_bottom_callback(self, msg):
     #     self.obs_range_bottom = msg.ranges
+
+    def box_checkpoint_callback(self, msg):
+        self.box_pose = [msg.latitude, msg.longitude, msg.altitude]
 
     # Functions for data conversion between GPS and meter with respect to origin
     def lat_to_x(self, input_latitude): return 110692.0702932625 * (input_latitude - 19)
@@ -117,31 +127,36 @@ class PathPlanner():
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
         # Calculating Maximum Possible movement possible in a particular direction
-        i = 0; movement = [0, 0, 0, 0, 0]
-        for obs_distance in data:
-            movement[i] = obs_distance * 0.75
-            # if obs_distance < self.obs_closest_range:
-            #     movement[i] = obs_distance - self.obs_closest_range
-                # This would be negative cause we wanna pull back our drone if it gets too close
-            if obs_distance > 25:
-                movement[i] = 25
-            i+=1
+        # i = 0; movement = [0, 0, 0, 0, 0]
+        # for obs_distance in data:
+        #     movement[i] = obs_distance * 0.75
+        #     if obs_distance < self.obs_closest_range:
+        #         movement[i] = obs_distance - self.obs_closest_range
+        #         # This would be negative cause we wanna pull back our drone if it gets too close
+        #     if obs_distance > 25:
+        #         movement[i] = 25
+        #     i+=1
 
-        self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
+        for i in [0, 1]:
+            self.direction_xy[i] = i if self.diff_xy > 0 else i+2
 
-        for i in range(2):
-            if (-0.5 <= self.destination_xy[i] - self.current_location_xy[i] <= 0.5
-                    and not self.lock and self.movement_in_plane[(i+1)%2] < abs(self.diff_xy[(i+1)%2])):
-                self.lock = True
+        for i in [0, 1]:
+            if data[self.direction_xy[i]] < self.diff_xy[i]:
+                self.movement_in_plane[i] = (data[self.direction_xy[i]] - self.obs_closest_range) * 0.75
+
+        # self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
+
+        # for i in range(2):
+        #     if (-0.5 <= self.destination_xy[i] - self.current_location_xy[i] <= 0.5
+        #             and not self.lock and self.movement_in_plane[(i+1)%2] < abs(self.diff_xy[(i+1)%2])):
+        #         self.lock = True
 
             # if self.lock:
             #     # if direction is locked then take jump of 3 meters and check if way is clear
             #     self.destination[i] += 3
 
 
-
-
-        print(self.movement_in_plane, movement)
+        # print(self.movement_in_plane, movement)
 
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
