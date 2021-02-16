@@ -46,7 +46,7 @@ class PathPlanner():
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     def final_setpoint_callback(self, msg):
-        self.destination = [19.0, 72.0, 24]
+        self.destination = [19.0007046575 , 71.9998955286, 24]
 
     def gps_callback(self, msg):
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
@@ -97,46 +97,43 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
         
-        # calculating maximum distance to be covered at once
-        # it can be done more efficiently using another pid 
-        # for obs_distance in data:
-        #     if 16 <= obs_distance:
-        #         self.movement_in_1D = 15
-        #     elif 9 <= obs_distance:
-        #         self.movement_in_1D = 4
-        #     else:
-        #         self.movement_in_1D = 2.5
-
-        # # checking if destination is nearer than maximum distance to be travelled
-        # if self.movement_in_1D >= self.distance_xy:
-        #     self.movement_in_1D = self.distance_xy
-
-        # # doge the obstacle if its closer than certain distance
-        # for i in range(len(data)-1):
-        #     if data[i] <= self.obs_closest_range:
-        #         if i % 2 != 0:
-        #             self.movement_in_plane[0] = data[i] - self.obs_closest_range
-        #             self.movement_in_plane[1] = self.movement_in_1D
-        #         else:
-        #             self.movement_in_plane[0] = self.movement_in_1D
-        #             self.movement_in_plane[1] = data[i] - self.obs_closest_range
-        #     else :
-        #         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
-        
         for i in [0, 1]:
             self.direction_xy[i] = i if self.diff_xy > 0 else i+2
 
+        # calculating maximum distance to be covered at once
+        # it can be done more efficiently using another pid 
         for i in [0, 1]:
-            if data[self.direction_xy[i]] < self.diff_xy[i]:
-                self.movement_in_plane[i] = (data[self.direction_xy[i]] - self.obs_closest_range) * 0.75
-            else:
-                self.movement_in_plane[i] = 16
+            self.movement_in_1D = data[self.direction_xy[i]] * 0.25
+            if data[self.direction_xy[i]] > 10:
+                self.movement_in_1D = 1
+
+        # # checking if destination is nearer than maximum distance to be travelled
+        if self.movement_in_1D >= self.distance_xy:
+            self.movement_in_1D = self.distance_xy
+
+        # doge the obstacle if its closer than certain distance
+        for i in [0, 1]:
+            if data[self.direction_xy[i]] <= self.obs_closest_range:
+                if i % 2 != 0:
+                    self.movement_in_plane[0] = data[self.direction_xy[i]] - self.obs_closest_range
+                    self.movement_in_plane[1] = self.movement_in_1D
+                else:
+                    self.movement_in_plane[0] = self.movement_in_1D
+                    self.movement_in_plane[1] = data[self.direction_xy[i]] - self.obs_closest_range
+            else :
+                self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
+
+        # for i in [0, 1]:
+        #     if data[self.direction_xy[i]] < self.diff_xy[i]:
+        #         self.movement_in_plane[i] = (data[self.direction_xy[i]] - self.obs_closest_range) * 0.75
+        #     else:
+        #         self.movement_in_plane[i] = 16
 
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0] * (-1)*(self.direction_xy[0]+1)%3)
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1] * (-1)*(self.direction_xy[1])%3)
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) 
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         # self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         # self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         self.checkpoint.altitude = 24   # giving fixed altitude for now will work on it in future
