@@ -214,6 +214,12 @@ class Edrone():
         # Publishing Prop Speeds
         self.pwm_pub.publish(self.pwm_cmd)
         # ------------------------------------------------------------------------------------------------------------------------
+    
+    def shutdown_hook(self):
+        # print("shutdown time!")
+        self.pwm_cmd.prop1 = self.pwm_cmd.prop2 = self.pwm_cmd.prop3 = self.pwm_cmd.prop4 = 0
+        self.pwm_pub.publish(self.pwm_cmd)
+        self.reset_world()
 
 
 if __name__ == '__main__':
@@ -223,4 +229,5 @@ if __name__ == '__main__':
     r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
         e_drone.pid()
+        rospy.on_shutdown(e_drone.shutdown_hook)
         r.sleep()
