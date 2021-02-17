@@ -7,6 +7,7 @@ import os
 from sensor_msgs.msg import NavSatFix, LaserScan
 import rospy
 import math
+import std_msgs.msg
 
 
 class marker_detection():
@@ -37,7 +38,7 @@ class marker_detection():
         self.logo_data = [0, 0, 0, 0]
         # data of bottom range
         self.obs_range_bottom = [0]
-        self.logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/cascade.xml'))
+        self.logo_cascade = cv2.CascadeClassifier('/home/kashyap/img_pros/intro_cascade_classifiers_training_and_usage/data/cascade.xml')
 
         # Subscribe
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
@@ -58,7 +59,10 @@ class marker_detection():
             self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_bottom_callback(self, msg):
-        self.obs_range_bottom = msg.ranges
+        
+        if(msg.ranges[0]>0.400000):
+            self.obs_range_bottom = msg.ranges
+            # print(self.obs_range_bottom[0])
 
     def image_callback(self, data):
         ''' Callback function of camera topic'''
@@ -71,12 +75,17 @@ class marker_detection():
 
     def detect_marker(self):
         '''Image QR-Code scanning and publishing algo'''
+        # self.error.header.frame_id="Delevery"
+        self.error.latitude = 3
+        self.error.longitude = 3
+        self.marker_error.publish(self.error)
         if(self.img.size > 1):
             try:
                 gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
                 # image, reject levels level weights.
                 logo = self.logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
                 if(len(logo) != 0 and logo[0][2]<80):
+                    print("detected")
                     '''
                     - Providing error to the path_planner
                     - calculating necessary distance in meter
@@ -84,8 +93,10 @@ class marker_detection():
                     row_x = -(200-(2*logo[0][0]+logo[0][2])/2)
                     row_y = (200-(2*logo[0][1]+logo[0][3])/2)
 
-                    x = (row_x*(self.current_location[2]-self.destination[2]))/self.focal_length
-                    y = (row_y*(self.current_location[2]-self.destination[2]))/self.focal_length
+                    # x = (row_x*(self.current_location[2]-self.destination[2]))/self.focal_length
+                    # y = (row_y*(self.current_location[2]-self.destination[2]))/self.focal_length
+                    x = (row_x*(self.obs_range_bottom[0]))/self.focal_length
+                    y = (row_y*(self.obs_range_bottom[0]))/self.focal_length
 
                     self.error.latitude = x
                     self.error.longitude = y
@@ -94,6 +105,12 @@ class marker_detection():
                     # print(self.obs_range_bottom[0])
                     # print("and from calculations")
                     # print(self.current_location[2]-self.destination[2])
+                else:
+
+                    self.error.latitude = 0
+                    self.error.longitude = 0
+
+                    self.marker_error.publish(self.error)
 
                 # for (x, y, w, h) in logo:
                 #     cv2.rectangle(self.img, (x, y),(x + w, y + h), (255, 255, 0), 2)
