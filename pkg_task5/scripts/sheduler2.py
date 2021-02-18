@@ -7,7 +7,7 @@ This node publishes and subsribes the following topics:
         /checkpoint             /marker_data
 
 '''
-
+#print("testing phase")
 import rospy
 import math
 import csv
