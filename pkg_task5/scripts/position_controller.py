@@ -40,9 +40,9 @@ class Command():
         # [roll, pitch, throttle]
         self.Kp = [1507*10000,  1507*10000,  290*1]
         self.Ki = [0, 0,  0*0.25]
-        self.Kd = [755*10000*5,  755*10000*5,   284*1]
+        self.Kd = [897*10000*5,  895*10000*5,   284*1]
         # necessary variables for calculation of desired position for roll,pitch and throttle
-        # [roll, pitch, throttle]
+        # [roll, pitch, throttle]sss
         self.error = [0, 0, 0]
         self.prev_error = [0, 0, 0]
         self.change = [0, 0, 0]
