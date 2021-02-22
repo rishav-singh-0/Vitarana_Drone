@@ -90,10 +90,8 @@ class PathPlanner():
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
         
-
         rospy.Subscriber('/box_checkpoint',NavSatFix,self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
-
 
     def imu_callback(self, msg):
         self.drone_orientation_quaternion[0] = msg.orientation.x
@@ -103,7 +101,6 @@ class PathPlanner():
         (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
             [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
 
-
     def csv_checkpoint(self,msg):
         self.status=msg.header.frame_id
         self.container=[msg.latitude,msg.longitude,msg.altitude]
@@ -111,22 +108,18 @@ class PathPlanner():
             self.dst=self.container
             # print(self.dst)
 
-
     def marker_error_callback(self, msg):
         self.img_data = [msg.latitude, msg.longitude]
         # print("holA")
         # print(msg.header.frame_id)
 
-
     def gripper_check_callback(self, state):
         self.attech_situation = state.data
-
 
     def final_setpoint_callback(self, msg):
         self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
-        # print(self.current_location[0]-msg.latitude)
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
@@ -140,7 +133,6 @@ class PathPlanner():
             self.obs_range_bottom = msg.ranges
             # print(self.obs_range_bottom[0])
 
-
     #mehods for distance measurement
     def lat_to_x_diff(self,ip_lat_diff):return (110692.0702932625*ip_lat_diff)
     def long_to_y_diff(self,ip_long_diff):return (-105292.0089353767*ip_long_diff)
@@ -151,7 +143,6 @@ class PathPlanner():
 
     def x_to_lat_diff(self, input_x): return (input_x / 110692.0702932625)
     def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
-
 
     def altitude_control(self):
         dist_z = self.current_location[2] - self.destination[2] + 3
@@ -262,41 +253,22 @@ class PathPlanner():
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
         # calculating maximum distance to be covered at once
-        # it can be done more efficiently using another pid
-        # for obs_distance in data:
-        #     if 16 <= obs_distance:
-        #         self.movement_in_1D = 2
-        #     elif 9 <= obs_distance:
-        #         self.movement_in_1D = 1
-        #     elif(self.distance_xy<5):
-        #         self.movement_in_1D=self.distance_xy
-        #     else:
-        # self.movement_in_1D[0] = 6
-        # self.movement_in_1D[1] = 6
         for i in [0, 1]:
-            d = data[self.direction_xy[i]]
-            if d > 22:
-                d = 22
+            d = data[self.direction_xy[i]] if data[self.direction_xy[i]] < 24 else 24
             self.movement_in_1D = d * 0.65
 
         if(self.distance_xy<=8.0):
             self.movement_in_1D = self.distance_xy
 
-        # checking if destination is nearer than maximum distance to be travelled
-        # if self.movement_in_1D[0] >= self.distance_xy:
-        #     # print("helloooooooo  oooo  oooooo  oooooo  oooooo  oooooo  oooooo  ooooo")
-        #     self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
         # doge the obstacle if its closer than certain distance
-        # for i in range(len(data)-1):
-        #     if data[i] <= self.obs_closest_range:
-        #         if i % 2 != 0:
-        #             self.movement_in_plane[0] = data[i] - \
-        #                 self.obs_closest_range
-        #             self.movement_in_plane[1] = self.movement_in_1D
-        #         else:
-        #             self.movement_in_plane[0] = self.movement_in_1D
-        #             self.movement_in_plane[1] = data[i] - \
-        #                 self.obs_closest_range
+        for i in range(len(data)-1):
+            if data[i] <= self.obs_closest_range:
+                if i % 2 != 0:
+                    self.movement_in_plane[0] = data[i] - self.obs_closest_range
+                    self.movement_in_plane[1] = self.movement_in_1D
+                else:
+                    self.movement_in_plane[0] = self.movement_in_1D
+                    self.movement_in_plane[1] = data[i] - self.obs_closest_range
         #     else:
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
@@ -304,13 +276,13 @@ class PathPlanner():
 
         # setting the values to publish
         # self.altitude_select()
-        self.check_altitude()
+        # self.check_altitude()
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         self.checkpoint.altitude = 24
 
 
-        
+
 
 
         # if(math.hypot(self.lat_to_x_diff(self.destination[0]-self.current_location[0]),self.long_to_y_diff((self.destination[1]-self.current_location[1])))<=6 and self.pick):
