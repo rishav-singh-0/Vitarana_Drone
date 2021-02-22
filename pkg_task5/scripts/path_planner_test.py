@@ -46,6 +46,7 @@ class PathPlanner():
         self.buffer_altitude=0
         self.drone_orientation_quaternion=[0,0,0,0]
         self.drone_orientation_euler=[0,0,0,0]
+        self.pause_coordinates=[0,0]
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -130,7 +131,10 @@ class PathPlanner():
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
-        if(-1.5<=(self.drone_orientation_euler[0]*180/3.14)<=1.5 and -1.5<=(self.drone_orientation_euler[1]*180/3.14)<=1.5):
+        # print(self.drone_orientation_euler[0]*180/3.14)
+        # print("hellloooooo")
+        # print(self.drone_orientation_euler[1]*180/3.14)
+        if(-2.5<=(self.drone_orientation_euler[0]*180/3.14)<=2.5 and -2.5<=(self.drone_orientation_euler[1]*180/3.14)<=2.5):
             if(msg.ranges[0]>0.4 and msg.ranges[1]>0.4 and msg.ranges[2]>0.4 and msg.ranges[3]>0.4):
                 self.obs_range_top = msg.ranges
                 # print(self.obs_range_top)
@@ -192,20 +196,20 @@ class PathPlanner():
                         #self.pick_drop_box=False
                     
     def altitude_select(self):
-        print(self.checkpoint.altitude)
+        # print(self.checkpoint.altitude)
         # if(self.pick):
         #     self.altitude=self.destination[2]+2
         # else:
         if(self.limiter[2]==0):
             if((-0.08<self.current_location[2]-self.destination[2]<0.08) and self.altitude_interrup):
                 print("current is big")
-                self.altitude=10.1#self.destination[2]+1.5
+                self.altitude=16.75+3#self.destination[2]+1.5
             elif(not (-0.08<self.current_location[2]-self.destination[2]<0.08) and self.current_location[2]>self.destination[2] and self.altitude_interrup):
                 if(self.limiter[0]==0):
                     print("hiiii")
-                    self.buffer_altitude=10.1#self.current_location[2]+2
+                    self.buffer_altitude=self.current_location[2]+3
                     self.limiter[0]+=1
-                self.altitude=10.1#self.buffer_altitude
+                self.altitude=self.buffer_altitude
             elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
                 print("current is small")
                 self.altitude=10.1#self.destination[2]+1
@@ -213,19 +217,36 @@ class PathPlanner():
                 #     print("obs_bottom")
                 #     self.altitude=self.current_location[2]+0.5
             self.limiter[2]+=1
-        if(self.altitude_interrup and (self.obs_range_top[0]<=6 or self.obs_range_top[1]<=6 or self.obs_range_top[2]<=6 or self.obs_range_top[3]<=6)):
-            self.altitude=self.current_location[2]+4.67
+
+        a=min(self.obs_range_top)
+        print(self.distance_xy)
+        print(a)
+
+        print()
+        print(self.distance_xy>a)
+        print(self.altitude_interrup)
+        print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
+        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=10 or self.obs_range_top[1]<=7 or self.obs_range_top[2]<=7 or self.obs_range_top[3]<=7)):
+            
             print("yoo")
+            self.altitude=self.current_location[2]+4.67
+
+            # self.pause_coordinates=[self.current_location[0],self.current_location[1]]
             self.altitude_interrup=False
-        print(self.checkpoint.altitude)
+        # print(self.checkpoint.altitude)
         self.checkpoint.altitude=self.altitude
+        # if(self.pause_coordinates[0]!=0):
+        #     self.checkpoint.latitude=self.pause_coordinates[0]
+        #     self.checkpoint.longitude=self.pause_coordinates[1]
 
     def check_altitude(self):
+        
+        # print(self.distance_xy)
         if( not self.altitude_interrup):
             if(-0.1<=self.altitude-self.current_location[2]<=0.1):
                 print("achived")
             else:
-                self.movement_in_1D[0]=self.movement_in_1D[1]=-2
+                self.movement_in_1D=-6
                 print("kaam aabhi baki hai")
 
     def calculate_movement_in_plane(self, total_movement):
@@ -303,11 +324,12 @@ class PathPlanner():
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        # self.altitude_select()
-        self.check_altitude()
+        
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
-        self.checkpoint.altitude = 24
+        # self.checkpoint.altitude = 24
+        self.altitude_select()
+        self.check_altitude()
 
 
         
@@ -395,6 +417,7 @@ class PathPlanner():
                 if(not self.pick and not self.msg_from_marker_find):
                     # print("marker_find")
                     self.limiter=[0,0,0]
+                    self.altitude_interrup=True
                     self.marker_find()
                     # self.threshould_box()
                 elif(self.pick or self.msg_from_marker_find):
@@ -411,6 +434,8 @@ class PathPlanner():
             elif(self.pick_drop_box):
                 self.pick_n_drop()
                 # self.threshould_box()
+                self.limiter=[0,0,0]
+                self.altitude_interrup=True
                 print("pick_n_drop")
         self.threshould_box()
         # print(self.checkpoint.altitude)
