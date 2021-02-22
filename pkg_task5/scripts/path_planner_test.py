@@ -207,14 +207,15 @@ class PathPlanner():
             self.limiter[2]+=1
 
         a=min(self.obs_range_top)
-        print(self.distance_xy)
-        print(a)
+        # print(self.distance_xy)
+        # print(a)
 
-        print()
-        print(self.distance_xy>a)
-        print(self.altitude_interrup)
-        print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
-        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<13)):
+        # print()
+        # print(self.distance_xy>a)
+        # print(self.altitude_interrup)
+        # print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
+
+        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[self.direction_xy[0]]<=15 or self.obs_range_top[self.direction_xy[1]]<=15)):
             
             self.altitude=self.current_location[2]+4
 
