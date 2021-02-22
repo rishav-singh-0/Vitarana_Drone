@@ -193,16 +193,13 @@ class PathPlanner():
         # else:
         if(self.limiter[2]==0):
             if((-0.08<self.current_location[2]-self.destination[2]<0.08) and self.altitude_interrup):
-                print("current is big")
                 self.altitude=16.75+3#self.destination[2]+1.5
             elif(not (-0.08<self.current_location[2]-self.destination[2]<0.08) and self.current_location[2]>self.destination[2] and self.altitude_interrup):
                 if(self.limiter[0]==0):
-                    print("hiiii")
                     self.buffer_altitude=self.current_location[2]+3
                     self.limiter[0]+=1
                 self.altitude=self.buffer_altitude
             elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
-                print("current is small")
                 self.altitude=10.1#self.destination[2]+1
                 # if(self.obs_range_bottom[0]<1):
                 #     print("obs_bottom")
@@ -219,7 +216,6 @@ class PathPlanner():
         print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
         if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=10 or self.obs_range_top[1]<=7 or self.obs_range_top[2]<=7 or self.obs_range_top[3]<=7)):
             
-            print("yoo")
             self.altitude=self.current_location[2]+4.67
 
             # self.pause_coordinates=[self.current_location[0],self.current_location[1]]
@@ -238,7 +234,6 @@ class PathPlanner():
                 print("achived")
             else:
                 self.movement_in_1D=-6
-                print("kaam aabhi baki hai")
 
     def calculate_movement_in_plane(self, total_movement):
         '''This Function will take the drone in straight line towards destination'''
@@ -272,6 +267,9 @@ class PathPlanner():
                         self.destination_xy[1] - self.current_location_xy[1]]
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
+        
+        for i in [0, 1]:
+            self.direction_xy[i] = i if self.diff_xy > 0 else i+2
 
         # calculating maximum distance to be covered at once
         for i in [0, 1]:
