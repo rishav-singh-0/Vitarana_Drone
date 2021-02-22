@@ -66,14 +66,15 @@ class PathPlanner():
         self.diff_xy = [0, 0]
         self.distance_xy = 0                # distance between current and final position
 
-        self.movement_in_1D = [0,0]             # maximum movement to be done in one direction
+        self.movement_in_1D = 0             # maximum movement to be done in one direction
         # [x, y] -> movement distribution in x and y
         self.movement_in_plane = [0, 0]
         # closest distance of obstacle (in meters)
         self.obs_closest_range = 8
         self.lock = False
 
-        self.sample_time = 0.08
+        self.direction_xy = [0, 0]
+        self.sample_time = 0.5
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
@@ -230,12 +231,11 @@ class PathPlanner():
     def calculate_movement_in_plane(self, total_movement):
         '''This Function will take the drone in straight line towards destination'''
 
-        # movement in specific direction that is x and y
-        specific_movement = [0, 0]
+        specific_movement = [0, 0]      # movement in specific direction that is x and y
 
         # Applying symmetric triangle method
-        specific_movement[0] = (total_movement[0] * self.diff_xy[0]) / self.distance_xy
-        specific_movement[1] = (total_movement[1] * self.diff_xy[1]) / self.distance_xy
+        specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
+        specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
 
     def obstacle_avoid(self):
@@ -271,15 +271,21 @@ class PathPlanner():
         #     elif(self.distance_xy<5):
         #         self.movement_in_1D=self.distance_xy
         #     else:
-        self.movement_in_1D[0] = 2
-        self.movement_in_1D[1]=2
+        # self.movement_in_1D[0] = 6
+        # self.movement_in_1D[1] = 6
+        for i in [0, 1]:
+            d = data[self.direction_xy[i]]
+            if d > 22:
+                d = 22
+            self.movement_in_1D = d * 0.65
+
+        if(self.distance_xy<=8.0):
+            self.movement_in_1D = self.distance_xy
 
         # checking if destination is nearer than maximum distance to be travelled
         # if self.movement_in_1D[0] >= self.distance_xy:
         #     # print("helloooooooo  oooo  oooooo  oooooo  oooooo  oooooo  oooooo  ooooo")
         #     self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
-        if(self.distance_xy<=8.0):
-            self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
         # doge the obstacle if its closer than certain distance
         # for i in range(len(data)-1):
         #     if data[i] <= self.obs_closest_range:
@@ -292,16 +298,16 @@ class PathPlanner():
         #             self.movement_in_plane[1] = data[i] - \
         #                 self.obs_closest_range
         #     else:
-        self.movement_in_plane = self.calculate_movement_in_plane(
-                    self.movement_in_1D)
+        self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.altitude_select()
+        # self.altitude_select()
         self.check_altitude()
-        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
+        self.checkpoint.altitude = 24
 
 
         

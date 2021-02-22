@@ -38,7 +38,7 @@ class marker_detection():
         self.logo_data = [0, 0, 0, 0]
         # data of bottom range
         self.obs_range_bottom = [0]
-        self.logo_cascade = cv2.CascadeClassifier('/home/kashyap/img_pros/intro_cascade_classifiers_training_and_usage/data/cascade.xml')
+        self.logo_cascade = cv2.CascadeClassifier(os.path.join(os.path.dirname(os.path.realpath(__file__)), '../data/cascade.xml'))
 
         # Subscribe
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
