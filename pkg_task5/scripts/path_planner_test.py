@@ -5,6 +5,7 @@ import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 from std_msgs.msg import String,Float32
 import std_msgs.msg
+import tf
 
 
 class PathPlanner():
@@ -39,6 +40,12 @@ class PathPlanner():
         self.dst=[0,0,0]
         self.container=[0,0,0]
         self.kaam_aabhi_baki_hai=False
+        self.altitude_interrup=True
+        self.altitude=0
+        self.limiter=[0,0,0]#for limiting the altitude due to current_location
+        self.buffer_altitude=0
+        self.drone_orientation_quaternion=[0,0,0,0]
+        self.drone_orientation_euler=[0,0,0,0]
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -51,7 +58,7 @@ class PathPlanner():
         self.desti_data=NavSatFix()
 
         # Initializing to store data from Lazer Sensors
-        self.obs_range_top = []
+        self.obs_range_top = [0,0,0,0]
         self.obs_range_bottom = []
 
         # Defining variables which are needed for calculation
@@ -80,17 +87,28 @@ class PathPlanner():
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
+        rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
         
 
         rospy.Subscriber('/box_checkpoint',NavSatFix,self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
+
+
+    def imu_callback(self, msg):
+        self.drone_orientation_quaternion[0] = msg.orientation.x
+        self.drone_orientation_quaternion[1] = msg.orientation.y
+        self.drone_orientation_quaternion[2] = msg.orientation.z
+        self.drone_orientation_quaternion[3] = msg.orientation.w
+        (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
+            [self.drone_orientation_quaternion[0], self.drone_orientation_quaternion[1], self.drone_orientation_quaternion[2], self.drone_orientation_quaternion[3]])
+
 
     def csv_checkpoint(self,msg):
         self.status=msg.header.frame_id
         self.container=[msg.latitude,msg.longitude,msg.altitude]
         if(self.dst!=self.container):
             self.dst=self.container
-            print(self.dst)
+            # print(self.dst)
 
 
     def marker_error_callback(self, msg):
@@ -107,15 +125,24 @@ class PathPlanner():
         self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
+        # print(self.current_location[0]-msg.latitude)
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
-        self.obs_range_top = msg.ranges
+        if(-1.5<=(self.drone_orientation_euler[0]*180/3.14)<=1.5 and -1.5<=(self.drone_orientation_euler[1]*180/3.14)<=1.5):
+            if(msg.ranges[0]>0.4 and msg.ranges[1]>0.4 and msg.ranges[2]>0.4 and msg.ranges[3]>0.4):
+                self.obs_range_top = msg.ranges
+                # print(self.obs_range_top)
 
     def range_finder_bottom_callback(self, msg):
         if(msg.ranges[0]>0.410000):
             self.obs_range_bottom = msg.ranges
             # print(self.obs_range_bottom[0])
+
+
+    #mehods for distance measurement
+    def lat_to_x_diff(self,ip_lat_diff):return (110692.0702932625*ip_lat_diff)
+    def long_to_y_diff(self,ip_long_diff):return (-105292.0089353767*ip_long_diff)
 
     # Functions for data conversion between GPS and meter with respect to origin
     def lat_to_x(self, input_latitude): return 110692.0702932625 * (input_latitude - 19)
@@ -137,7 +164,7 @@ class PathPlanner():
         # print("yoo",self.current_location)
         if -0.000005217 <= (self.destination[0]-self.current_location[0]) <= 0.000005217:
            
-            if -0.0000033487 <= (self.destination[1]-self.current_location[1])<= 0.0000033487:
+            if -0.0000013487 <= (self.destination[1]-self.current_location[1])<= 0.0000031487:
                 self.pick_drop_box=True
                
                 if(self.pause_process):
@@ -163,7 +190,42 @@ class PathPlanner():
                         
                         #self.pick_drop_box=False
                     
+    def altitude_select(self):
+        print(self.checkpoint.altitude)
+        # if(self.pick):
+        #     self.altitude=self.destination[2]+2
+        # else:
+        if(self.limiter[2]==0):
+            if((-0.08<self.current_location[2]-self.destination[2]<0.08) and self.altitude_interrup):
+                print("current is big")
+                self.altitude=10.1#self.destination[2]+1.5
+            elif(not (-0.08<self.current_location[2]-self.destination[2]<0.08) and self.current_location[2]>self.destination[2] and self.altitude_interrup):
+                if(self.limiter[0]==0):
+                    print("hiiii")
+                    self.buffer_altitude=10.1#self.current_location[2]+2
+                    self.limiter[0]+=1
+                self.altitude=10.1#self.buffer_altitude
+            elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
+                print("current is small")
+                self.altitude=10.1#self.destination[2]+1
+                # if(self.obs_range_bottom[0]<1):
+                #     print("obs_bottom")
+                #     self.altitude=self.current_location[2]+0.5
+            self.limiter[2]+=1
+        if(self.altitude_interrup and (self.obs_range_top[0]<=6 or self.obs_range_top[1]<=6 or self.obs_range_top[2]<=6 or self.obs_range_top[3]<=6)):
+            self.altitude=self.current_location[2]+4.67
+            print("yoo")
+            self.altitude_interrup=False
+        print(self.checkpoint.altitude)
+        self.checkpoint.altitude=self.altitude
 
+    def check_altitude(self):
+        if( not self.altitude_interrup):
+            if(-0.1<=self.altitude-self.current_location[2]<=0.1):
+                print("achived")
+            else:
+                self.movement_in_1D[0]=self.movement_in_1D[1]=-2
+                print("kaam aabhi baki hai")
 
     def calculate_movement_in_plane(self, total_movement):
         '''This Function will take the drone in straight line towards destination'''
@@ -213,9 +275,9 @@ class PathPlanner():
         self.movement_in_1D[1]=2
 
         # checking if destination is nearer than maximum distance to be travelled
-        if self.movement_in_1D[0] >= self.distance_xy:
-            print("helloooooooo  oooo  oooooo  oooooo  oooooo  oooooo  oooooo  ooooo")
-            self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
+        # if self.movement_in_1D[0] >= self.distance_xy:
+        #     # print("helloooooooo  oooo  oooooo  oooooo  oooooo  oooooo  oooooo  ooooo")
+        #     self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
         if(self.distance_xy<=8.0):
             self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
         # doge the obstacle if its closer than certain distance
@@ -236,22 +298,22 @@ class PathPlanner():
         # print(self.movement_in_plane,self.movement_in_1D)
 
         # setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - \
-            self.x_to_lat_diff(self.movement_in_plane[0])
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
-            self.movement_in_plane[1])
+        self.altitude_select()
+        self.check_altitude()
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
 
 
         
 
 
-        # if(math.hypot((self.destination[0]-self.current_location[0]),(self.destination[1]-self.current_location[1]))<=6 and self.pick):
-        #     self.checkpoint.altitude=self.destination[2]+4
+        # if(math.hypot(self.lat_to_x_diff(self.destination[0]-self.current_location[0]),self.long_to_y_diff((self.destination[1]-self.current_location[1])))<=6 and self.pick):
         #     self.checkpoint.longitude=self.destination[1]
+        #     print("yoo")
         #     self.checkpoint.latitude=self.destination[0]
             
         # else:
-        self.checkpoint.altitude = 14
+        # self.checkpoint.altitude = 14
         # self.altitude_control()
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
@@ -276,7 +338,7 @@ class PathPlanner():
             self.checkpoint.altitude=self.current_location[2]+1
             self.pub_checkpoint.publish(self.checkpoint)
         elif(self.img_data!=[0,0] and (not self.pause_process)):
-            print("yoooooooo")
+            # print("yoooooooo")
             self.destination[0]=self.current_location[0]+self.x_to_lat_diff(self.img_data[0])
             self.destination[1]=self.current_location[1]+self.y_to_long_diff(self.img_data[1])
             self.checkpoint.latitude=self.destination[0]
@@ -307,7 +369,7 @@ class PathPlanner():
         #print(self.pick)
             
     def function_call(self):
-        print("pick",self.pick)
+        # print("pick",self.pick)
         # print("msg_marker",self.msg_from_marker_find)
         # print("pause_process",self.pause_process)
         
@@ -326,6 +388,7 @@ class PathPlanner():
             elif(self.pick_drop_box):
                 if(not self.pick and not self.msg_from_marker_find):
                     # print("marker_find")
+                    self.limiter=[0,0,0]
                     self.marker_find()
                     # self.threshould_box()
                 elif(self.pick or self.msg_from_marker_find):
@@ -344,7 +407,7 @@ class PathPlanner():
                 # self.threshould_box()
                 print("pick_n_drop")
         self.threshould_box()
-        print(self.checkpoint.altitude)
+        # print(self.checkpoint.altitude)
         self.pub_checkpoint.publish(self.checkpoint)
 
 if __name__ == "__main__":
