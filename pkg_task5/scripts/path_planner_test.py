@@ -207,14 +207,15 @@ class PathPlanner():
             self.limiter[2]+=1
 
         a=min(self.obs_range_top)
-        print(self.distance_xy)
-        print(a)
+        # print(self.distance_xy)
+        # print(a)
 
-        print()
-        print(self.distance_xy>a)
-        print(self.altitude_interrup)
-        print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
-        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=10 or self.obs_range_top[1]<=7 or self.obs_range_top[2]<=7 or self.obs_range_top[3]<=7)):
+        # print()
+        # print(self.distance_xy>a)
+        # print(self.altitude_interrup)
+        # print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
+
+        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[self.direction_xy[0]]<=15 or self.obs_range_top[self.direction_xy[1]]<=15)):
             
             self.altitude=self.current_location[2]+4.67
 
@@ -268,9 +269,11 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
         
-        for i in [0, 1]:
-            self.direction_xy[i] = i if self.diff_xy > 0 else i+2
-
+        for i in [0, 1]: 
+            self.direction_xy[i] = i if self.diff_xy[i] > 0 else i+2
+        print("x",self.diff_xy[0])
+        print("y",self.diff_xy[1])
+        print("indexes",self.direction_xy)
         # calculating maximum distance to be covered at once
         for i in [0, 1]:
             d = data[self.direction_xy[i]] if data[self.direction_xy[i]] < 24 else 24
