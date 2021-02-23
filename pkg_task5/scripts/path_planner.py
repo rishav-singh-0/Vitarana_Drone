@@ -57,7 +57,7 @@ class PathPlanner():
 
         self.lock = False
 
-        self.sample_time = 0.01
+        self.sample_time = 0.5
 
         # Publisher
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
@@ -126,19 +126,17 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
-        # Calculating Maximum Possible movement possible in a particular direction
-        # i = 0; movement = [0, 0, 0, 0, 0]
-        # for obs_distance in data:
-        #     movement[i] = obs_distance * 0.75
-        #     if obs_distance < self.obs_closest_range:
-        #         movement[i] = obs_distance - self.obs_closest_range
-        #         # This would be negative cause we wanna pull back our drone if it gets too close
-        #     if obs_distance > 25:
-        #         movement[i] = 25
-        #     i+=1
+        self.direction_xy[0] = 1 if self.diff_xy[0] < 0 else 3
+        self.direction_xy[1] = 0 if self.diff_xy[1] < 0 else 2
+        # print(self.direction_xy, self.diff_xy, data)
 
+        # Calculating Maximum Possible movement possible in a particular direction
         for i in [0, 1]:
-            self.direction_xy[i] = i if self.diff_xy > 0 else i+2
+            d = data[self.direction_xy[i]] if data[self.direction_xy[i]] < 24 else 24
+            self.movement_in_1D = d * 0.65
+
+        if(self.distance_xy <= 8.0):
+            self.movement_in_1D = self.distance_xy
 
         for i in [0, 1]:
             if data[self.direction_xy[i]] < self.diff_xy[i]:
@@ -154,7 +152,6 @@ class PathPlanner():
             # if self.lock:
             #     # if direction is locked then take jump of 3 meters and check if way is clear
             #     self.destination[i] += 3
-
 
         # print(self.movement_in_plane, movement)
 
