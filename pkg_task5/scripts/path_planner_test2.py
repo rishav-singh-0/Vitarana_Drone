@@ -140,7 +140,7 @@ class PathPlanner():
                 # print(self.obs_range_top)
 
     def range_finder_bottom_callback(self, msg):
-        if(msg.ranges[0]>0.410000):
+        if(msg.ranges[0]>0.410000 or (self.destination[2]-self.current_location[2])<0.1):
             self.obs_range_bottom = msg.ranges
             # print(self.obs_range_bottom[0])
 
@@ -179,21 +179,12 @@ class PathPlanner():
                         self.reach_flag=True
                         self.pause_process=False
                         self.next_flag.publish(1.0)
-                elif((self.obs_range_bottom[0]<=0.4500) and (not self.pick)):
+                elif((self.obs_range_bottom[0]<=0.5500) and (not self.pick)):
                     if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
                             self.next_flag.publish(1.0)
-                        # self.next_flag.publish(1.0)
-                        #print(self.pick_drop_box)
-                        #if(not self.pick_drop_box):
-                        # print(self.cnt)
-                        # if(self.cnt==3):
-                        #     self.cnt=3
-                        # else:
-                        #     self.cnt+=1
-                        
-                        #self.pick_drop_box=False
+                       
                     
     def altitude_select(self):
         # print(self.checkpoint.altitude)
@@ -425,7 +416,7 @@ class PathPlanner():
                     self.pick_n_drop()
                     # self.threshould_box()
                     #print("niche jao")
-        elif(self.status=="RETURN"):
+        elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
                 # self.threshould_box()
