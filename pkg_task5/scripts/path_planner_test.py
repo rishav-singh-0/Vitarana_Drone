@@ -6,6 +6,7 @@ from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 from std_msgs.msg import String,Float32
 import std_msgs.msg
 import tf
+from vitarana_drone.srv import *
 
 class PathPlanner():
 
@@ -96,6 +97,14 @@ class PathPlanner():
         rospy.Subscriber('/box_checkpoint', NavSatFix, self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
+    def gripper_client(self, check_condition):
+        '''this function will call and wait for the gripper service'''
+
+        rospy.wait_for_service('/edrone/activate_gripper')
+        carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
+        msg_container = carry(check_condition)
+        return msg_container.result     # true if box is atteched and visa versa
+
     def imu_callback(self, msg):
         self.drone_orientation_quaternion[0] = msg.orientation.x
         self.drone_orientation_quaternion[1] = msg.orientation.y
@@ -177,6 +186,7 @@ class PathPlanner():
                     self.pick_drop_box=True
                 
                     if(self.pause_process):
+                        print("in the altitude control")
                         self.msg_from_marker_find=True
                     if(not self.pick and (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.500))):
                         if(self.attech_situation):
@@ -190,6 +200,8 @@ class PathPlanner():
                         if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
+                            while( self.gripper_client(True)==False):
+                                self.gripper_client(True)
                             if(self.status=="RETURN "):
                                 self.pick_n_drop()
                                 self.stop_pick=False
