@@ -355,7 +355,6 @@ class PathPlanner():
             # self.next_flag.publish(1.0)
             
     def function_call(self):
-        print("hii")
         print("pause_process",self.pause_process)
         print("self.pick_drop_box",self.pick_drop_box)
         print("self.pick",self.pick)
