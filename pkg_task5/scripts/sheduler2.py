@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 '''
 This python file runs a ROS-node 'data_processing' which takes care of the next destination to be reached

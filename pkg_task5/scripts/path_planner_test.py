@@ -7,7 +7,6 @@ from std_msgs.msg import String,Float32
 import std_msgs.msg
 import tf
 
-
 class PathPlanner():
 
     def __init__(self):
@@ -150,10 +149,6 @@ class PathPlanner():
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
 
     def threshould_box(self):
-        #print(self.pick_drop_box)
-        # print(self.pause_process)
-        # print(self.destination)
-        # print("yoo",self.current_location)
         if -0.000004117 <= (self.destination[0]-self.current_location[0]) <= 0.000004117:
            
             if -0.0000013487 <= (self.destination[1]-self.current_location[1])<= 0.0000031487:
@@ -167,23 +162,13 @@ class PathPlanner():
                         self.pause_process=False
                         self.next_flag.publish(1.0)
                 
-                if(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4600)):
+                elif(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4600)):
                     if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
                             # rospy.sleep(1)
                             self.next_flag.publish(1.0)
-                        # self.next_flag.publish(1.0)
-                        #print(self.pick_drop_box)
-                        #if(not self.pick_drop_box):
-                        # print(self.cnt)
-                        # if(self.cnt==3):
-                        #     self.cnt=3
-                        # else:
-                        #     self.cnt+=1
-                        
-                        #self.pick_drop_box=False
-                    
+
     def altitude_select(self):
         # print(self.checkpoint.altitude)
         # if(self.pick):
@@ -265,10 +250,10 @@ class PathPlanner():
 
         self.distance_xy = math.hypot(self.diff_xy[0], self.diff_xy[1])
 
-        self.direction_xy[0] = 1 if self.diff_xy[0] > 0 else 3
+        self.direction_xy[0] = 1 if self.diff_xy[0] < 0 else 3
         self.direction_xy[1] = 0 if self.diff_xy[1] < 0 else 2
 
-        print(self.direction_xy,' ',self.diff_xy,' ',data)
+        # print(self.direction_xy, self.diff_xy, data)
 
         # calculating maximum distance to be covered at once
         for i in [0, 1]:
@@ -279,14 +264,14 @@ class PathPlanner():
             self.movement_in_1D = self.distance_xy
 
         # doge the obstacle if its closer than certain distance
-        for i in [0, 1]:
-            if data[i] <= self.obs_closest_range:
-                if i % 2 != 0:
-                    self.movement_in_plane[0] = data[i] - self.obs_closest_range
-                    self.movement_in_plane[1] = self.movement_in_1D
-                else:
-                    self.movement_in_plane[0] = self.movement_in_1D
-                    self.movement_in_plane[1] = data[i] - self.obs_closest_range
+        # for i in [0, 1]:
+        #     if data[i] <= self.obs_closest_range:
+        #         if i % 2 != 0:
+        #             self.movement_in_plane[0] = data[i] - self.obs_closest_range
+        #             self.movement_in_plane[1] = self.movement_in_1D
+        #         else:
+        #             self.movement_in_plane[0] = self.movement_in_1D
+        #             self.movement_in_plane[1] = data[i] - self.obs_closest_range
         #     else:
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
@@ -367,7 +352,7 @@ class PathPlanner():
                 #self.threshould_box()
             elif(self.pick_drop_box):
                 self.pick_n_drop()
-                self.threshould_box()
+                # self.threshould_box()
                 self.limiter=[0,0,0]
                 self.altitude_interrup=True
                 print("pick_n_drop")
