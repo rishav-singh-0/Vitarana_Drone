@@ -6,7 +6,7 @@ from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 from std_msgs.msg import String,Float32
 import std_msgs.msg
 import tf
-from vitarana_drone.srv import *
+# from vitarana_drone.srv import *
 
 class PathPlanner():
 
@@ -97,13 +97,13 @@ class PathPlanner():
         rospy.Subscriber('/box_checkpoint', NavSatFix, self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
-    def gripper_client(self, check_condition):
-        '''this function will call and wait for the gripper service'''
+    # def gripper_client(self, check_condition):
+    #     '''this function will call and wait for the gripper service'''
 
-        rospy.wait_for_service('/edrone/activate_gripper')
-        carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
-        msg_container = carry(check_condition)
-        return msg_container.result     # true if box is atteched and visa versa
+    #     rospy.wait_for_service('/edrone/activate_gripper')
+    #     carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
+    #     msg_container = carry(check_condition)
+    #     return msg_container.result     # true if box is atteched and visa versa
 
     def imu_callback(self, msg):
         self.drone_orientation_quaternion[0] = msg.orientation.x
@@ -155,7 +155,7 @@ class PathPlanner():
     def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
 
     def threshould_box(self):
-        if(self.pick):
+        if(not self.pick):
             if -0.000009517 <= (self.destination[0]-self.current_location[0]) <= 0.000009517:
            
                 if -0.0000093487 <= (self.destination[1]-self.current_location[1])<= 0.0000093487:
@@ -200,11 +200,10 @@ class PathPlanner():
                         if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
-                            while( self.gripper_client(True)==False):
-                                self.gripper_client(True)
-                            if(self.status=="RETURN "):
-                                self.pick_n_drop()
-                                self.stop_pick=False
+                            
+                            # if(self.status=="RETURN "):
+                            self.pick_n_drop()
+                            self.stop_pick=False
                             self.next_flag.publish(1.0)
                 
 
@@ -372,7 +371,9 @@ class PathPlanner():
                     self.altitude_interrup=True
                     self.marker_find()
                 elif(self.pick or self.msg_from_marker_find):
-                    self.pick_n_drop()
+                    if(self.stop_pick):
+                        self.pick_n_drop()
+                    # self.pick_n_drop()
         elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
