@@ -153,7 +153,7 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))):
+                if(not self.pick and (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.500))):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
@@ -161,7 +161,7 @@ class PathPlanner():
                             self.pick_n_drop()
                             self.stop_pick=False
                         self.next_flag.publish(1.0)
-                elif(not self.pick and (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.500))):
+                elif ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
@@ -339,6 +339,7 @@ class PathPlanner():
         elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
+                self.stop_pick=True
                 # self.threshould_box()
                 print("obstacle_avoid")
                 #self.threshould_box()
