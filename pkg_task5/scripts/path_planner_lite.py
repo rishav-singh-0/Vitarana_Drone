@@ -166,20 +166,23 @@ class PathPlanner():
                 if(self.pause_process):
                     self.msg_from_marker_find=True
                 print(self.obs_range_bottom)
-                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05)or(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4100))) and self.pick):
+                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05)or(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4100))) ):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
-                        self.next_flag.publish(1.0)
-                
-                elif(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4600) and not self.pick):
-                    if(self.attech_situation):
-                            self.reach_flag=True
-                            self.pause_process=False
-                            # rospy.sleep(1)
+                        if(self.status=="RETURN "):
                             self.pick_n_drop()
-                            self.next_flag.publish(1.0)
-                            print("publish")
+                        self.next_flag.publish(1.0)
+                        print("publish")
+                
+                # elif(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4600) and (not self.pick)):
+                #     if(self.attech_situation):
+                #             self.reach_flag=True
+                #             self.pause_process=False
+                #             # rospy.sleep(1)
+                #             # self.pick_n_drop()
+                #             self.next_flag.publish(1.0)
+                #             print("publish")
                         # self.next_flag.publish(1.0)
                         #print(self.pick_drop_box)
                         #if(not self.pick_drop_box):
@@ -192,41 +195,28 @@ class PathPlanner():
                         #self.pick_drop_box=False
                     
     def altitude_select(self):
-        # print(self.checkpoint.altitude)
+        print(self.checkpoint.altitude)
         # if(self.pick):
         #     self.altitude=self.destination[2]+2
         # else:
         if(self.limiter[2]==0):
             if((-0.08<self.current_location[2]-self.destination[2]<0.08) and self.altitude_interrup):
                 self.altitude=self.destination[2]+3
-            elif(not (-0.08<self.current_location[2]-self.destination[2]<0.08) and self.current_location[2]>self.destination[2] and self.altitude_interrup):
-                if(self.limiter[0]==0):
+            else:
+                if((self.current_location[2]>self.destination[2]) and self.altitude_interrup):
                     self.buffer_altitude=self.current_location[2]+3
-                    self.limiter[0]+=1
+                
+                elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
+                    self.buffer_altitude=self.destination[2]+2
                 self.altitude=self.buffer_altitude
-            elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
-                self.altitude=self.destination[2]+2
-                # if(self.obs_range_bottom[0]<1):
-                #     print("obs_bottom")
-                #     self.altitude=self.current_location[2]+0.5
             self.limiter[2]+=1
 
         a=min(self.obs_range_top)
-        # print(self.distance_xy)
-        # print(a)
-
-        # print()
-        # print(self.distance_xy>a)
-        # print(self.altitude_interrup)
-        # print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
-
         if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13)):
             
             self.altitude=self.current_location[2]+4
-
-            # self.pause_coordinates=[self.current_location[0],self.current_location[1]]
             self.altitude_interrup=False
-        # print(self.checkpoint.altitude)
+
         self.checkpoint.altitude=self.altitude
         # if(self.pause_coordinates[0]!=0):
         #     self.checkpoint.latitude=self.pause_coordinates[0]
@@ -352,7 +342,10 @@ class PathPlanner():
             # self.next_flag.publish(1.0)
             
     def function_call(self):
-        
+        print("hii")
+        print("pause_process",self.pause_process)
+        print("self.pick_drop_box",self.pick_drop_box)
+        print("self.pick",self.pick)
         if(self.dst==[0,0,0]):
             return
         # print(self.msg_from_marker_find)
@@ -363,25 +356,28 @@ class PathPlanner():
                 self.msg_from_marker_find=False
                 self.pause_process=False
                 self.obstacle_avoid()
+                print("obstacle")
             elif(self.pick_drop_box):
                 if(not self.pick and not self.msg_from_marker_find):
                     self.limiter=[0,0,0]
                     self.altitude_interrup=True
                     self.marker_find()
+                    print("marker")
                 elif(self.pick or self.msg_from_marker_find):
                     self.pick_n_drop()
-        elif(self.status=="RETURN"):
+                    print("pick_drop")
+        elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
                 # self.threshould_box()
-                print("obstacle_avoid")
+                print("r_obstacle_avoid")
                 #self.threshould_box()
             elif(self.pick_drop_box):
                 self.pick_n_drop()
                 # self.threshould_box()
                 self.limiter=[0,0,0]
                 self.altitude_interrup=True
-                print("pick_n_drop")
+                print("r_pick_n_drop")
         self.threshould_box()
         # print(self.checkpoint.altitude)
         self.pub_checkpoint.publish(self.checkpoint)
