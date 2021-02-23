@@ -47,6 +47,7 @@ class PathPlanner():
         self.drone_orientation_quaternion = [0, 0, 0, 0]
         self.drone_orientation_euler = [0, 0, 0, 0]
         self.pause_coordinates = [0, 0]
+        self.stop_pick=True
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -152,14 +153,22 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4100))):
+                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
                         if(self.status=="RETURN "):
                             self.pick_n_drop()
+                            self.stop_pick=False
                         self.next_flag.publish(1.0)
-                
+                elif(not self.pick and (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.500))):
+                    if(self.attech_situation):
+                        self.reach_flag=True
+                        self.pause_process=False
+                        if(self.status=="RETURN "):
+                            self.pick_n_drop()
+                            self.stop_pick=False
+                        self.next_flag.publish(1.0)
                 
 
     def altitude_select(self):
@@ -169,41 +178,25 @@ class PathPlanner():
         # else:
 
         # self.checkpoint.altitude = self.destination[2] + 3 if self.diff_z > 0 else self.current_location[2] +3
-        if(self.limiter[2] == 0):
-            if((-0.08 < self.diff_z < 0.08) and self.altitude_interrup):
-                self.altitude = self.destination[2]+3
-            elif(not (0 < self.diff_z < 0.08) and self.altitude_interrup):
-                if(self.limiter[0] == 0):
-                    self.buffer_altitude = self.current_location[2]+3
-                    self.limiter[0] += 1
-                self.altitude = self.buffer_altitude
-            elif(self.diff_z > 0 and self.altitude_interrup):
-                self.altitude = self.destination[2]+2
-                # if(self.obs_range_bottom[0]<1):
-                #     print("obs_bottom")
-                #     self.altitude=self.current_location[2]+0.5
-            self.limiter[2] += 1
+        if(self.limiter[2]==0):
+            if((-0.08<self.current_location[2]-self.destination[2]<0.08) and self.altitude_interrup):
+                self.altitude=self.destination[2]+3
+            else:
+                if((self.current_location[2]>self.destination[2]) and self.altitude_interrup):
+                    self.buffer_altitude=self.current_location[2]+3
+                
+                elif(self.current_location[2]<self.destination[2] and self.altitude_interrup):
+                    self.buffer_altitude=self.destination[2]+2
+                self.altitude=self.buffer_altitude
+            self.limiter[2]+=1
 
-        a = min(self.obs_range_top)
-        # print(self.distance_xy)
-        # print(a)
+        a=min(self.obs_range_top)
+        if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13)):
+            
+            self.altitude=self.current_location[2]+4
+            self.altitude_interrup=False
 
-        # print()
-        # print(self.distance_xy>a)
-        # print(self.altitude_interrup)
-        # print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
-
-        if(self.distance_xy > a and self.altitude_interrup and (self.obs_range_top[0] <= 13 or self.obs_range_top[1] <= 13 or self.obs_range_top[2] <= 13 or self.obs_range_top[3] <= 13)):
-
-            self.altitude = self.current_location[2]+4
-
-            # self.pause_coordinates=[self.current_location[0],self.current_location[1]]
-            self.altitude_interrup = False
-        # print(self.checkpoint.altitude)
-        self.checkpoint.altitude = self.altitude
-        # if(self.pause_coordinates[0]!=0):
-        #     self.checkpoint.latitude=self.pause_coordinates[0]
-        #     self.checkpoint.longitude=self.pause_coordinates[1]
+        self.checkpoint.altitude=self.altitude
 
     def check_altitude(self):
         
@@ -350,7 +343,8 @@ class PathPlanner():
                 print("obstacle_avoid")
                 #self.threshould_box()
             elif(self.pick_drop_box):
-                self.pick_n_drop()
+                if(self.stop_pick):
+                    self.pick_n_drop()
                 # self.threshould_box()
                 self.limiter=[0,0,0]
                 self.altitude_interrup=True
