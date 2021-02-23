@@ -47,6 +47,7 @@ class PathPlanner():
         self.drone_orientation_quaternion=[0,0,0,0]
         self.drone_orientation_euler=[0,0,0,0]
         self.pause_coordinates=[0,0]
+        self.stop=True
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -174,7 +175,7 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) and self.pick):
+                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) and self.obs_range_bottom[0]<3700 and self.pick):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
@@ -183,6 +184,9 @@ class PathPlanner():
                     if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
+                            if(self.stop):
+                                self.pick_n_drop()
+                                self.stop=False
                             self.next_flag.publish(1.0)
                        
                     
@@ -410,6 +414,7 @@ class PathPlanner():
                     self.limiter=[0,0,0]
                     self.altitude_interrup=True
                     self.marker_find()
+                    self.stop=True
                     # self.threshould_box()
                 elif(self.pick or self.msg_from_marker_find):
                     # print("pick n drop")
@@ -421,9 +426,11 @@ class PathPlanner():
                 self.obstacle_avoid()
                 # self.threshould_box()
                 print("obstacle_avoid")
+                self.stop=True
                 #self.threshould_box()
             elif(self.pick_drop_box):
-                self.pick_n_drop()
+                if(self.stop):
+                    self.pick_n_drop()
                 # self.threshould_box()
                 self.limiter=[0,0,0]
                 self.altitude_interrup=True
