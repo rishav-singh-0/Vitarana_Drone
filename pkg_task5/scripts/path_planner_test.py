@@ -105,7 +105,7 @@ class PathPlanner():
 
     def csv_checkpoint(self,msg):
         self.status=msg.header.frame_id
-        self.container=[msg.latitude,msg.longitude,msg.altitude-0.1]
+        self.container=[msg.latitude,msg.longitude,msg.altitude]
         if(self.dst!=self.container):
             self.dst=self.container
             # print(self.dst)
@@ -129,7 +129,7 @@ class PathPlanner():
                 # print(self.obs_range_top)
 
     def range_finder_bottom_callback(self, msg):
-        if(msg.ranges[0]>0.409000):
+        if(msg.ranges[0]>0.41000 or abs(self.current_location[2]-self.destination[2])<0.1 ):
             self.obs_range_bottom = msg.ranges
             # print(self.obs_range_bottom[0])
 
@@ -156,14 +156,11 @@ class PathPlanner():
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
+                        if(self.status=="RETURN "):
+                            self.pick_n_drop()
                         self.next_flag.publish(1.0)
                 
-                elif(len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4600)):
-                    if(self.attech_situation):
-                            self.reach_flag=True
-                            self.pause_process=False
-                            # rospy.sleep(1)
-                            self.next_flag.publish(1.0)
+                
 
     def altitude_select(self):
         # print(self.checkpoint.altitude)
@@ -310,7 +307,7 @@ class PathPlanner():
 
     def pick_n_drop(self):
         
-        self.checkpoint.altitude=self.destination[2]-0.08
+        self.checkpoint.altitude=self.destination[2]-0.3
         # self.pub_checkpoint.publish(self.checkpoint)
         if(self.reach_flag):
             if(self.pick and self.attech_situation):
