@@ -152,7 +152,7 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) and self.pick):
+                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.4100))):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
