@@ -205,6 +205,7 @@ class PathPlanner():
                             self.pick_n_drop()
                             self.stop_pick=False
                             self.next_flag.publish(1.0)
+                            self.pick_drop_box=False
                 
 
     def altitude_select(self):
@@ -354,7 +355,10 @@ class PathPlanner():
             # self.next_flag.publish(1.0)
             
     def function_call(self):
-        
+        print("hii")
+        print("pause_process",self.pause_process)
+        print("self.pick_drop_box",self.pick_drop_box)
+        print("self.pick",self.pick)
         if(self.dst==[0,0,0]):
             return
         # print(self.msg_from_marker_find)
@@ -365,14 +369,19 @@ class PathPlanner():
                 self.msg_from_marker_find=False
                 self.pause_process=False
                 self.obstacle_avoid()
+                print("obs_avoid")
+                
             elif(self.pick_drop_box):
                 if(not self.pick and not self.msg_from_marker_find):
                     self.limiter=[0,0,0]
                     self.altitude_interrup=True
                     self.marker_find()
+                    print("marker")
+                    self.stop_pick=True
                 elif(self.pick or self.msg_from_marker_find):
                     if(self.stop_pick):
                         self.pick_n_drop()
+                    print("pick_drop")
                     # self.pick_n_drop()
         elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
