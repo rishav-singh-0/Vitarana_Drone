@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 '''
 This python file runs a ROS-node 'data_processing' which takes care of the next destination to be reached
@@ -35,17 +35,21 @@ class Data_processing():
         self.diff_grid = [0.000013552, 0.000014245]          # Difference between grid points
         self.counter_for_initial_pos=0                       # Counter for taking drone coordinates
         self.sample_time = 1
-        self.read_and_set_data()
+        
 
 
         # Publishing
         self.pub_checkpoint = rospy.Publisher('/box_checkpoint', NavSatFix, queue_size=1)
         #subscribing
         rospy.Subscriber('/next_destination_flag',Float32,self.next_destination_callback)
+        rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
+    
 
         while(self.drone_coordinates[0]==0):
             continue
+
         self.checkpoint = NavSatFix()
+        self.read_and_set_data()
     #function for the subscription
     def gps_callback(self, msg):
         if(msg.latitude!=0):
@@ -165,6 +169,7 @@ class Data_processing():
         [self.checkpoint.latitude,self.checkpoint.longitude,self.checkpoint.altitude]=self.coordinates[self.cnt]
         self.checkpoint.header.frame_id=self.purpose[self.cnt]
         self.pub_checkpoint.publish(self.checkpoint)
+        print(self.checkpoint)
         
 
 if __name__ == "__main__":
