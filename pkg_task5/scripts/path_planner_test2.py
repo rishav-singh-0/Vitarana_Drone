@@ -177,6 +177,7 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
+                    print("self.lock2",self.lock)
                 if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))) and self.pick and self.lock2==False):
                     if(self.attech_situation):
                         self.reach_flag=True
@@ -430,7 +431,7 @@ class PathPlanner():
                 self.msg_from_marker_find=False
                 self.pause_process=False
                 self.lock=False
-                self.lock2=True
+                self.lock2=False
                 self.obstacle_avoid()
                 # self.threshould_box()
             elif(self.pick_drop_box):
