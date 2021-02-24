@@ -47,6 +47,8 @@ class PathPlanner():
         self.drone_orientation_quaternion=[0,0,0,0]
         self.drone_orientation_euler=[0,0,0,0]
         self.pause_coordinates=[0,0]
+        self.lock=True
+
         #*******************************************opt********************************#
         
         # Present Location of the DroneNote
@@ -174,16 +176,30 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if ((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) and self.pick):
+                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))) and self.pick):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
+                        self.grip_flag.publish('True')
+                        # self.next_flag.publish(1.0)
+                        self.pick=False
+                        self.pick_drop_box=False
                         self.next_flag.publish(1.0)
-                elif((self.obs_range_bottom[0]<=0.5500) and (not self.pick)):
+                        self.destination=self.dst
+                        self.lock=True
+                
+                elif((self.obs_range_bottom[0]<=0.5500) and (not self.pick) and self.lock==False):
                     if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
+                            self.grip_flag.publish('False')
+                            # self.next_flag.publish(1.0)
+                            self.pick=True
+                            self.pick_drop_box=False
                             self.next_flag.publish(1.0)
+                            self.destination=self.dst
+                            if(self.status=="RETURN "):
+                                self.status=="DELIVERY"
                        
                     
     def altitude_select(self):
@@ -210,13 +226,13 @@ class PathPlanner():
             self.limiter[2]+=1
 
         a=min(self.obs_range_top)
-        print(self.distance_xy)
-        print(a)
+        # print(self.distance_xy)
+        # print(a)
 
-        print()
-        print(self.distance_xy>a)
-        print(self.altitude_interrup)
-        print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
+        # print()
+        # print(self.distance_xy>a)
+        # print(self.altitude_interrup)
+        # print((self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13))
         if(self.distance_xy>a and self.altitude_interrup and (self.obs_range_top[0]<=13 or self.obs_range_top[1]<=13 or self.obs_range_top[2]<=13 or self.obs_range_top[3]<=13)):
             
             print("yoo")
@@ -318,14 +334,22 @@ class PathPlanner():
         
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
-        # self.checkpoint.altitude = 24
-        self.altitude_select()
-        self.check_altitude()
-
+        # self.altitude_select()
+        # self.check_altitude()
+        if(self.current_location[2]!=0.00):
+            if(self.limiter[1]==0):
+                if(self.distance_xy<=15):
+                    self.buffer_altitude=self.current_location[2]+3
+                    self.limiter[1]+=1
+                else:
+                    self.buffer_altitude = 30
+                self.limiter[1]+=1
+                self.checkpoint.altitude=self.buffer_altitude
 
         
 
 
+        # self.checkpoint.altitude = 24
         # if(math.hypot(self.lat_to_x_diff(self.destination[0]-self.current_location[0]),self.long_to_y_diff((self.destination[1]-self.current_location[1])))<=6 and self.pick):
         #     self.checkpoint.longitude=self.destination[1]
         #     print("yoo")
@@ -334,6 +358,7 @@ class PathPlanner():
         # else:
         # self.checkpoint.altitude = 14
         # self.altitude_control()
+        print(self.checkpoint.altitude)
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
@@ -368,27 +393,27 @@ class PathPlanner():
 
     def pick_n_drop(self):
         
-        self.checkpoint.altitude=self.destination[2]-0.08
+        self.checkpoint.altitude=self.destination[2]-0.3
         # self.pub_checkpoint.publish(self.checkpoint)
-        if(self.reach_flag):
-            #print("yoo")
-            if(self.pick and self.attech_situation):
-                self.grip_flag.publish('True')
-                # self.next_flag.publish(1.0)
-                self.pick=False
+        # if(self.reach_flag):
+        #     #print("yoo")
+        #     if(self.pick and self.attech_situation):
+        #         self.grip_flag.publish('True')
+        #         # self.next_flag.publish(1.0)
+        #         self.pick=False
                 
-            else:
-                self.grip_flag.publish('False')
-                # self.next_flag.publish(1.0)
-                self.pick=True
+        #     else:
+        #         self.grip_flag.publish('False')
+        #         # self.next_flag.publish(1.0)
+        #         self.pick=True
 
-            self.reach_flag=False#not self.reach_flag
-            self.pick_drop_box=False
-            # self.next_flag.publish(1.0)
-        #print(self.pick)
+        #     self.reach_flag=False#not self.reach_flag
+        #     self.pick_drop_box=False
+        #     # self.next_flag.publish(1.0)
+        # #print(self.pick)
             
     def function_call(self):
-        # print("pick",self.pick)
+        print(self.status)
         # print("msg_marker",self.msg_from_marker_find)
         # print("pause_process",self.pause_process)
         
@@ -399,23 +424,25 @@ class PathPlanner():
             self.destination=self.dst
         if(self.status=="DELIVERY"):
             if(not self.pick_drop_box):
-                # print("obstacle avoid")
+                print("obstacle avoid")
                 self.msg_from_marker_find=False
                 self.pause_process=False
+                self.lock=False
                 self.obstacle_avoid()
                 # self.threshould_box()
             elif(self.pick_drop_box):
                 if(not self.pick and not self.msg_from_marker_find):
-                    # print("marker_find")
+                    print("marker_find")
                     self.limiter=[0,0,0]
                     self.altitude_interrup=True
                     self.marker_find()
                     # self.threshould_box()
                 elif(self.pick or self.msg_from_marker_find):
                     # print("pick n drop")
+                    self.limiter=[0,0,0]
                     self.pick_n_drop()
                     # self.threshould_box()
-                    #print("niche jao")
+                    print("niche jao")
         elif(self.status=="RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
