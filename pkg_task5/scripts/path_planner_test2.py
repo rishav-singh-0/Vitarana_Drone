@@ -178,9 +178,10 @@ class PathPlanner():
         # print(self.pause_process)
         # print(self.destination)
         # print("yoo",self.current_location)
-        if -0.2 <= self.diff_xy[0] <= 0.2:
+       
+        if -0.2 <= self.lat_to_x_diff(self.current_location[0]-self.destination[0])<= 0.2:
            
-            if -0.2<= self.diff_xy[1]<= 0.2:
+            if -0.2<= self.long_to_y_diff(self.current_location[1]-self.destination[1])<= 0.2:
                 self.pick_drop_box=True
                
                 if(self.pause_process):
@@ -389,7 +390,7 @@ class PathPlanner():
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
-
+        
         # if(not self.sudo_destination_reach):
         #     if(self.img_data!=[0,0] and (not self.pause_process)):
         #         self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
@@ -435,7 +436,7 @@ class PathPlanner():
         # print("msg_marker",self.msg_from_marker_find)
         # print("pause_process",self.pause_process)
         
-        if(self.dst==[0,0,0] or self.current_location==[0,0,0] or self.destination==[0,0,0]):
+        if(self.dst==[0,0,0]):
             return
         # print(self.msg_from_marker_find)
         if(not self.pause_process):
