@@ -176,7 +176,7 @@ class PathPlanner():
                
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))) and self.pick):
+                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))) and self.pick and self.lock2==False):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
@@ -198,8 +198,9 @@ class PathPlanner():
                             self.pick_drop_box=False
                             self.next_flag.publish(1.0)
                             self.destination=self.dst
-                            if(self.status=="RETURN "):
-                                self.status=="DELIVERY"
+                            self.lock2=True
+                            # if(self.status=="RETURN "):
+                            #     self.status=="DELIVERY"
                        
                     
     def altitude_select(self):
@@ -428,6 +429,7 @@ class PathPlanner():
                 self.msg_from_marker_find=False
                 self.pause_process=False
                 self.lock=False
+                self.lock2=True
                 self.obstacle_avoid()
                 # self.threshould_box()
             elif(self.pick_drop_box):
