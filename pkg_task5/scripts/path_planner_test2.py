@@ -48,6 +48,7 @@ class PathPlanner():
         self.drone_orientation_euler=[0,0,0,0]
         self.pause_coordinates=[0,0]
         self.lock=True
+        self.lock2=False
 
         #*******************************************opt********************************#
         
