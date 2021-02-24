@@ -178,7 +178,7 @@ class PathPlanner():
                 if(self.pause_process):
                     self.msg_from_marker_find=True
                     print("self.lock2",self.lock)
-                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3700))) and self.pick and self.lock2==False):
+                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3840))) and self.pick ):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
@@ -187,10 +187,12 @@ class PathPlanner():
                         self.pick=False
                         self.pick_drop_box=False
                         self.next_flag.publish(1.0)
+                        while(self.destination==self.dst):
+                            continue
                         self.destination=self.dst
-                        self.lock=True
+                        # self.lock=True
                 
-                elif((self.obs_range_bottom[0]<=0.5500) and (not self.pick) and self.lock==False):
+                elif((-2<(self.destination[2]-self.current_location[2]) < 2)and(self.obs_range_bottom[0]<=0.5100) and (not self.pick)  ):
                     if(self.attech_situation):
                             self.reach_flag=True
                             self.pause_process=False
@@ -199,8 +201,10 @@ class PathPlanner():
                             self.pick=True
                             self.pick_drop_box=False
                             self.next_flag.publish(1.0)
+                            while(self.destination==self.dst):
+                                continue
                             self.destination=self.dst
-                            self.lock2=True
+                            # self.lock2=True
                             # if(self.status=="RETURN "):
                             #     self.status=="DELIVERY"
                        
