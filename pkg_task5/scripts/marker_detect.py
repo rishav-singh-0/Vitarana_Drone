@@ -75,10 +75,6 @@ class marker_detection():
 
     def detect_marker(self):
         '''Image QR-Code scanning and publishing algo'''
-        # self.error.header.frame_id="Delevery"
-        # self.error.latitude = 3
-        # self.error.longitude = 3
-        # self.marker_error.publish(self.error)
         if(self.img.size > 1):
             try:
                 gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
@@ -102,9 +98,6 @@ class marker_detection():
                     self.error.longitude = y
 
                     self.marker_error.publish(self.error)
-                    # print(self.obs_range_bottom[0])
-                    # print("and from calculations")
-                    # print(self.current_location[2]-self.destination[2])
                 else:
 
                     self.error.latitude = 0

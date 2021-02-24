@@ -19,40 +19,19 @@ class PathPlanner():
         self.destination = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-
-        #*******************************************opt********************************#
-        # checking if its reached at the destination which is for delevery in csv file
-        self.sudo_destination_reach = False
-        # giving it to the threshould box if it has found marker
-        self.desired_destination = [0, 0, 0]
-        #above 2 will being erased:::::)
-        # data which will come from the maeker_detect.py script
-        self.img_data = [0, 0]
-        # it will helpful to stop taking the data form the marker_detect and focus on destination reach
-        self.pause_process = False
-        self.reach_flag = False  # for reaching at every position which is require threshould box
-        self.pick = True  # for deciding wather to pick or drop a box
-        self.status = "DELIVERY"  # it will be either "delevery" or "returns"
-        self.pick_drop_box = False
-        self.msg_from_marker_find = False
-        self.cnt = 0
-        self.attech_situation = False
-
-        self.dst = [0, 0, 0]
-        self.container = [0, 0, 0]
-        self.kaam_aabhi_baki_hai = False
-        self.altitude_interrup = True
-        self.altitude = 0
-        # for limiting the altitude due to current_location
-        self.limiter = [0, 0, 0]
-        self.buffer_altitude = 0
-        self.drone_orientation_quaternion = [0, 0, 0, 0]
-        self.drone_orientation_euler = [0, 0, 0, 0]
-        self.pause_coordinates = [0, 0]
-        self.lock = True
-        self.lock2 = False
-
-        #*******************************************opt********************************#
+        self.img_data = [0, 0]                               # Data which will come from the maeker_detect.py script
+        self.pause_process = False                           # It will helpful to stop taking the data form the marker_detect
+        self.reach_flag = False                              # For reaching at every position which is require threshould box
+        self.pick = True                                     # For deciding wather to pick or drop a box
+        self.status = "DELIVERY"                             # It will be either "delevery" or "returns"
+        self.pick_drop_box = False                           # Switch for obstacle avoid and all funtion
+        self.msg_from_marker_find = False                    # Flag for calling pick_n_drop() after marker_find()
+        self.attech_situation = False                        # It will check if box is attechable
+        self.dst = [0, 0, 0]                                 # It will take data from the scheduler algorithm
+        self.container = [0, 0, 0]                           # Buffer for data coming from scheduler algorithm
+        # For limiting the altitude due to current_location
+        self.drone_orientation_quaternion = [0, 0, 0, 0]     # Drone orientation in qurtenion
+        self.drone_orientation_euler = [0, 0, 0, 0]          # Drone orientation in euler
 
         # Present Location of the DroneNote
         self.current_location = [0, 0, 0]
@@ -64,20 +43,22 @@ class PathPlanner():
         self.desti_data = NavSatFix()
 
         # Initializing to store data from Lazer Sensors
+
+        #It will collect data from top range sensor
         self.obs_range_top = [0,0,0,0]
+        #It will collect data from bottom range sensor
         self.obs_range_bottom = []
 
         # Defining variables which are needed for calculation
-        # diffrence of current and final position
+        # Diffrence of current and final position
         self.diff_xy = [0, 0]
-        self.distance_xy = 0                # distance between current and final position
+        self.distance_xy = 0                # Distance between current and final position
 
-        self.movement_in_1D = 0             # maximum movement to be done in one direction
+        self.movement_in_1D = 0             # Maximum movement to be done in one direction
         # [x, y] -> movement distribution in x and y
         self.movement_in_plane = [0, 0]
-        # closest distance of obstacle (in meters)
+        # Closest distance of obstacle (in meters)
         self.obs_closest_range = 8
-        self.lock = False
 
         self.direction_xy = [0, 0]
         self.sample_time = 0.5
@@ -86,8 +67,8 @@ class PathPlanner():
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
         self.grip_flag=rospy.Publisher('/gripp_flag',String,queue_size=1)
         self.destination_data=rospy.Publisher('/destination_data' , NavSatFix,queue_size=1)
-
         self.next_flag=rospy.Publisher('/next_destination_flag',Float32,queue_size=1)
+
         # Subscriber
         rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
@@ -162,7 +143,6 @@ class PathPlanner():
 
                 if(self.pause_process):
                     self.msg_from_marker_find=True
-                    print("self.lock2",self.lock)
                 if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3940))) and self.pick ):
                     if(self.attech_situation):
                         self.reach_flag=True
@@ -248,6 +228,7 @@ class PathPlanner():
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
+        '''it will take data from the marker_detect.py and will do process on it'''
         if(self.img_data == [0, 0] and (not self.pause_process)):
             self.checkpoint.altitude = self.current_location[2]+1
             self.pub_checkpoint.publish(self.checkpoint)
@@ -259,11 +240,11 @@ class PathPlanner():
             self.pause_process = True
 
     def pick_n_drop(self):
+        '''used to decrease the altitude'''
         self.checkpoint.altitude = self.destination[2]-0.2
 
     def function_call(self):
-        print(self.status)
-
+        '''it will handle fulction calling in all time'''
         if(self.dst == [0, 0, 0]):
             return
 
@@ -271,28 +252,19 @@ class PathPlanner():
             self.destination = self.dst
         if(self.status == "DELIVERY"):
             if(not self.pick_drop_box):
-                print("obstacle avoid")
                 self.msg_from_marker_find = False
                 self.pause_process = False
-                self.lock = False
-                self.lock2 = False
                 self.obstacle_avoid()
             elif(self.pick_drop_box):
                 if(not self.pick and not self.msg_from_marker_find):
-                    self.limiter = [0, 0, 0]
-                    self.altitude_interrup = True
                     self.marker_find()
                 elif(self.pick or self.msg_from_marker_find):
-                    self.limiter = [0, 0, 0]
                     self.pick_n_drop()
         elif(self.status == "RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
-                print("obstacle_avoid")
             elif(self.pick_drop_box):
                 self.pick_n_drop()
-                self.limiter = [0, 0, 0]
-                self.altitude_interrup = True
         self.threshould_box(0.28)
         self.pub_checkpoint.publish(self.checkpoint)
 
