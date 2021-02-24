@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''
 This python file runs a ROS-node 'data_processing' which takes care of the next destination to be reached
@@ -23,33 +23,36 @@ class Data_processing():
 
     def __init__(self):
         rospy.init_node('data_processing')
-        #*******************************************opt********************************#
-        self.drone_coordinates=[18.999888790581846,72.00021844032396,16.757980880738472]
-        self.box_type=None
-        self.cnt=0
-        self.d_list=None
-        self.destination_list=[]
-        self.coordinates=[]
-        self.purpose=[]
-        #*******************************************opt********************************#
-        self.delivery_grid = [18.9998102845, 72.000142461]
-        self.return_grid = [18.9999367615, 72.000142461]
-        self.diff_grid = [0.000013552, 0.000014245]
-
+        self.drone_coordinates=[0,0,0]                       # Initial drone coordinates
+        self.box_type=None                                   # It will store the type wather its "delevery" or "return"
+        self.cnt=0                                           # Used for publishing coordinates in sequence
+        self.d_list=None                                     # Storing coordinates from the .csv file
+        self.destination_list=[]                             # Forming the list of appropreat destinations in propper format
+        self.coordinates=[]                                  # Buffer for storing coordinate comes from read_and_set_data()
+        self.purpose=[]                                      # List for storing wather its "delevery" or "return"
+        self.delivery_grid = [18.9998102845, 72.000142461]   # Coordinate for delevery grid
+        self.return_grid = [18.9999367615, 72.000142461]     # Coordinate for return grid
+        self.diff_grid = [0.000013552, 0.000014245]          # Difference between grid points
+        self.counter_for_initial_pos=0                       # Counter for taking drone coordinates
         self.sample_time = 1
         self.read_and_set_data()
-        self.checkpoint = NavSatFix()
 
 
         # Publishing
         self.pub_checkpoint = rospy.Publisher('/box_checkpoint', NavSatFix, queue_size=1)
-
-         #*******************************************opt********************************#
         #subscribing
         rospy.Subscriber('/next_destination_flag',Float32,self.next_destination_callback)
 
+        while(self.drone_coordinates[0]==0):
+            continue
+        self.checkpoint = NavSatFix()
+    #function for the subscription
+    def gps_callback(self, msg):
+        if(msg.latitude!=0):
+            if(self.counter_for_initial_pos==0):
+                self.drone_coordinates=[msg.latitude, msg.longitude, msg.altitude]
+                self.counter_for_initial_pos=self.counter_for_initial_pos+1
 
-        #function for the subscription
     def next_destination_callback(self,msg):
         if(msg.data==1):
             if(self.cnt==len(self.coordinates)):
@@ -62,7 +65,6 @@ class Data_processing():
     #mehods for distance measurement
     def lat_to_x_diff(self,ip_lat_diff):return (110692.0702932625*ip_lat_diff)
     def long_to_y_diff(self,ip_long_diff):return (-105292.0089353767*ip_long_diff)
-    # float(buff_coordinate[0]))
 
     def read_and_set_data(self):
         check_list=[]
@@ -70,7 +72,7 @@ class Data_processing():
             content = numpy.array(list(csv.reader(x)))
             self.box_type = content[:, 0]
             self.d_list = content[:, 1:]
-        # print(self.sd_list)
+
         for i in range(len(self.box_type)):
             check_list.append(True)
         maxx=1000
@@ -156,16 +158,13 @@ class Data_processing():
                     self.purpose.append(self.destination_list[itter][0])
 
                     
-        for u in range(len(self.coordinates)):
-            print(self. coordinates[u],self.purpose[u])
-        print(len(self.coordinates))
         
     def data_publish(self):
+        while(self.drone_coordinates[0]==0):
+            continue
         [self.checkpoint.latitude,self.checkpoint.longitude,self.checkpoint.altitude]=self.coordinates[self.cnt]
         self.checkpoint.header.frame_id=self.purpose[self.cnt]
         self.pub_checkpoint.publish(self.checkpoint)
-        print(self.coordinates[self.cnt])
-        print(self.cnt)
         
 
 if __name__ == "__main__":
