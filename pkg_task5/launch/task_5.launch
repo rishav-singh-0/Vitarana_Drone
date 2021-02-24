@@ -9,7 +9,7 @@
     <node pkg="pkg_task5" type="position_controller.py" name="position_controller" />
 
     <arg name="record" default="false"/>
-    <arg name="duration" default="480"/>
+    <arg name="duration" default="600"/>
     <arg name="rec_name" default="Task_5_VD.bag"/>
 
     <group if="$(arg record)">

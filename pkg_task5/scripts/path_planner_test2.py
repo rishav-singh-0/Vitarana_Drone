@@ -19,7 +19,7 @@ class PathPlanner():
         self.destination = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
         self.destination_xy = [0, 0]
-        
+
         #*******************************************opt********************************#
         # checking if its reached at the destination which is for delevery in csv file
         self.sudo_destination_reach = False
@@ -53,7 +53,7 @@ class PathPlanner():
         self.lock2 = False
 
         #*******************************************opt********************************#
-        
+
         # Present Location of the DroneNote
         self.current_location = [0, 0, 0]
         # Converting latitude and longitude in meters for calculation
@@ -95,7 +95,7 @@ class PathPlanner():
         rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-        
+
         rospy.Subscriber('/box_checkpoint',NavSatFix,self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
@@ -154,22 +154,22 @@ class PathPlanner():
     def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
 
     def threshould_box(self, limit):
-       
+
         if -0.2 <= self.lat_to_x_diff(self.current_location[0]-self.destination[0])<= 0.2:
-           
+
             if -0.2<= self.long_to_y_diff(self.current_location[1]-self.destination[1])<= 0.2:
                 self.pick_drop_box=True
-               
+
                 if(self.pause_process):
                     self.msg_from_marker_find=True
                     print("self.lock2",self.lock)
-                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3840))) and self.pick ):
+                if (((-0.02<=(self.destination[2]-self.current_location[2]) <= 0.05) or (len(self.obs_range_bottom) and (self.obs_range_bottom[0]<=0.3940))) and self.pick ):
                     if(self.attech_situation):
                         self.reach_flag=True
                         self.pause_process=False
                         self.grip_flag.publish('True')
                         while( self.gripper_client(True)==False):
-                            
+
                             self.gripper_client(True)
                         self.pick=False
                         self.pick_drop_box=False
@@ -177,7 +177,7 @@ class PathPlanner():
                         while(self.destination==self.dst):
                             continue
                         self.destination=self.dst
-                
+
                 elif((-2<(self.destination[2]-self.current_location[2]) < 2)and(self.obs_range_bottom[0]<=0.5100) and (not self.pick)):
                     if(self.attech_situation):
                             self.reach_flag=True
@@ -190,7 +190,7 @@ class PathPlanner():
                             while(self.destination==self.dst):
                                 continue
                             self.destination=self.dst
-                    
+
     def calculate_movement_in_plane(self, total_movement):
         '''This Function will take the drone in straight line towards destination'''
 
@@ -259,7 +259,7 @@ class PathPlanner():
             self.pause_process = True
 
     def pick_n_drop(self):
-        self.checkpoint.altitude = self.destination[2]-0.3
+        self.checkpoint.altitude = self.destination[2]-0.2
 
     def function_call(self):
         print(self.status)
@@ -293,7 +293,7 @@ class PathPlanner():
                 self.pick_n_drop()
                 self.limiter = [0, 0, 0]
                 self.altitude_interrup = True
-        self.threshould_box(0.20)
+        self.threshould_box(0.28)
         self.pub_checkpoint.publish(self.checkpoint)
 
 
