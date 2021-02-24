@@ -173,14 +173,14 @@ class PathPlanner():
         slope = dist_z / (self.distance_xy - 3)
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
 
-    def threshould_box(self):
+    def threshould_box(self, limit):
         #print(self.pick_drop_box)
         # print(self.pause_process)
         # print(self.destination)
         # print("yoo",self.current_location)
-        if -0.2 <= self.diff_xy[0] <= 0.2:
+        if -1*limit <= self.diff_xy[0] <= limit:
            
-            if -0.2<= self.diff_xy[1]<= 0.2:
+            if -1*limit <= self.diff_xy[1] <= limit:
                 self.pick_drop_box=True
                
                 if(self.pause_process):
@@ -328,22 +328,6 @@ class PathPlanner():
         if(self.distance_xy<=8.0):
             self.movement_in_1D = self.distance_xy
 
-        # checking if destination is nearer than maximum distance to be travelled
-        # if self.movement_in_1D[0] >= self.distance_xy:
-        #     # print("helloooooooo  oooo  oooooo  oooooo  oooooo  oooooo  oooooo  ooooo")
-        #     self.movement_in_1D[0]=self.movement_in_1D[1] = self.distance_xy
-        # doge the obstacle if its closer than certain distance
-        # for i in range(len(data)-1):
-        #     if data[i] <= self.obs_closest_range:
-        #         if i % 2 != 0:
-        #             self.movement_in_plane[0] = data[i] - \
-        #                 self.obs_closest_range
-        #             self.movement_in_plane[1] = self.movement_in_1D
-        #         else:
-        #             self.movement_in_plane[0] = self.movement_in_1D
-        #             self.movement_in_plane[1] = data[i] - \
-        #                 self.obs_closest_range
-        #     else:
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
 
         # print(self.movement_in_plane,self.movement_in_1D)
@@ -354,48 +338,19 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1])
         # self.altitude_select()
         # self.check_altitude()
-        if(self.current_location[2]!=0.00):
-            if(self.limiter[1]==0):
-                if(self.distance_xy<=15):
-                    self.buffer_altitude=self.current_location[2]+3
-                    self.limiter[1]+=1
-                else:
-                    self.buffer_altitude = 30
-                self.limiter[1]+=1
-                self.checkpoint.altitude=self.buffer_altitude
 
-        
-
-
-        # self.checkpoint.altitude = 24
-        # if(math.hypot(self.lat_to_x_diff(self.destination[0]-self.current_location[0]),self.long_to_y_diff((self.destination[1]-self.current_location[1])))<=6 and self.pick):
-        #     self.checkpoint.longitude=self.destination[1]
-        #     print("yoo")
-        #     self.checkpoint.latitude=self.destination[0]
-            
-        # else:
-        # self.checkpoint.altitude = 14
-        # self.altitude_control()
-        print(self.checkpoint.altitude)
+        self.checkpoint.altitude = 24
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
 
-
         # Publishing
-        # if(not self.pick_drop_box):
         self.pub_checkpoint.publish(self.checkpoint)
         
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
 
-        # if(not self.sudo_destination_reach):
-        #     if(self.img_data!=[0,0] and (not self.pause_process)):
-        #         self.destination=[self.current_location[0]+self.x_to_lat_diff(self.img_data[0]),self.current_location[1]+self.y_to_long_diff(self.img_data[1])]
-        #         self.pause_process=True
-        # elif(self.sudo_destination_reach):
-        # print(self.pause_process)
         if(self.img_data==[0,0] and (not self.pause_process)):
             self.checkpoint.altitude=self.current_location[2]+1
             self.pub_checkpoint.publish(self.checkpoint)
@@ -474,7 +429,7 @@ class PathPlanner():
                 self.limiter=[0,0,0]
                 self.altitude_interrup=True
                 print("pick_n_drop")
-        self.threshould_box()
+        self.threshould_box(0.20)
         # print(self.checkpoint.altitude)
         self.pub_checkpoint.publish(self.checkpoint)
 

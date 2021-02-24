@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <launch>
     <!-- <node pkg="pkg_task5" type="qr_detect.py" name="qrcode_scan" /> -->
-    <node pkg="pkg_task5" type="scheduler_3.py" name="data_processing" />
+    <node pkg="pkg_task5" type="scheduler_2.py" name="data_processing" />
     <node pkg="pkg_task5" type="marker_detect.py" name="marker_detect" />
     <node pkg="pkg_task5" type="gripper_client.py" name="gripper_client" />
     <node pkg="pkg_task5" type="attitude_controller.py" name="attitude_controller" />
