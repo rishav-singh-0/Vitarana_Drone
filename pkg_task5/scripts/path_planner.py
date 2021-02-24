@@ -55,7 +55,10 @@ class PathPlanner():
         
         self.direction_xy = [0, 0]          # direction to go in
 
-        self.lock = False
+        # Flags
+        self.box_picked = False             # check if box is picked
+        self.lock = False                   # lock the particular direction
+        self.status = "DELIVERY"            # it will be either "delevery" or "returns"
 
         self.sample_time = 0.5
 
@@ -102,6 +105,9 @@ class PathPlanner():
         dist_z = self.current_location[2] - self.destination[2] + 3
         slope = dist_z / (self.distance_xy - 3)
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
+    
+    def threshould_box(self, limit):
+        
 
 
     def obstacle_avoid(self):
@@ -135,12 +141,14 @@ class PathPlanner():
             d = data[self.direction_xy[i]] if data[self.direction_xy[i]] < 24 else 24
             self.movement_in_1D = d * 0.65
 
-        if(self.distance_xy <= 8.0):
-            self.movement_in_1D = self.distance_xy
+        # if(self.distance_xy <= 8.0):
+        #     self.movement_in_1D = self.distance_xy
 
         for i in [0, 1]:
             if data[self.direction_xy[i]] < self.diff_xy[i]:
-                self.movement_in_plane[i] = (data[self.direction_xy[i]] - self.obs_closest_range) * 0.75
+                self.movement_in_plane[i] = data[self.direction_xy[i]] * 0.75
+            if self.movement_in_plane[i] < 4:
+                self.movement_in_plane[i] = self.diff_xy[i]
 
         # self.movement_in_plane = [min(movement[0],movement[2]),min(movement[1],movement[3])]
 
@@ -163,6 +171,9 @@ class PathPlanner():
 
         # Publishing
         self.pub_checkpoint.publish(self.checkpoint)
+        
+    def function_call(self):
+        self.obstacle_avoid()
 
 
 if __name__ == "__main__":
@@ -170,4 +181,5 @@ if __name__ == "__main__":
     rate = rospy.Rate(1/planner.sample_time)
     while not rospy.is_shutdown():
         planner.obstacle_avoid()
+        planner.function_call()
         rate.sleep()

@@ -5,7 +5,7 @@
     <node pkg="pkg_task5" type="marker_detect.py" name="marker_detect" />
     <node pkg="pkg_task5" type="gripper_client.py" name="gripper_client" />
     <node pkg="pkg_task5" type="attitude_controller.py" name="attitude_controller" />
-    <node pkg="pkg_task5" type="path_planner_test.py" name="path_planner" />
+    <node pkg="pkg_task5" type="path_planner_test2.py" name="path_planner" />
     <node pkg="pkg_task5" type="position_controller.py" name="position_controller" />
 
     <arg name="record" default="false"/>
