@@ -178,9 +178,10 @@ class PathPlanner():
         # print(self.pause_process)
         # print(self.destination)
         # print("yoo",self.current_location)
-        if -1*limit <= self.diff_xy[0] <= limit:
+       
+        if -0.2 <= self.lat_to_x_diff(self.current_location[0]-self.destination[0])<= 0.2:
            
-            if -1*limit <= self.diff_xy[1] <= limit:
+            if -0.2<= self.long_to_y_diff(self.current_location[1]-self.destination[1])<= 0.2:
                 self.pick_drop_box=True
                
                 if(self.pause_process):
@@ -339,7 +340,7 @@ class PathPlanner():
         # self.altitude_select()
         # self.check_altitude()
 
-        self.checkpoint.altitude = 24
+        self.checkpoint.altitude = 25
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
@@ -350,7 +351,6 @@ class PathPlanner():
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
-
         if(self.img_data==[0,0] and (not self.pause_process)):
             self.checkpoint.altitude=self.current_location[2]+1
             self.pub_checkpoint.publish(self.checkpoint)
