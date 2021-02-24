@@ -435,7 +435,7 @@ class PathPlanner():
         # print("msg_marker",self.msg_from_marker_find)
         # print("pause_process",self.pause_process)
         
-        if(self.dst==[0,0,0]):
+        if(self.dst==[0,0,0] or self.current_location==[0,0,0] or self.destination==[0,0,0]):
             return
         # print(self.msg_from_marker_find)
         if(not self.pause_process):
