@@ -178,9 +178,9 @@ class PathPlanner():
         # print(self.pause_process)
         # print(self.destination)
         # print("yoo",self.current_location)
-        if -0.000005217 <= (self.destination[0]-self.current_location[0]) <= 0.000005217:
+        if -0.2 <= self.diff_xy[0] <= 0.2:
            
-            if -0.0000013487 <= (self.destination[1]-self.current_location[1])<= 0.0000031487:
+            if -0.2<= self.diff_xy[1]<= 0.2:
                 self.pick_drop_box=True
                
                 if(self.pause_process):
