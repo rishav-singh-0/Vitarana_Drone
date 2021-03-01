@@ -164,6 +164,7 @@ class PathPlanner():
                         self.destination=self.dst
                         self.buffer_altitude=self.current_location[2]-self.destination[2]
                         self.altitude=self.buffer_altitude
+                        self.limiter=0
 
                 elif((-2<(self.destination[2]-self.current_location[2]) < 2)and(self.obs_range_bottom[0]<=0.5100) and (not self.pick)):
                     if(self.attech_situation):
@@ -179,6 +180,7 @@ class PathPlanner():
                             self.destination=self.dst
                             self.buffer_altitude=self.current_location[2]-self.destination[2]
                             self.altitude=self.buffer_altitude
+                            self.limiter=0
 
     def calculate_movement_in_plane(self, total_movement):
         '''This Function will take the drone in straight line towards destination'''
@@ -315,7 +317,7 @@ class PathPlanner():
                     self.marker_find()
                 elif(self.pick or self.msg_from_marker_find):
                     self.pick_n_drop()
-        elif(self.status == "RETURN"):
+        elif(self.status == "RETURN "):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
             elif(self.pick_drop_box):
