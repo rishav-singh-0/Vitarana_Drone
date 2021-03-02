@@ -258,18 +258,18 @@ class PathPlanner():
         # print("lat",selected_lat)
         # print("long",selected_long)
         if(self.distance_xy>self.obs_range_top[selected_lat] or self.distance_xy>self.obs_range_top[selected_long]):
-            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=15):
+            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=12):
                 # print("hello")
                 if(self.diff_xy[0]>0):
-                    avoid_obs_in_x=4
+                    avoid_obs_in_x=2
                 else:
-                    avoid_obs_in_x=-4
+                    avoid_obs_in_x=-2
                 self.movement_in_1D=0
-            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=15):
+            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=12):
                 if(self.diff_xy[1]>0):
-                    avoid_obs_in_y=4
+                    avoid_obs_in_y=2
                 else:
-                    avoid_obs_in_y=-4
+                    avoid_obs_in_y=-2
                 self.movement_in_1D=0
             else:
                 avoid_obs_in_x=avoid_obs_in_y=0
