@@ -197,18 +197,19 @@ class PathPlanner():
             # print("altitude")
             if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
                 self.checkpoint.altitude=self.destination[2]+2
-                # print("box grid")
+                print("box grid")
             elif((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy>30):
                 self.checkpoint.altitude=self.destination[2]+8
-                # print("box destination")
+                print("box destination")
             else:
                 if(self.current_location[2]<self.destination[2]):
-                    # print("curr<desti")
+                    print("curr<desti")
                     self.checkpoint.altitude=self.destination[2]+8
                 else:
                     self.checkpoint.altitude=self.destination[2]+self.altitude+8
-                    # print("curr>desti")
+                    print("curr>desti")
             self.limiter+=1
+        print(self.checkpoint.altitude)
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
@@ -263,7 +264,22 @@ class PathPlanner():
                 if(self.diff_xy[0]>0):
                     avoid_obs_in_x=2
                 else:
-                    avoid_obs_in_x=-2
+                    avoid_obs_in_x=-2f(self.limiter==0):
+            # print("altitude")
+            if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
+                self.checkpoint.altitude=self.destination[2]+2
+                # print("box grid")
+            elif((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy>30):
+                self.checkpoint.altitude=self.destination[2]+8
+                # print("box destination")
+            else:
+                if(self.current_location[2]<self.destination[2]):
+                    # print("curr<desti")
+                    self.checkpoint.altitude=self.destination[2]+8
+                else:
+                    self.checkpoint.altitude=self.destination[2]+self.altitude+8
+                    # print("curr>desti")
+            self.limiter+=1
                 self.movement_in_1D=0
             elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=12):
                 if(self.diff_xy[1]>0):
