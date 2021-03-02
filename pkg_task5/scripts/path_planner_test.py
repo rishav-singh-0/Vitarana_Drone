@@ -194,23 +194,29 @@ class PathPlanner():
         specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
     def altitude_select(self):
+        # bottom_distance = 4
+        # alt_to_reach = self.destination[2] + 4
+        # alt_present = self.current_location[2]
+        # if (self.destination[2] > )
+        # if (self.obs_range_bottom[0] < bottom_distance):
         if(self.limiter==0):
             # print("altitude")
             if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
                 self.checkpoint.altitude=self.destination[2]+2
                 print("box grid")
             elif((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy>30):
-                self.checkpoint.altitude=self.destination[2]+8
+                self.checkpoint.altitude=self.destination[2]+8.5
                 print("box destination")
             else:
                 if(self.current_location[2]<self.destination[2]):
                     print("curr<desti")
-                    self.checkpoint.altitude=self.destination[2]+8
+                    self.checkpoint.altitude=self.destination[2]+8.5
                 else:
-                    self.checkpoint.altitude=self.destination[2]+self.altitude+8
+                    self.checkpoint.altitude=self.destination[2]+self.altitude+8.5
                     print("curr>desti")
             print(self.checkpoint.altitude)
             self.limiter+=1
+            
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
@@ -241,11 +247,11 @@ class PathPlanner():
             d = data[self.direction_xy[i]]
             if d > 22:
                 d = 22
-            self.movement_in_1D = d * 0.65
+            if self.distance_xy > 22:
+                self.movement_in_1D = d
+            else:
+                self.movement_in_1D = d * 0.65
 
-        if(self.distance_xy<=8.0):
-            self.movement_in_1D = self.distance_xy
-        
         # print(self.movement_in_plane)
         
         ###########################################################################################
@@ -260,14 +266,14 @@ class PathPlanner():
         # print("lat",selected_lat)
         # print("long",selected_long)
         if(self.distance_xy>self.obs_range_top[selected_lat] or self.distance_xy>self.obs_range_top[selected_long]):
-            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=12):
+            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=10):
                 # print("hello")
                 if(self.diff_xy[0]>0):
                     avoid_obs_in_x=2
                 else:
                     avoid_obs_in_x=-2
                 self.movement_in_1D=0
-            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=12):
+            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=10):
                 if(self.diff_xy[1]>0):
                     avoid_obs_in_y=2
                 else:
@@ -277,8 +283,14 @@ class PathPlanner():
                 avoid_obs_in_x=avoid_obs_in_y=0
 
         ###########################################################################################
+<<<<<<< HEAD
         if(self.pause_process):
             self.movement_in_1D=self.distance_xy
+=======
+        if(self.distance_xy<=8.0):
+            self.movement_in_1D = self.distance_xy
+        
+>>>>>>> 4ea0bd14b5f42b63692c2b2a25479792a3e785ed
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_x)
@@ -289,7 +301,7 @@ class PathPlanner():
             if(self.pick==False):
                 self.checkpoint.altitude=self.destination[2]+8
             else:
-                self.checkpoint.altitude=self.destination[2]+2
+                self.checkpoint.altitude=self.destination[2]+5
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
@@ -342,9 +354,9 @@ class PathPlanner():
             self.threshould_box(0.2)
         elif(not self.pick):
             if(self.pause_process):
-                self.threshould_box(0.2)
+                self.threshould_box(0.25)
             else:
-                self.threshould_box(0.58)
+                self.threshould_box(1.5)
         self.pub_checkpoint.publish(self.checkpoint)
 
 
