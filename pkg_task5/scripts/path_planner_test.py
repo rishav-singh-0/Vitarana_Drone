@@ -196,12 +196,12 @@ class PathPlanner():
         if(self.limiter==0):
             # print("altitude")
             if(0.2<=self.current_location[2]-self.destination[2]<=0.2):
-                self.checkpoint.altitude=self.destination[2]+2
+                self.checkpoint.altitude=self.destination[2]+1.5
             else:
                 if(self.current_location[2]<self.destination[2]):
-                    self.checkpoint.altitude=self.destination[2]+2
+                    self.checkpoint.altitude=self.destination[2]+1.5
                 else:
-                    self.checkpoint.altitude=self.destination[2]+self.altitude+2
+                    self.checkpoint.altitude=self.destination[2]+self.altitude+1.5
             self.limiter+=1
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
@@ -252,18 +252,18 @@ class PathPlanner():
         print("lat",selected_lat)
         print("long",selected_long)
         if(self.distance_xy>self.obs_range_top[selected_lat] or self.distance_xy>self.obs_range_top[selected_long]):
-            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=12):
+            if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=15):
                 # print("hello")
                 if(self.diff_xy[0]>0):
-                    avoid_obs_in_x=2
+                    avoid_obs_in_x=4
                 else:
-                    avoid_obs_in_x=-2
+                    avoid_obs_in_x=-4
                 self.movement_in_1D=0
-            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=12):
+            elif(self.obs_range_top[selected_lat]<=self.obs_range_top[selected_long] and self.obs_range_top[selected_lat]<=15):
                 if(self.diff_xy[1]>0):
-                    avoid_obs_in_y=2
+                    avoid_obs_in_y=4
                 else:
-                    avoid_obs_in_y=2
+                    avoid_obs_in_y=-4
                 self.movement_in_1D=0
             else:
                 avoid_obs_in_x=avoid_obs_in_y=0
@@ -317,13 +317,19 @@ class PathPlanner():
                     self.marker_find()
                 elif(self.pick or self.msg_from_marker_find):
                     self.pick_n_drop()
-        elif(self.status == "RETURN "):
+        elif(self.status == "RETURN"):
             if(not self.pick_drop_box):
                 self.obstacle_avoid()
             elif(self.pick_drop_box):
                 self.pick_n_drop()
                 self.limiter=0
-        self.threshould_box(0.28)
+        if(self.pick):
+            self.threshould_box(0.2)
+        elif(not self.pick):
+            if(self.pause_process):
+                self.threshould_box(0.2)
+            else:
+                self.threshould_box(0.58)
         self.pub_checkpoint.publish(self.checkpoint)
 
 
