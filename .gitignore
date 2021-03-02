@@ -10,3 +10,5 @@ additional_package_for_vd/
 #Editor config
 **/.vscode
 **/.directory
+VD_t6_original/**
+pkg_task6/**
