@@ -1,5 +1,29 @@
 #!/usr/bin/env python
 
+'''
+This python file runs a ROS-node of name path_planner which controls the path to be travelled in order to 
+reach required destination which is given by scheduler script 
+This node publishes and subsribes the following topics:
+        PUBLICATIONS                SUBSCRIPTIONS
+        /checkpoint                 /final_setpoint
+        /gripp_flag                 /edrone/gps
+        /destination_data           /edrone/range_finder_top
+        /next_destination_flag      /edrone/range_finder_bottom
+                                    /edrone/gripper_check
+                                    /marker_error
+                                    /edrone/imu_data
+                                    /box_checkpoint
+
+'''
+
+# Team ID:          VD_983
+# Theme:            Vitarana_Drone
+# Author List:      Rishav Singh, Kashyap Joshi
+# Filename:         attitude_controller.py
+# Functions:        pid, shutdown_hook, imu_callback, drone_command_callback, check_output
+# Global variables: None
+
+# Importing the required libraries
 import rospy
 import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
@@ -12,7 +36,7 @@ from vitarana_drone.srv import *
 class PathPlanner():
 
     def __init__(self):
-        rospy.init_node('path_planner_beta')
+        rospy.init_node('path_planner')
 
         # Destination to be reached
         # [latitude, longitude, altitude]
@@ -193,12 +217,8 @@ class PathPlanner():
         specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
         specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
+
     def altitude_select(self):
-        # bottom_distance = 4
-        # alt_to_reach = self.destination[2] + 4
-        # alt_present = self.current_location[2]
-        # if (self.destination[2] > )
-        # if (self.obs_range_bottom[0] < bottom_distance):
         if(self.limiter==0):
             # print("altitude")
             if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
