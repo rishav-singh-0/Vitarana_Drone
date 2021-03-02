@@ -49,5 +49,4 @@ Hence it was the new concept of Dronmakehich can make a change in the field of t
 
 - [Rishav Singh](https://github.com/rishav-singh-0/)
 - [Kashyap Joshi](https://github.com/379-kash)
-- [Hardee Bhatt](https://github.com/Hardee426)
-- [Sandeep Suthar](https://github.com/SANDEEP5301)
+
