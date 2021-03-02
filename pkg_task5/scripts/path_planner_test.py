@@ -36,6 +36,7 @@ class PathPlanner():
         self.buffer_altitude=0                               #for assigning altitude to the altitude variable
         self.altitude=0                                      #for assigning buffer_altitude
         self.limiter=0                                       #limiting assignment to the alttitude
+        self.prev_altitude=16.757981                         #Differentianiting between current and previous altitude
         ################################################################################
 
         # Present Location of the DroneNote
@@ -288,8 +289,11 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1]) - self.y_to_long_diff(avoid_obs_in_y)
         self.altitude_select()
         # self.checkpoint.altitude = 25
-        if(self.status=="RETURN" and self.pick==False):
-            self.checkpoint.altitude=self.destination[2]+8
+        if(self.status=="RETURN"):
+            if(self.pick==False):
+                self.checkpoint.altitude=self.destination[2]+8
+            else:
+                self.checkpoint.altitude=self.destination[2]+2
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
