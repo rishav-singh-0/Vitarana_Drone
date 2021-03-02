@@ -1,18 +1,19 @@
 #!/usr/bin/env python
 
-# importing required libraries
-
-
 '''
-This python file runs a ROS-node of name 'position_controller' which controls the roll, pitch, yaw angles of the eDrone.
+This python file runs a ROS-node of name 'position_controller' which controls the required roll, pitch, yaw angles of the eDrone.
 This node publishes and subsribes the following topics:
         PUBLICATIONS            SUBSCRIPTIONS
-        /roll_error             /edrone/drone_command
-        /pitch_error            /edrone/imu/data
-        /yaw_error              
-        /edrone/pwm             
-                                
+        /drone_command          /edrone/gps
+                                /checkpoint
 '''
+
+# Team ID:          VD_983
+# Theme:            Vitarana_Drone
+# Author List:      Rishav Singh, Kashyap Joshi
+# Filename:         position_controller.py
+# Functions:        pid, gps_callback, checkpoint_callabck, check_output
+# Global variables: None
 
 import rospy
 from vitarana_drone.msg import edrone_cmd
@@ -20,9 +21,18 @@ from pid_tune.msg import PidTune
 from std_msgs.msg import Float32
 from sensor_msgs.msg import NavSatFix
 
-
 class Command():
-    '''Navigating the Drone through commands'''
+    '''
+    Purpose:
+    ---
+    Navigating the Drone through commands
+    Take data from path_planner and process it using pid 
+    for requirements of roll, pitch, yaw and throttle 
+
+    Input Arguments:
+    ---
+    None
+    '''
     # constructor
 
     def __init__(self):
@@ -35,7 +45,6 @@ class Command():
         # initialising desired position
         # [latitude,longitude,altitude]
         self.destination = [0, 0, 0]
-        # The threshold box can be calculated by using the tolerance of 0.000004517 in latitude, 0.0000047487 in longitude and 0.2m in altitude.
 
         # [roll, pitch, throttle]
         self.Kp = [1507*10000,  1507*10000,  290*1]
@@ -59,23 +68,74 @@ class Command():
 
         # Publishing /pitch_error, /roll_error, /throttle_error
         self.setpoint_pub = rospy.Publisher('/drone_command', edrone_cmd, queue_size=1)
-        # self.pitch_pub = rospy.Publisher('/pitch_error', Float32, queue_size=1)
-        # self.roll_pub = rospy.Publisher('/roll_error', Float32, queue_size=1)
-        self.throttle_pub = rospy.Publisher('/throttle_error', Float32, queue_size=1)
 
         # Subscribers
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/checkpoint', NavSatFix, self.checkpoint_callback)
 
     def gps_callback(self, msg):
+        '''
+        Purpose:
+        ---
+        Stores the data given by the gps sensor inside gps_position
+
+        Input Arguments:
+        ---
+        msg :  [ NavSatFix ]
+            raw data from gps sensor
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        gps_callback(<gps_data>)
+        '''
+
         self.gps_position = [msg.latitude, msg.longitude, msg.altitude]
 
     def checkpoint_callback(self, msg):
-        '''Taking checkpoints from path_planner.py'''
+        ''''''
+        '''
+        Purpose:
+        ---
+        Taking checkpoints from path_planner.py and store in destination
+
+        Input Arguments:
+        ---
+        msg :  [ NavSatFix ]
+            next destination to be travelled 
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        checkpoint_callback(<NavSatFix_data>)
+        '''
         self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def check(self, operator):
-        ''' Verifying if the value is within range if not making it and transforming it for desired range'''
+        '''
+        Purpose:
+        ---
+        Verifying if the value is within range if not making it and transforming it for desired range
+
+        Input Arguments:
+        ---
+        operator :  [ float32 ]
+            output of pid control system
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        check_output(1500)
+        '''
         operator = self.equilibrium_value + operator
         if operator > 2000:
             return 2000
@@ -85,7 +145,23 @@ class Command():
             return operator
 
     def pid(self):
-        '''Function for implimenting the pid algorithm'''
+        '''
+        Purpose:
+        ---
+        Calculates required roll, pitch, yaw and throttle for reaching checkpoint provided by path_planner
+
+        Input Arguments:
+        ---
+        None
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        pid()
+        '''
 
         for i in range(3):
             self.error[i] = self.destination[i] - self.gps_position[i]
@@ -101,14 +177,13 @@ class Command():
         self.setpoint_cmd.rcYaw = self.equilibrium_value
 
         # publishing all the values to attitude_controller and for plotting purpose
-        # self.roll_pub.publish(self.error[0])
-        # self.pitch_pub.publish(self.error[1])
-        self.throttle_pub.publish(self.error[2])
         self.setpoint_pub.publish(self.setpoint_cmd)
 
-
+# Function Name:    main (built in)
+#        Inputs:    None
+#       Outputs:    None
+#       Purpose:    To call the Edrone class to control eDrones movement
 if __name__ == '__main__':
-
     # specify rate in Hz based upon your desired PID sampling time
     command = Command()
     rate = rospy.Rate(1/command.sample_time)  # defining rate
