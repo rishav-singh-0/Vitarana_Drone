@@ -193,6 +193,11 @@ class PathPlanner():
         specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
     def altitude_select(self):
+        # bottom_distance = 4
+        # alt_to_reach = self.destination[2] + 4
+        # alt_present = self.current_location[2]
+        # if (self.destination[2] > )
+        # if (self.obs_range_bottom[0] < bottom_distance):
         if(self.limiter==0):
             # print("altitude")
             if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
@@ -209,6 +214,7 @@ class PathPlanner():
                     self.checkpoint.altitude=self.destination[2]+self.altitude+8
                     # print("curr>desti")
             self.limiter+=1
+            
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
         checkpoint for avoiding obstacles'''
@@ -239,11 +245,8 @@ class PathPlanner():
             d = data[self.direction_xy[i]]
             if d > 22:
                 d = 22
-            self.movement_in_1D = d * 0.65
+            self.movement_in_1D = d * 0.75
 
-        if(self.distance_xy<=8.0):
-            self.movement_in_1D = self.distance_xy
-        
         # print(self.movement_in_plane)
         
         ###########################################################################################
@@ -275,6 +278,9 @@ class PathPlanner():
                 avoid_obs_in_x=avoid_obs_in_y=0
 
         ###########################################################################################
+        if(self.distance_xy<=8.0):
+            self.movement_in_1D = self.distance_xy
+        
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_x)
@@ -335,7 +341,7 @@ class PathPlanner():
             self.threshould_box(0.2)
         elif(not self.pick):
             if(self.pause_process):
-                self.threshould_box(0.2)
+                self.threshould_box(0.25)
             else:
                 self.threshould_box(0.58)
         self.pub_checkpoint.publish(self.checkpoint)

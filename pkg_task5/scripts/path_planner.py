@@ -107,7 +107,7 @@ class PathPlanner():
         self.checkpoint.altitude = self.current_location[2] + (slope * dist_z)
     
     def threshould_box(self, limit):
-        
+        pass
 
 
     def obstacle_avoid(self):
