@@ -277,6 +277,8 @@ class PathPlanner():
                 avoid_obs_in_x=avoid_obs_in_y=0
 
         ###########################################################################################
+        if(self.pause_process):
+            self.movement_in_1D=self.distance_xy
         self.movement_in_plane = self.calculate_movement_in_plane(self.movement_in_1D)
         # setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_x)

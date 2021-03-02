@@ -35,7 +35,7 @@ class Data_processing():
         self.diff_grid = [0.000013552, 0.000014245]          # Difference between grid points
         self.counter_for_initial_pos=0                       # Counter for taking drone coordinates
         self.sample_time = 1
-        
+        self.input_for_csv=[]                                #for storing all destinations where drone will reach
 
 
         # Publishing
@@ -95,7 +95,9 @@ class Data_processing():
                         maxx=diff
                         index=k
             check_list[index]=False
-            self.destination_list.append([self.box_type[index],self.d_list[index][1].split(";"),self.d_list[index][0]])      
+            self.destination_list.append([self.box_type[index],self.d_list[index][1].split(";"),self.d_list[index][0]]) 
+            self.input_for_csv.append([self.box_type[index],self.d_list[index][0],self.d_list[index][1]])
+
         
         for l in range(int(len(self.box_type)/2)):
             m=0
@@ -114,7 +116,7 @@ class Data_processing():
             if(r_index!=0):
                 check_list[r_index]=False
                 self.destination_list.insert((2*l+1),[self.box_type[r_index],self.d_list[r_index][0].split(";"),self.d_list[r_index][1]])
-
+                self.input_for_csv.insert((2*l+1),[self.box_type[r_index],self.d_list[r_index][0],self.d_list[r_index][1]])
         for itter in range(len(self.box_type)):
             switch_grid_destination=False
             if(self.destination_list[itter][0]=='DELIVERY'):
@@ -160,9 +162,16 @@ class Data_processing():
                                 self.coordinates.append([(2*self.diff_grid[0]+self.return_grid[0]),((i-1)*self.diff_grid[1]+self.return_grid[1]),self.drone_coordinates[2]])
                                 
                     self.purpose.append(self.destination_list[itter][0])
-        for u in range(len(self.coordinates)):
-            print(self.coordinates[u])
-            print(u)
+        # for u in range(len(self.coordinates)):
+            # print(math.hypot(self.lat_to_x_diff(abs(self.drone_coordinates[0]-self.coordinates[u][0])),self.long_to_y_diff(abs(self.drone_coordinates[1]-self.coordinates[u][1]))))
+            # print(u)
+        for u in range(18):
+            # print(self.d_list[0])
+            # print(self.box_type[0])
+            with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sequenced_manifest_original.csv'), 'a') as sequenced_csv:
+                sequence_writer = csv.writer(sequenced_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+                sequence_writer.writerow([self.input_for_csv[u][0],self.input_for_csv[u][1],self.input_for_csv[u][2]])
+            # print(self.input_for_csv[u])
 
                     
         
