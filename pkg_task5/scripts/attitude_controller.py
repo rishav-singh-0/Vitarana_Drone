@@ -11,6 +11,13 @@ This node publishes and subsribes the following topics:
 
 '''
 
+# Team ID:          VD_983
+# Theme:            Vitarana_Drone
+# Author List:      Rishav Singh, Kashyap Joshi
+# Filename:         attitude_controller.py
+# Functions:        pid, shutdown_hook, imu_callback, drone_command_callback, check_output
+# Global variables: None
+
 # Importing the required libraries
 import tf
 import time
@@ -24,7 +31,16 @@ from std_srvs.srv import Empty
 
 
 class Edrone():
-    """docstring for Edrone"""
+    '''
+    Purpose:
+    ---
+    Take data from position_controller and process it using pid 
+    for requirements of propeller speed
+
+    Input Arguments:
+    ---
+    None
+    '''
 
     def __init__(self):
         # initializing ros node with name attitude_controller
@@ -102,20 +118,75 @@ class Edrone():
 
         # ------------------------------------------------------------------------------------------------------------
 
-    def check(self, operator):
-        ''' Vreifying if prop speed is within range if not making it '''
+    def check_output(self, operator):
+        '''
+        Purpose:
+        ---
+        Vreifying if prop speed is within range if not making it
+
+        Input Arguments:
+        ---
+        operator :  [ float32 ]
+            output of pid control system
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        check_output(1024)
+        '''
+
         if operator > self.max_values:
             operator = self.max_values
         elif operator < self.min_values:
             operator = self.min_values
 
     def imu_callback(self, msg):
+        '''
+        Purpose:
+        ---
+        Stores the data given by the imu sensor
+
+        Input Arguments:
+        ---
+        msg :  [ Imu ]
+            Raw data from imu sensor
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        imu_callback(<Imu_message>)
+        '''
         self.drone_orientation_quaternion[0] = msg.orientation.x
         self.drone_orientation_quaternion[1] = msg.orientation.y
         self.drone_orientation_quaternion[2] = msg.orientation.z
         self.drone_orientation_quaternion[3] = msg.orientation.w
 
     def drone_command_callback(self, msg):
+        '''
+        Purpose:
+        ---
+        Stores the data given by the position_controller 
+
+        Input Arguments:
+        ---
+        msg :  [ edrone_cmd ]
+            Raw data from position_controller about required set values
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        drone_command_callback(<edrone_cmd>)
+        '''
+
         self.setpoint_cmd[0] = msg.rcRoll
         self.setpoint_cmd[1] = msg.rcPitch
         self.setpoint_cmd[2] = msg.rcYaw
@@ -124,19 +195,23 @@ class Edrone():
     # ----------------------------------------------------------------------------------------------------------------------
 
     def pid(self):
+        '''
+        Purpose:
+        ---
+        Controls propeller speed of eDrone from the provided data of position_controller
 
-        # Steps:
-        # - 1. Convert the quaternion format of orientation to euler angles
-        # - 2. Convert the setpoin that is in the range of 1000 to 2000 into angles with the limit from -10 degree to 10 degree in euler angles
-        # - 3. Compute error in each axis. eg: error[0] = self.setpoint_euler[0] - self.drone_orientation_euler[0], where error[0] corresponds to error in roll...
-        # - 4. Compute the error (for proportional), change in error (for derivative) and sum of errors (for integral) in each axis. Refer "Understanding PID.pdf" to understand PID equation.
-        # * 5. Calculate the pid output required for each axis. For eg: calcuate self.out_roll, self.out_pitch, etc.
-        # - 6. Use this computed output value in the equations to compute the pwm for each propeller. LOOK OUT FOR SIGN (+ or -). EXPERIMENT AND FIND THE CORRECT SIGN
-        # - 7. Don't run the pid continously. Run the pid only at the a sample time. self.sampletime defined above is for this purpose. THIS IS VERY IMPORTANT.
-        # - 8. Limit the output value and the final command value between the maximum(0) and minimum(1024)range before publishing. For eg : if self.pwm_cmd.prop1 > self.max_values[1]:
-        #                                                                                                                                      self.pwm_cmd.prop1 = self.max_values[1]
-        # - 8. Update previous errors.eg: self.prev_error[1] = error[1] where index 1 corresponds to that of pitch (eg)
-        # - 9. Add error_sum to use for integral component
+        Input Arguments:
+        ---
+        None
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        pid()
+        '''
 
         # Converting quaternion to euler angles
         (self.drone_orientation_euler[1], self.drone_orientation_euler[0], self.drone_orientation_euler[2]) = tf.transformations.euler_from_quaternion(
@@ -170,10 +245,10 @@ class Edrone():
         self.pwm_cmd.prop4 = self.throttle_cmd + self.roll_cmd + self.pitch_cmd + self.yaw_cmd
 
         # Vreifying if prop speed is within range if not making it
-        self.check(self.pwm_cmd.prop1)
-        self.check(self.pwm_cmd.prop2)
-        self.check(self.pwm_cmd.prop3)
-        self.check(self.pwm_cmd.prop4)
+        self.check_output(self.pwm_cmd.prop1)
+        self.check_output(self.pwm_cmd.prop2)
+        self.check_output(self.pwm_cmd.prop3)
+        self.check_output(self.pwm_cmd.prop4)
 
         # Publishing error messages
         # self.roll_pub.publish(self.error[0])
@@ -185,20 +260,41 @@ class Edrone():
         # ------------------------------------------------------------------------------------------------------------------------
 
     def shutdown_hook(self):
-        # print("shutdown time!")
+        '''
+        Purpose:
+        ---
+        Shutdown hooks works when the script is called to be killed
+        It restores the position of eDrone and changes the propeller speed to 0
+
+        Input Arguments:
+        ---
+        None
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        shutdown_hook()
+        '''
+        
         self.pwm_cmd.prop1 = self.pwm_cmd.prop2 = self.pwm_cmd.prop3 = self.pwm_cmd.prop4 = 0
         self.pwm_pub.publish(self.pwm_cmd)
         self.reset_world()
-        # rospy.signal_shutdown('Terminating Signal provided')
 
-
-
+# Function Name:    main (built in)
+#        Inputs:    None
+#       Outputs:    None
+#       Purpose:    To call the Edrone class to control eDrones movement
 if __name__ == '__main__':
 
     e_drone = Edrone()
-    # specify rate in Hz based upon your desired PID sampling time, i.e. if desired sample time is 33ms specify rate as 30Hz
+    # specify rate in Hz based upon your desired PID sampling time
+    # i.e. if desired sample time is 33ms specify rate as 30Hz
     r = rospy.Rate(1/e_drone.sample_time)
     while not rospy.is_shutdown():
+        # running with a desired frequency
         e_drone.pid()
         rospy.on_shutdown(e_drone.shutdown_hook)
         r.sleep()
