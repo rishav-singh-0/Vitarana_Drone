@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+'''
+This python file runs a ROS-node 'path_planner' which takes care of the bath to be followed
+This node publishes and subsribes the following topics:
+        PUBLICATIONS            SUBSCRIPTIONS
+        /checkpoint             /marker_data
+                                /edrone/gps
+                                /edrone/range_finder_top
+                                /edrone/range_finder_bottom
+
+'''
+
 import rospy
 import math
 from sensor_msgs.msg import NavSatFix, LaserScan, Imu
@@ -8,7 +19,7 @@ from sensor_msgs.msg import NavSatFix, LaserScan, Imu
 class PathPlanner():
 
     def __init__(self):
-        rospy.init_node('path_planner_beta')
+        rospy.init_node('path_planner')
 
         # Destination to be reached
         # [latitude, longitude, altitude]
@@ -46,13 +57,9 @@ class PathPlanner():
         self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
 
         # Subscriber
-        rospy.Subscriber('/final_setpoint', NavSatFix, self.final_setpoint_callback)
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
         rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
         # rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
-
-    def final_setpoint_callback(self, msg):
-        self.destination = [msg.latitude, msg.longitude, msg.altitude]
 
     def gps_callback(self, msg):
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]

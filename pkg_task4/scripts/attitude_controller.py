@@ -6,9 +6,9 @@ This node publishes and subsribes the following topics:
         PUBLICATIONS            SUBSCRIPTIONS
         /roll_error             /edrone/drone_command
         /pitch_error            /edrone/imu/data
-        /yaw_error              
-        /edrone/pwm             
-                                
+        /yaw_error
+        /edrone/pwm
+
 '''
 
 # Importing the required libraries

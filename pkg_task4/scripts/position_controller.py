@@ -2,6 +2,18 @@
 
 # importing required libraries
 
+
+'''
+This python file runs a ROS-node of name 'position_controller' which controls the roll, pitch, yaw angles of the eDrone.
+This node publishes and subsribes the following topics:
+        PUBLICATIONS            SUBSCRIPTIONS
+        /roll_error             /edrone/drone_command
+        /pitch_error            /edrone/imu/data
+        /yaw_error              
+        /edrone/pwm             
+                                
+'''
+
 import rospy
 from vitarana_drone.msg import edrone_cmd
 from pid_tune.msg import PidTune
