@@ -195,13 +195,19 @@ class PathPlanner():
     def altitude_select(self):
         if(self.limiter==0):
             # print("altitude")
-            if(0.2<=self.current_location[2]-self.destination[2]<=0.2):
-                self.checkpoint.altitude=self.destination[2]+1.5
+            if((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy<30):
+                self.checkpoint.altitude=self.destination[2]+2
+                # print("box grid")
+            elif((-0.2<=self.current_location[2]-self.destination[2]<=0.2) and self.distance_xy>30):
+                self.checkpoint.altitude=self.destination[2]+8
+                # print("box destination")
             else:
                 if(self.current_location[2]<self.destination[2]):
-                    self.checkpoint.altitude=self.destination[2]+1.5
+                    # print("curr<desti")
+                    self.checkpoint.altitude=self.destination[2]+8
                 else:
-                    self.checkpoint.altitude=self.destination[2]+self.altitude+1.5
+                    self.checkpoint.altitude=self.destination[2]+self.altitude+8
+                    # print("curr>desti")
             self.limiter+=1
     def obstacle_avoid(self):
         '''For Processing the obtained sensor data and publishing required
@@ -249,8 +255,8 @@ class PathPlanner():
             selected_long=2
         else:
             selected_long=0
-        print("lat",selected_lat)
-        print("long",selected_long)
+        # print("lat",selected_lat)
+        # print("long",selected_long)
         if(self.distance_xy>self.obs_range_top[selected_lat] or self.distance_xy>self.obs_range_top[selected_long]):
             if(self.obs_range_top[selected_lat]>=self.obs_range_top[selected_long] and self.obs_range_top[selected_long]<=15):
                 # print("hello")
@@ -275,6 +281,8 @@ class PathPlanner():
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1]) - self.y_to_long_diff(avoid_obs_in_y)
         self.altitude_select()
         # self.checkpoint.altitude = 25
+        if(self.status=="RETURN" and self.pick==False):
+            self.checkpoint.altitude=self.destination[2]+8
         self.desti_data.latitude=self.destination[0]
         self.desti_data.longitude=self.destination[1]
         self.desti_data.altitude=self.destination[2]
