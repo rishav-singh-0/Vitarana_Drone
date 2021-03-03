@@ -4,7 +4,7 @@
 #Team ID:            0983
 #Theme:              VITARANA DRONE
 #Author List:        Rishav Singh,Kashyap Joshi
-#Filename:           marker_detect.py
+#Filename:           path_planner_test.py
 #Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
 #Global Variables:   None
 '''
@@ -13,12 +13,11 @@
 This python file runs a ROS-node of name path_planner which controls the path to be travelled in order to 
 reach required destination which is given by scheduler script 
 This node publishes and subsribes the following topics:
-        PUBLICATIONS                SUBSCRIPTIONS
-        /checkpoint                 /final_setpoint
+        PUBLICATIONS                SUBSCRIPTIONS                
         /gripp_flag                 /edrone/gps
         /destination_data           /edrone/range_finder_top
         /next_destination_flag      /edrone/range_finder_bottom
-                                    /edrone/gripper_check
+        /checkpoint                 /edrone/gripper_check
                                     /marker_error
                                     /edrone/imu_data
                                     /box_checkpoint
