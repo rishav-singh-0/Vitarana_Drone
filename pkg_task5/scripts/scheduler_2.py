@@ -32,7 +32,7 @@ class Data_processing():
     '''
     Purpose:
     ---
-    
+    This class will contain member functions to process the .csv fileand publish it.
 
     Input Argument:
     ---
