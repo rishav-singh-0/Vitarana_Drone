@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 #Team ID:            0983
 #Theme:              VITARANA DRONE
@@ -6,7 +7,16 @@
 #Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
 #Global Variables:   None
 '''
-#!/usr/bin/env python
+
+'''
+This python file runs a ROS-node of name 'marker_detect' which will calculate difference of cross marker from the eDrone.
+This node publishes and subsribes the following topics:
+        SUBSCRIPTIONS                        PUBLICATIONS                         
+        /edrone/camera/image_raw             /marker_error
+        /edrone/gps                          
+        /destination_data
+
+'''
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
@@ -19,8 +29,20 @@ import std_msgs.msg
 
 
 class marker_detection():
+    '''
+    Purpose:
+    ---
+    Its class for handling marker data processing and calculating the error between marker eDrone.
+    This will contain all the functions 
 
+    Input Argument:
+    ---
+    None
+    '''
     def __init__(self):
+        '''
+        It will initialize allthe defined variables
+        '''
         rospy.init_node('marker_detect')
         # For storing tha data of the image in form of numpy array
         self.img = np.empty([])
@@ -132,7 +154,7 @@ class marker_detection():
         '''
         Purpose:
         ---
-        This function will process on the image data and remove fake pixel location where wrong marker like thing(ie: helipad) and will precess the pixel data and calculate coordinates of the
+        This function will process on the image data and remove fake pixel location where wrong marker like thing(ie: helipad) and will precess the pixel data and calculate coordinate difference of the
         cross marker in meters.
         by applying some oncepts of ray optics we can calculate the difference to cross marker only we need is focal length and pixel size of the image.
 
@@ -146,7 +168,10 @@ class marker_detection():
 
         Example call:
         ---
-        Every time this function is calling for publishing the difference in distance from drone to cross marker in given frequency.
+        Every time this function is calling for publishing the difference in distance from eDrone to cross marker in given frequency.
+
+        marker_detection_obj.detect_marker()
+        
         '''
 
         if(self.img.size > 1):
@@ -192,6 +217,10 @@ class marker_detection():
                 pass
 
 
+# Function Name:    main (built in)
+#        Inputs:    None
+#       Outputs:    None
+#       Purpose:    To call the Edrone class's functions to publish appropreat error to the cross marker
 if __name__ == '__main__':
     marker_detection_obj = marker_detection()
     r = rospy.Rate(1/marker_detection_obj.sample_time)
