@@ -39,8 +39,8 @@ class PathPlanner():
     Purpose:
     ---
     This class will contain member functions to control below functionings.
-    -->provide propper destination to eDrone
-    -->attech and detech boxes
+    -->provide propper destination to eDrone.
+    -->attech and detech boxes.
     -->decreace altitude for attwch and detech box.
     -->avoid obstacles.
     -->getting data from marker_detect.
@@ -93,6 +93,7 @@ class PathPlanner():
 
         # The checkpoint node to be reached for reaching final destination
         self.checkpoint = NavSatFix()
+        self.desti_data = NavSatFix()
 
         # Initializing to store data from Lazer Sensors
         # ---
@@ -627,9 +628,12 @@ class PathPlanner():
             else:
                 self.checkpoint.altitude = self.destination[2]+5
        
-
+        self.desti_data.latitude=self.destination[0]
+        self.desti_data.longitude=self.destination[1]
+        self.desti_data.altitude=self.destination[2]
         # Publishing the checkpoint at where eDrone have to reach
         self.pub_checkpoint.publish(self.checkpoint)
+        self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
 
@@ -659,10 +663,8 @@ class PathPlanner():
             self.checkpoint.altitude = self.current_location[2]+1
             self.pub_checkpoint.publish(self.checkpoint)
         elif(self.img_data != [0, 0] and (not self.pause_process_after_detection)):
-            self.destination[0] = self.current_location[0] + \
-                self.x_to_lat_diff(self.img_data[0])
-            self.destination[1] = self.current_location[1] + \
-                self.y_to_long_diff(self.img_data[1])
+            self.destination[0] = self.current_location[0] + self.x_to_lat_diff(self.img_data[0])
+            self.destination[1] = self.current_location[1] + self.y_to_long_diff(self.img_data[1])
             self.checkpoint.latitude = self.destination[0]
             self.checkpoint.longitude = self.destination[1]
             self.pause_process_after_detection = True
