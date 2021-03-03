@@ -35,6 +35,22 @@ from vitarana_drone.srv import *
 
 class PathPlanner():
 
+    '''
+    Purpose:
+    ---
+    This class will contain member functions to control below functionings.
+    -->provide propper destination to eDrone
+    -->attech and detech boxes
+    -->decreace altitude for attwch and detech box.
+    -->avoid obstacles.
+    -->getting data from marker_detect.
+
+    Input Argument:
+    ---
+    None
+    '''
+
+
     def __init__(self):
         rospy.init_node('path_planner_beta')
 
