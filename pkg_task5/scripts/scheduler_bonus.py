@@ -32,7 +32,7 @@ class Data_processing():
     '''
     Purpose:
     ---
-
+    This class will contain all the required member functions as well as variables for sorting the destinations
 
     Input Argument:
     ---
@@ -76,7 +76,8 @@ class Data_processing():
 
         Input Argument:
         ---
-        msg
+        msg: [Float]
+             Flag for next destination
 
         Returns:
         ---
@@ -120,6 +121,8 @@ class Data_processing():
 
         Example call:
         ---
+        read_and_set_data()
+        
         called in start for sorting the data and letter data will published by 'data_publish()'.
         '''
         # Boolian list for checking perticuler delevery or return is selected previously or not
@@ -152,7 +155,7 @@ class Data_processing():
             buffer_index=0
 
             # Initializing the minimum threshould
-            maxx=0
+            maxx=1000
 
             # 'index' will store the index of preferable coordinates
             index=0
@@ -164,7 +167,7 @@ class Data_processing():
 
                     # 'diff' will store difference between coordinates for delevery
                     diff=math.hypot(self.lat_to_x_diff(abs(self.drone_coordinates[0]-x)),self.long_to_y_diff(abs(self.drone_coordinates[1]-y)))
-                    if(diff>=maxx):
+                    if(diff<=maxx):
                         maxx=diff
                         index=buffer_index
             check_list[index]=False

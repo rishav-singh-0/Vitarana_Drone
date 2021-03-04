@@ -84,7 +84,8 @@ class Grip():
         
         Input Argument:
         ---
-        check_condition
+        check_condition: [boolean]
+                         Input for gripping and ungrippig the parcel box
 
         Returns:
         ---
