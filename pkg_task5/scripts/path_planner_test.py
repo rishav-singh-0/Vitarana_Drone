@@ -144,7 +144,24 @@ class PathPlanner():
                          LaserScan, self.range_finder_bottom_callback)
 
     def gripper_client(self, check_condition):
-       
+       '''
+        Purpose:
+        ---
+        Basically this function is made for service call and it will wait for service to active.
+        when service will active it will send request to grip or drop box and receive appropreat feedback from the service.
+        
+        Input Argument:
+        ---
+        check_condition
+
+        Returns:
+        ---
+        msg_container.result(its reasult wather box is gripped or not as a feedback)
+
+        Example call:
+        ---
+        Called automatically when appropreat data will being published by the '/edrone/activate_gripper' service .
+        '''
         rospy.wait_for_service('/edrone/activate_gripper')
         carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
         msg_container = carry(check_condition)
