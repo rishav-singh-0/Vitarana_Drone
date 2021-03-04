@@ -32,7 +32,6 @@ from vitarana_drone.srv import *
 
 
 class PathPlanner():
-
     '''
     Purpose:
     ---
@@ -47,7 +46,6 @@ class PathPlanner():
     ---
     None
     '''
-
 
     def __init__(self):
         rospy.init_node('path_planner')
@@ -130,7 +128,6 @@ class PathPlanner():
         rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
         rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
-
         rospy.Subscriber('/box_checkpoint', NavSatFix, self.csv_checkpoint)
         rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
@@ -145,8 +142,11 @@ class PathPlanner():
         '''
         Purpose:
         ---
-        This is callback function function for saving the IMU data so that we can introduce limitation in taking the samples from the 'range_finder_top'.
-        when in latitude and longitude angle in euler is <= 2.5 apperars variables will start to sample the data so unwanted noise will being removed due to to the drone inclination.
+        This is callback function function for saving the IMU data so that we can introduce limitation in taking the samples 
+        from the 'range_finder_top'.
+        
+        When in latitude and longitude angle in euler is <= 2.5 apperars variables will start to sample the data 
+        so unwanted noise will being removed due to to the drone inclination.
 
         Input Argument:
         ---
