@@ -66,7 +66,7 @@ class PathPlanner():
         # For deciding wather to pick or drop a box
         self.pick = True
         # It will be either "delevery" or "returns"
-        self.status = "DELIVERY"
+        self.status = None
         # Switch for obstacle avoid and all funtion
         self.pick_drop_box = False
         # Flag for calling pick_n_drop() after marker_find()
@@ -144,24 +144,7 @@ class PathPlanner():
                          LaserScan, self.range_finder_bottom_callback)
 
     def gripper_client(self, check_condition):
-       '''
-        Purpose:
-        ---
-        Basically this function is made for service call and it will wait for service to active.
-        when service will active it will send request to grip or drop box and receive appropreat feedback from the service.
-        
-        Input Argument:
-        ---
-        check_condition
 
-        Returns:
-        ---
-        msg_container.result(its reasult wather box is gripped or not as a feedback)
-
-        Example call:
-        ---
-        Called automatically when appropreat data will being published by the '/edrone/activate_gripper' service .
-        '''
         rospy.wait_for_service('/edrone/activate_gripper')
         carry = rospy.ServiceProxy('/edrone/activate_gripper', Gripper)
         msg_container = carry(check_condition)
@@ -507,14 +490,14 @@ class PathPlanner():
                 self.checkpoint.altitude = self.destination[2]+2
 
             elif((-0.2 <= self.current_location[2]-self.destination[2] <= 0.2) and self.distance_xy > 30):
-                self.checkpoint.altitude = self.destination[2]+self.threshould_altitude
+                self.checkpoint.altitude = self.destination[2]+self.threshould_altitude-4
 
             else:
                 if(self.current_location[2] < self.destination[2]):
 
-                    self.checkpoint.altitude = self.destination[2]+self.threshould_altitude
+                    self.checkpoint.altitude = self.destination[2]+self.threshould_altitude-4
                 else:
-                    self.checkpoint.altitude = self.destination[2] + self.altitude+self.threshould_altitude
+                    self.checkpoint.altitude = self.destination[2] + self.altitude+self.threshould_altitude-4
 
             self.limiter += 1
 
@@ -595,23 +578,23 @@ class PathPlanner():
 
         # Deciding condition when to avoid obstacle(basically threshould defination in condition)
         if(self.distance_xy > self.obs_range_top[selected_latitude_and_longituide[0]] or self.distance_xy > self.obs_range_top[selected_latitude_and_longituide[1]]):
-            if(self.obs_range_top[selected_latitude_and_longituide[0]] >= self.obs_range_top[selected_latitude_and_longituide[1]] and self.obs_range_top[selected_latitude_and_longituide[1]] <= 10):
+            if(self.obs_range_top[selected_latitude_and_longituide[0]] >= self.obs_range_top[selected_latitude_and_longituide[1]] and self.obs_range_top[selected_latitude_and_longituide[1]] <= 15):
                 
                 #Selecting appropreat distance to travel while avoiding obstacle
                 if(self.diff_xy[0] > 0):
-                    avoid_obs_in_xy[0] = 2
+                    avoid_obs_in_xy[0] = 4
                 else:
-                    avoid_obs_in_xy[0] = -2
-                self.movement_in_1D = 0
+                    avoid_obs_in_xy[0] = -4
+                self.movement_in_1D = -10
 
             # Deciding condition when to avoid obstacle(basically threshould defination in condition)
-            elif(self.obs_range_top[selected_latitude_and_longituide[0]] <= self.obs_range_top[selected_latitude_and_longituide[1]] and self.obs_range_top[selected_latitude_and_longituide[0]] <= 10):
+            elif(self.obs_range_top[selected_latitude_and_longituide[0]] <= self.obs_range_top[selected_latitude_and_longituide[1]] and self.obs_range_top[selected_latitude_and_longituide[0]] <= 15):
                 
                 # Deciding condition when to avoid obstacle(basically threshould defination in condition)
                 if(self.diff_xy[1] > 0):
-                    avoid_obs_in_xy[1] = 2
+                    avoid_obs_in_xy[1] = 4
                 else:
-                    avoid_obs_in_xy[1] = -2
+                    avoid_obs_in_xy[1] = -4
                 self.movement_in_1D = 0
             else:
                 avoid_obs_in_xy[0] = avoid_obs_in_xy[1] = 0
@@ -621,7 +604,7 @@ class PathPlanner():
 
         self.movement_in_plane = self.calculate_movement_in_plane(
             self.movement_in_1D)
-
+        print(avoid_obs_in_xy)
         # Setting the values to publish
         self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_xy[0])
         self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1]) - self.y_to_long_diff(avoid_obs_in_xy[1])
@@ -629,7 +612,7 @@ class PathPlanner():
         # Checkin and correcting the provided altitude
         if(self.status == "RETURN"):
             if(self.pick == False):
-                self.checkpoint.altitude = self.destination[2]+8
+                self.checkpoint.altitude = self.destination[2]+5
             else:
                 self.checkpoint.altitude = self.destination[2]+5
        
