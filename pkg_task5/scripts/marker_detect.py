@@ -186,7 +186,7 @@ class marker_detection():
                     - Providing error to the path_planner
                     - calculating necessary distance in meter
                     '''
-                    #row_ and row_y both will form central pixel of the detected image
+                    #row_x and row_y both will form central pixel of the detected image
                     row_x = -(200-(2*logo[0][0]+logo[0][2])/2)
                     row_y = (200-(2*logo[0][1]+logo[0][3])/2)
 
