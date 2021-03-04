@@ -139,69 +139,69 @@ class Data_processing():
             check_list.append(True)
 
         #setting maximum threshould
-        maxx=1000
+        maxx = 1000
 
         #storing the first coordinates
-        buffer_coordinates=self.d_list[0][1].split(';')
+        buffer_coordinates = self.d_list[0][1].split(';')
         #converting buffer_corrdinates in float for use of comperision
-        x,y=float(buffer_coordinates[0]),float(buffer_coordinates[1])
+        x, y = float(buffer_coordinates[0]), float(buffer_coordinates[1])
 
         # Following loop will arrange delevery in propper format
-        for Itter in range(int(len(self.box_type)/2)):
+        for _ in range(int(len(self.box_type)/2)):
             # 'buffer_index' is for traversing in loop
-            buffer_index=0
+            buffer_index = 0
 
             # Initializing the minimum threshould
-            maxx=0
+            maxx = 1000
 
             # 'index' will store the index of preferable coordinates
-            index=0
+            index = 0
             # Following loop will also arrange the delevery
             for buffer_index in range(len(self.box_type)):
-                if(check_list[buffer_index] and self.box_type[buffer_index]=="DELIVERY"):
-                    buff_coordinate=self.d_list[buffer_index][1].split(';')
-                    x,y=float(buff_coordinate[0]),float(buff_coordinate[1])
+                if(check_list[buffer_index] and self.box_type[buffer_index] == "DELIVERY"):
+                    buff_coordinate = self.d_list[buffer_index][1].split(';')
+                    x, y = float(buff_coordinate[0]), float(buff_coordinate[1])
 
                     # 'diff' will store difference between coordinates for delevery
                     diff=math.hypot(self.lat_to_x_diff(abs(self.drone_coordinates[0]-x)),self.long_to_y_diff(abs(self.drone_coordinates[1]-y)))
-                    if(diff>=maxx):
+                    if(diff<=maxx):
                         maxx=diff
                         index=buffer_index
             check_list[index]=False
-            self.destination_list.append([self.box_type[index],self.d_list[index][1].split(";"),self.d_list[index][0]])
-            self.input_for_csv.append([self.box_type[index],self.d_list[index][0],self.d_list[index][1]])
+            self.destination_list.append([self.box_type[index], self.d_list[index][1].split(";"), self.d_list[index][0]])
+            self.input_for_csv.append([self.box_type[index], self.d_list[index][0], self.d_list[index][1]])
 
         # Following loop will arrange return from the data of deleveries
         for l in range(int(len(self.box_type)/2)):
 
             # 'return_index' is traversing in the loop
-            rerurn_index=0
+            rerurn_index = 0
 
             # Defining the madimum threshould for the returns
-            r_maxx=1000
+            r_maxx = 1000
 
             # 'r_index' will store possible return coordinate index
-            r_index=0
+            r_index = 0
 
             # Following loop will also arrange the returns
             for rerurn_index in range(len(self.box_type)):
-                if(self.box_type[rerurn_index]=="RETURN"):
+                if(self.box_type[rerurn_index] == "RETURN"):
                     if(check_list[rerurn_index]):
 
                         # Below varinable will store coordinate in string type latter helpful for comperision
-                        r_buff_coordinate=self.d_list[rerurn_index][0].split(';')
+                        r_buff_coordinate = self.d_list[rerurn_index][0].split(';')
 
                         # Below variables are just storing one of the coordinate of .csv file and converting it in float type
                         r_x,r_y=float(r_buff_coordinate[0]),float(r_buff_coordinate[1])
                         t_x,t_y=float(self.destination_list[2*l][1][0]),float(self.destination_list[2*l][1][1])
 
                         # 'r_diff' will store difference between coordinates for returns
-                        r_diff=math.hypot(self.lat_to_x_diff(abs(t_x-r_x)),self.long_to_y_diff(abs(t_y-r_y)))
-                        if(r_diff<=r_maxx):
-                            r_maxx=r_diff
-                            r_index=rerurn_index
-            if(r_index!=0):
-                check_list[r_index]=False
+                        r_diff = math.hypot(self.lat_to_x_diff(abs(t_x-r_x)), self.long_to_y_diff(abs(t_y-r_y)))
+                        if(r_diff <= r_maxx):
+                            r_maxx = r_diff
+                            r_index = rerurn_index
+            if(r_index != 0):
+                check_list[r_index] = False
 
                 # Storing data in list for making 'sequenced_manifest_bonus.csv' and making list of coordinates.
                 self.destination_list.insert((2*l+1),[self.box_type[r_index],self.d_list[r_index][0].split(";"),self.d_list[r_index][1]])
@@ -262,7 +262,6 @@ class Data_processing():
             with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sequenced_manifest_bonus.csv'), 'a') as sequenced_csv:
                 sequence_writer = csv.writer(sequenced_csv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
                 sequence_writer.writerow([self.input_for_csv[u][0],self.input_for_csv[u][1],self.input_for_csv[u][2]])
-
 
 
     def data_publish(self):
