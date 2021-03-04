@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 
 '''
-#Team ID:            0983
-#Theme:              VITARANA DRONE
-#Author List:        Rishav Singh,Kashyap Joshi
-#Filename:           path_planner_test.py
-#Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
-#Global Variables:   None
-'''
-
-'''
 This python file runs a ROS-node of name path_planner which controls the path to be travelled in order to 
 reach required destination which is given by scheduler script 
 This node publishes and subsribes the following topics:
@@ -23,6 +14,13 @@ This node publishes and subsribes the following topics:
                                     /box_checkpoint
 
 '''
+
+#Team ID:            0983
+#Theme:              VITARANA DRONE
+#Author List:        Rishav Singh, Kashyap Joshi
+#Filename:           path_planner.py
+#Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
+#Global Variables:   None
 
 import rospy
 import math
@@ -52,7 +50,7 @@ class PathPlanner():
 
 
     def __init__(self):
-        rospy.init_node('path_planner_beta')
+        rospy.init_node('path_planner')
 
         # Destination to be reached
         # [latitude, longitude, altitude]
@@ -79,7 +77,7 @@ class PathPlanner():
         self.container = [0, 0, 0]
         # For limiting the altitude due to current_location
         self.drone_orientation_quaternion = [0, 0, 0, 0]     # Drone orientation in qurtenion
-        
+
         self.drone_orientation_euler = [0, 0, 0, 0]          # Drone orientation in euler
         self.buffer_altitude = 0                             # For assigning altitude to the altitude variable
         self.altitude = 0                                    # For assigning buffer_altitude
@@ -121,27 +119,20 @@ class PathPlanner():
         self.sample_time = 0.5              # Defining the sample time
 
         # Publisher
-        self.pub_checkpoint = rospy.Publisher(
-            '/checkpoint', NavSatFix, queue_size=1)
+        self.pub_checkpoint = rospy.Publisher('/checkpoint', NavSatFix, queue_size=1)
         self.grip_flag = rospy.Publisher('/gripp_flag', String, queue_size=1)
-        self.destination_data = rospy.Publisher(
-            '/destination_data', NavSatFix, queue_size=1)
-        self.next_flag = rospy.Publisher(
-            '/next_destination_flag', Float32, queue_size=1)
+        self.destination_data = rospy.Publisher('/destination_data', NavSatFix, queue_size=1)
+        self.next_flag = rospy.Publisher('/next_destination_flag', Float32, queue_size=1)
 
         # Subscriber
         rospy.Subscriber('/edrone/gps', NavSatFix, self.gps_callback)
-        rospy.Subscriber('/edrone/range_finder_top', LaserScan,
-                         self.range_finder_top_callback)
-        rospy.Subscriber('/edrone/gripper_check', String,
-                         self.gripper_check_callback)
-        rospy.Subscriber('/marker_error', NavSatFix,
-                         self.marker_error_callback)
+        rospy.Subscriber('/edrone/range_finder_top', LaserScan, self.range_finder_top_callback)
+        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
+        rospy.Subscriber('/marker_error', NavSatFix, self.marker_error_callback)
         rospy.Subscriber('/edrone/imu/data', Imu, self.imu_callback)
 
         rospy.Subscriber('/box_checkpoint', NavSatFix, self.csv_checkpoint)
-        rospy.Subscriber('/edrone/range_finder_bottom',
-                         LaserScan, self.range_finder_bottom_callback)
+        rospy.Subscriber('/edrone/range_finder_bottom', LaserScan, self.range_finder_bottom_callback)
 
     def gripper_client(self, check_condition):
        
@@ -157,7 +148,6 @@ class PathPlanner():
         This is callback function function for saving the IMU data so that we can introduce limitation in taking the samples from the 'range_finder_top'.
         when in latitude and longitude angle in euler is <= 2.5 apperars variables will start to sample the data so unwanted noise will being removed due to to the drone inclination.
 
-        
         Input Argument:
         ---
         msg
@@ -170,6 +160,7 @@ class PathPlanner():
         ---
         Called automatically when appropreat data will being published by the '/edrone/imu/data' topic.
         '''
+
         self.drone_orientation_quaternion[0] = msg.orientation.x
         self.drone_orientation_quaternion[1] = msg.orientation.y
         self.drone_orientation_quaternion[2] = msg.orientation.z
@@ -182,7 +173,6 @@ class PathPlanner():
         Purpose:
         ---
         It will receive the coordinates of next destination which will being published by the shaduler algorithm.
-
         
         Input Argument:
         ---
@@ -203,12 +193,10 @@ class PathPlanner():
             self.incoming_distance = self.container
 
     def marker_error_callback(self, msg):
-
         '''
         Purpose:
         ---
         It will receive the difference of x and y coordinates from eDrone to cross marker from marker_detect script.
-
         
         Input Argument:
         ---
@@ -226,7 +214,6 @@ class PathPlanner():
         self.img_data = [msg.latitude, msg.longitude]
 
     def gripper_check_callback(self, state):
-        
         '''
         Purpose:
         ---
@@ -234,7 +221,6 @@ class PathPlanner():
         True      -->    if attechable
         False     -->    if not attachable
 
-        
         Input Argument:
         ---
         msg
@@ -249,16 +235,12 @@ class PathPlanner():
         '''
         self.attech_situation = state.data
 
-    
-
     def gps_callback(self, msg):
-
         '''
         Purpose:
         ---
         It will receive the data from the gps which are in form of latitude,longitude,altitude.
 
-        
         Input Argument:
         ---
         msg
@@ -275,7 +257,6 @@ class PathPlanner():
         self.current_location = [msg.latitude, msg.longitude, msg.altitude]
 
     def range_finder_top_callback(self, msg):
-
         '''
         Purpose:
         ---
@@ -283,6 +264,7 @@ class PathPlanner():
         In this function we filtered the data.
         When in latitude and longitude angle(basically in roll and pitch of eDrone.) in euler is <= 2.5 apperars variables will start to sample the data so unwanted noise will being removed due to to the drone inclination.
         Some unwanted noise on the threshould of <=0.4 is also removed
+        
         Input Argument:
         ---
         msg
@@ -301,7 +283,6 @@ class PathPlanner():
                 self.obs_range_top = msg.ranges
 
     def range_finder_bottom_callback(self, msg):
-
         '''
         Purpose:
         ---
@@ -326,27 +307,100 @@ class PathPlanner():
 
     # mehods for distance measurement(conversion of difference in gps coordinates to cartesian form)
     #---
-    # Below function will convert difference of latitude in difference of x in meters
-    # It will accepts one argument which is difference in latitude
     def lat_to_x_diff(self, ip_lat_diff): 
+        '''
+        Purpose:
+        ---
+        Convert diffrence of GPS Latitude to x in meters 
+        It will accepts one argument which is difference in latitude
+
+        Input Argument:
+        ---
+        ip_lat_diff : [ float32 ]
+            input GPS Latitude Coordinate 
+
+        Returns:
+        ---
+        x value in meters
+
+        Example call:
+        ---
+        lat_to_x_diff(19.0000134)
+        '''
         return (110692.0702932625*ip_lat_diff)
 
     # Below function will convert difference of longitude in difference of y in meters
     # It will accepts one argument which is difference in longitude
     def long_to_y_diff(self, ip_long_diff): 
-        return (-105292.0089353767*ip_long_diff)
+        '''
+        Purpose:
+        ---
+        Convert diffrence of GPS Longitude to y in meters 
+        It will accepts one argument which is difference in Longitude
 
+        Input Argument:
+        ---
+        ip_long_diff : [ float32 ]
+            input GPS Longitude Coordinate 
+
+        Returns:
+        ---
+        y value in meters
+
+        Example call:
+        ---
+        lat_to_x_diff(72.0000134)
+        '''
+        return (-105292.0089353767*ip_long_diff)
 
     # Functions for data conversion between GPS and meter with respect to origin
     #---
-    # It will convert latitude in x coordinates in meters
+    # It will convert Latitude in x coordinates in meters
     # It will accept one argument which is lattitude
     def lat_to_x(self, input_latitude): 
+        '''
+        Purpose:
+        ---
+        Convert diffrence of GPS Latitude to x in meters 
+        It will accepts one argument which is difference in Latitude
+
+        Input Argument:
+        ---
+        ip_lat_diff : [ float32 ]
+            input GPS Latitude Coordinate 
+
+        Returns:
+        ---
+        x value in meters
+
+        Example call:
+        ---
+        Called automatically when appropreat data will being published by the '/edrone/gripper_check' topic.
+        '''
         return 110692.0702932625 * (input_latitude - 19)
     
     # It will convert longitude in y coordinates in meters
     # It will accept one argument which is longitude
     def long_to_y(self, input_longitude): 
+        '''
+        Purpose:
+        ---
+        Convert diffrence of GPS Latitude to x in meters 
+        It will accepts one argument which is difference in latitude
+
+        Input Argument:
+        ---
+        ip_lat_diff : [ float32 ]
+            input GPS Latitude Coordinate 
+
+        Returns:
+        ---
+        x value in meters
+
+        Example call:
+        ---
+        Called automatically when appropreat data will being published by the '/edrone/gripper_check' topic.
+        '''
         return - 105292.0089353767 * (input_longitude - 72)
     # Functions which will convert cartesian difference in gps accepted format
     #---
@@ -361,7 +415,6 @@ class PathPlanner():
         return (input_y / -105292.0089353767)
 
     def threshould_box(self, limit):
-
         '''
         Purpose:
         ---
@@ -452,9 +505,7 @@ class PathPlanner():
 
         Example call:
         ---
-        Called in obstacle_avoid() for calculating linear distance.
-
-        calculate_movement_in_plane(self.movement_in_1D)
+        calculate_movement_in_plane(25)
         '''
         # movement in specific direction that is x and y
         specific_movement = [0, 0]
@@ -480,8 +531,6 @@ class PathPlanner():
 
         Example call:
         ---
-        Called in obstacle_avoid() for calculating linear distance.
-        
         altitude_select()
         '''
 
@@ -518,8 +567,6 @@ class PathPlanner():
 
         Example call:
         ---
-        Called in function_call() if needed.
-
         obstacle_avoid()
         '''
 
@@ -641,8 +688,6 @@ class PathPlanner():
 
         Example call:
         ---
-        Called in function_call() if needed.
-
         marker_find()
         '''
 
@@ -701,7 +746,6 @@ class PathPlanner():
         function_call()
         '''
 
-        '''it will handle fulction calling in all time'''
         if(self.incoming_distance == [0, 0, 0]):
             return
 
