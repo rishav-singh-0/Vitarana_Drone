@@ -89,7 +89,8 @@ class marker_detection():
 
         Input Argument:
         ---
-        msg
+        msg: [NavSatFix]
+             Storing coordinates
 
         Returns:
         ---
@@ -110,7 +111,8 @@ class marker_detection():
 
         Input Argument:
         ---
-        msg
+        msg: [NavSatFix]
+             Storing current location
 
         Returns:
         ---
@@ -132,7 +134,8 @@ class marker_detection():
 
         Input Argument:
         ---
-        data
+        data: [Image]
+               Store data coming from the camera
 
         Returns:
         ---

@@ -123,6 +123,7 @@ class Edrone():
         Purpose:
         ---
         Vreifying if prop speed is within range if not making it
+        It will limit speed if incoming value will exceed the range
 
         Input Arguments:
         ---
@@ -148,6 +149,7 @@ class Edrone():
         Purpose:
         ---
         Stores the data given by the imu sensor
+        data is basically in quaternion form
 
         Input Arguments:
         ---
@@ -171,7 +173,9 @@ class Edrone():
         '''
         Purpose:
         ---
-        Stores the data given by the position_controller 
+        Stores the data given by the position_controller for performing roll,pitch,yaw and throttle of eDrone
+
+
 
         Input Arguments:
         ---
@@ -199,6 +203,7 @@ class Edrone():
         Purpose:
         ---
         Controls propeller speed of eDrone from the provided data of position_controller
+        It provide processed data to the 4 equetions for 4 propellers of eDrone
 
         Input Arguments:
         ---

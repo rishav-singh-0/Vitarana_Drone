@@ -32,7 +32,7 @@ class Data_processing():
     '''
     Purpose:
     ---
-
+    This class will contain all the required member functions as well as variables for sorting the destinations
 
     Input Argument:
     ---
@@ -76,7 +76,8 @@ class Data_processing():
 
         Input Argument:
         ---
-        msg
+        msg: [Float]
+             Flag for next destination
 
         Returns:
         ---
@@ -120,6 +121,8 @@ class Data_processing():
 
         Example call:
         ---
+        read_and_set_data()
+        
         called in start for sorting the data and letter data will published by 'data_publish()'.
         '''
         # Boolian list for checking perticuler delevery or return is selected previously or not
