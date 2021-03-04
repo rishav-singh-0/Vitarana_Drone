@@ -169,8 +169,6 @@ class PathPlanner():
         Example call:
         ---
         Called automatically when appropreat data will being published by the '/edrone/imu/data' topic.
-
-
         '''
         self.drone_orientation_quaternion[0] = msg.orientation.x
         self.drone_orientation_quaternion[1] = msg.orientation.y
@@ -330,35 +328,37 @@ class PathPlanner():
     #---
     # Below function will convert difference of latitude in difference of x in meters
     # It will accepts one argument which is difference in latitude
-    def lat_to_x_diff(self, ip_lat_diff): return (
-        110692.0702932625*ip_lat_diff)
+    def lat_to_x_diff(self, ip_lat_diff): 
+        return (110692.0702932625*ip_lat_diff)
 
     # Below function will convert difference of longitude in difference of y in meters
     # It will accepts one argument which is difference in longitude
-    def long_to_y_diff(
-        self, ip_long_diff): return (-105292.0089353767*ip_long_diff)
+    def long_to_y_diff(self, ip_long_diff): 
+        return (-105292.0089353767*ip_long_diff)
 
 
     # Functions for data conversion between GPS and meter with respect to origin
     #---
     # It will convert latitude in x coordinates in meters
     # It will accept one argument which is lattitude
-    def lat_to_x(self, input_latitude): return 110692.0702932625 * \
-        (input_latitude - 19)
+    def lat_to_x(self, input_latitude): 
+        return 110692.0702932625 * (input_latitude - 19)
     
     # It will convert longitude in y coordinates in meters
     # It will accept one argument which is longitude
-    def long_to_y(self, input_longitude): return - \
-        105292.0089353767 * (input_longitude - 72)
+    def long_to_y(self, input_longitude): 
+        return - 105292.0089353767 * (input_longitude - 72)
     # Functions which will convert cartesian difference in gps accepted format
     #---
     # It will convert x difference in form of latitude difference form
     # It will accept one argument which is difference in x(in meters)
-    def x_to_lat_diff(self, input_x): return (input_x / 110692.0702932625)
+    def x_to_lat_diff(self, input_x): 
+        return (input_x / 110692.0702932625)
 
     # It will convert y difference in form of longitude difference form
     # It will accept one argument which is difference in y(in meters)
-    def y_to_long_diff(self, input_y): return (input_y / -105292.0089353767)
+    def y_to_long_diff(self, input_y): 
+        return (input_y / -105292.0089353767)
 
     def threshould_box(self, limit):
 
@@ -411,8 +411,7 @@ class PathPlanner():
                         while(self.destination == self.incoming_distance):
                             continue
                         self.destination = self.incoming_distance
-                        self.buffer_altitude = self.current_location[2] - \
-                            self.destination[2]
+                        self.buffer_altitude = self.current_location[2] - self.destination[2]
                         self.altitude = self.buffer_altitude
                         self.limiter = 0
 
@@ -430,14 +429,12 @@ class PathPlanner():
                             continue
                         self.destination = self.incoming_distance
                         # Below will store difference between current and desired location
-                        self.buffer_altitude = self.current_location[2] - \
-                            self.destination[2]
+                        self.buffer_altitude = self.current_location[2] - self.destination[2]
                         self.altitude = self.buffer_altitude
                         # while 'self.limiter'== 0 its permited to set altitude
                         self.limiter = 0
 
     def calculate_movement_in_plane(self, total_movement):
-
         '''
         Purpose:
         ---
@@ -458,21 +455,16 @@ class PathPlanner():
         Called in obstacle_avoid() for calculating linear distance.
 
         calculate_movement_in_plane(self.movement_in_1D)
-
         '''
-
         # movement in specific direction that is x and y
         specific_movement = [0, 0]
 
         # Applying symmetric triangle method
-        specific_movement[0] = (
-            total_movement * self.diff_xy[0]) / self.distance_xy
-        specific_movement[1] = (
-            total_movement * self.diff_xy[1]) / self.distance_xy
+        specific_movement[0] = (total_movement * self.diff_xy[0]) / self.distance_xy
+        specific_movement[1] = (total_movement * self.diff_xy[1]) / self.distance_xy
         return specific_movement
 
     def altitude_select(self):
-
         '''
         Purpose:
         ---
@@ -491,7 +483,6 @@ class PathPlanner():
         Called in obstacle_avoid() for calculating linear distance.
         
         altitude_select()
-        @538
         '''
 
         if(self.limiter == 0):
@@ -511,7 +502,6 @@ class PathPlanner():
             self.limiter += 1
 
     def obstacle_avoid(self):
-
         '''
         Purpose:
         ---
@@ -616,10 +606,8 @@ class PathPlanner():
             self.movement_in_1D)
 
         # Setting the values to publish
-        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(
-            self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_xy[0])
-        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(
-            self.movement_in_plane[1]) - self.y_to_long_diff(avoid_obs_in_xy[1])
+        self.checkpoint.latitude = self.current_location[0] - self.x_to_lat_diff(self.movement_in_plane[0]) - self.x_to_lat_diff(avoid_obs_in_xy[0])
+        self.checkpoint.longitude = self.current_location[1] - self.y_to_long_diff(self.movement_in_plane[1]) - self.y_to_long_diff(avoid_obs_in_xy[1])
         self.altitude_select()
         # Checkin and correcting the provided altitude
         if(self.status == "RETURN"):
@@ -636,7 +624,6 @@ class PathPlanner():
         self.destination_data.publish(self.desti_data)
 
     def marker_find(self):
-
         '''
         Purpose:
         ---
@@ -670,7 +657,6 @@ class PathPlanner():
             self.pause_process_after_detection = True
 
     def pick_n_drop(self):
-        
         '''
         Purpose:
         ---
@@ -694,7 +680,6 @@ class PathPlanner():
         self.checkpoint.altitude = self.destination[2]-0.2
 
     def function_call(self):
-
         '''
         Purpose:
         ---
@@ -751,8 +736,8 @@ class PathPlanner():
 # Function Name:    main (built in)
 #        Inputs:    None
 #       Outputs:    None
-#       Purpose:    To call the Edrone class's function function_call() for managing all the function call to make possible drone to avoid obstacle,find marker,drop and lift the box.
-
+#       Purpose:    To call the Edrone class's function function_call() for managing all the 
+#                   function call to make possible drone to avoid obstacle,find marker,drop and lift the box.
 if __name__ == "__main__":
     planner = PathPlanner()
     rate = rospy.Rate(1/planner.sample_time)
