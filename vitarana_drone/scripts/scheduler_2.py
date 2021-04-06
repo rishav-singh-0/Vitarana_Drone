@@ -1,22 +1,20 @@
 #!/usr/bin/env python
-'''
-#Team ID:            0983
-#Theme:              VITARANA DRONE
-#Author List:        Rishav Singh,Kashyap Joshi
-#Filename:           scheduler_2.py
-#Functions:          next_destination_callback,lat_to_x_diff,long_to_y_diff,read_and_set_data,data_publish
-#Global Variables:   None
-'''
 
 '''
 This python file runs a ROS-node 'data_processing' which takes care of the next destination to be reached
 This node publishes and subsribes the following topics:
         PUBLICATIONS            SUBSCRIPTIONS
         /box_checkpoint         /next_destination_flag
-
-
+        
 '''
-#print("testing phase")
+
+#Team ID:            0983
+#Theme:              VITARANA DRONE
+#Author List:        Rishav Singh,Kashyap Joshi
+#Filename:           scheduler_2.py
+#Functions:          next_destination_callback,lat_to_x_diff,long_to_y_diff,read_and_set_data,data_publish
+#Global Variables:   None
+
 import rospy
 import math
 import csv
@@ -63,8 +61,6 @@ class Data_processing():
         #subscribing
         rospy.Subscriber('/next_destination_flag',Float32,self.next_destination_callback)
     
-
-        
     #function for the subscription
 
     def next_destination_callback(self,msg):
