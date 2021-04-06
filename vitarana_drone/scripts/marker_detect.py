@@ -1,12 +1,4 @@
 #!/usr/bin/env python
-'''
-#Team ID:            0983
-#Theme:              VITARANA DRONE
-#Author List:        Rishav Singh,Kashyap Joshi
-#Filename:           marker_detect.py
-#Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
-#Global Variables:   None
-'''
 
 '''
 This python file runs a ROS-node of name 'marker_detect' which will calculate difference of cross marker from the eDrone.
@@ -17,6 +9,14 @@ This node publishes and subsribes the following topics:
         /destination_data
 
 '''
+
+#Team ID:            0983
+#Theme:              VITARANA DRONE
+#Author List:        Rishav Singh,Kashyap Joshi
+#Filename:           marker_detect.py
+#Functions:          destination_callback,gps_callback,range_finder_bottom_callback,image_callback,detect_marker
+#Global Variables:   None
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
