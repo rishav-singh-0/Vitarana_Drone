@@ -1,5 +1,21 @@
 #!/usr/bin/env python
 
+'''
+This python file runs a ROS-node of name qrcode_scan which read data of qr_code and 
+publishes decoded data to /final_checkpoint
+This node publishes and subsribes the following topics:
+        PUBLICATIONS            SUBSCRIPTIONS
+        /final_setpoint         /edrone/camera/image_raw
+                                /edrone/gripper_check
+'''
+
+# Team ID:          VD_983
+# Theme:            Vitarana_Drone
+# Author List:      Rishav Singh, Kashyap Joshi
+# Filename:         qr_detect.py
+# Functions:        read_qr, gripper_check_callback, detech_msg, image_callback
+# Global variables: None
+
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from matplotlib import pyplot as plt
@@ -13,6 +29,16 @@ import time
 
 
 class image_proc():
+    '''
+    Purpose:
+    ---
+    Take data from camera and scanning qr_code from above the box 
+    Taking read data of qr_code and publishing decoded data to /final_checkpoint
+
+    Input Arguments:
+    ---
+    None
+    '''
 
     # Initialise everything
     def __init__(self):
@@ -34,26 +60,55 @@ class image_proc():
         self.attech_situation = 'False'
         self.data = [0, 0, 0]
 
-
-        self.logo_cascade = cv2.CascadeClassifier('../data/cascade.xml')
-
         # Publishing the scanned destination
         self.final_destination = rospy.Publisher('/final_setpoint', NavSatFix, queue_size=1)
 
         # Subscribing to the camera topic
         self.image_sub = rospy.Subscriber('/edrone/camera/image_raw', Image, self.image_callback)
-        rospy.Subscriber('/edrone/gripper_check', String,self.gripper_check_callback)
-        #rospy.Subscriber('check_point_flag', Float32, self.detech_msg)
+        rospy.Subscriber('/edrone/gripper_check', String, self.gripper_check_callback)
 
     def gripper_check_callback(self, state):
+        '''
+        Purpose:
+        ---
+        To check if box is gripped or to be gripped
+
+        Input Arguments:
+        ---
+        state :  [ String ]
+            output of pid control system
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        gripper_check_callback(<state>)
+        '''
+
         self.attech_situation = state.data
 
-    def detech_msg(self, msg):
-        self.detech_req = msg.data
-        # print(self.detech_req)
-
     def image_callback(self, data):
-        ''' Callback function of camera topic'''
+        '''
+        Purpose:
+        ---
+        Reading data from camera of eDrone and storing in self.img variable
+
+        Input Arguments:
+        ---
+        data :  [ Image ]
+            Raw data from Camera Sensor
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        image_callback(<Image_data>)
+        '''
+
         try:
             # Converting the image to OpenCV standard image
             self.img = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -63,7 +118,23 @@ class image_proc():
             return
 
     def read_qr(self):
-        '''Image QR-Code scanning and publishing algo'''
+        '''
+        Purpose:
+        ---
+        Read the QR Code from Image data and decode it
+
+        Input Arguments:
+        ---
+        None
+
+        Returns:
+        ---
+        None
+
+        Example call:
+        ---
+        read_qr()
+        '''
         try:
             barcode = decode(self.img)
             # used for loop to eleminate the possibility of multiple or null qrcode check
@@ -90,23 +161,13 @@ class image_proc():
             self.final_destination.publish(self.destination)
 
         except ValueError, IndexError:
+            # Neglecting some false readings
             pass
 
-    def detect_marker(self):
-        try:
-            gray = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
-
-            # image, reject levels level weights.
-            logo = logo_cascade.detectMultiScale(gray, scaleFactor=1.05)
-
-            for (x, y, w, h) in logo:
-                cv2.rectangle(self.img, (x, y), (x + w, y + h), (255, 255, 0), 2)
-            plt.imshow(cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB))
-            plt.show()
-        except :
-            pass
-
-
+# Function Name:    main (built in)
+#        Inputs:    None
+#       Outputs:    None
+#       Purpose:    To call the imag_proc class and decode qr_code
 if __name__ == '__main__':
     image_proc_obj = image_proc()
     r = rospy.Rate(1/image_proc_obj.sample_time)
